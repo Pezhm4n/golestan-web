@@ -1,4 +1,4 @@
-import { Moon, Sun, Download, BarChart3, Layers, Calendar, User } from 'lucide-react';
+import { Moon, Sun, Download, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -7,6 +7,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import ExamScheduleDialog from './ExamScheduleDialog';
+import AutoPlannerDialog from './AutoPlannerDialog';
+import SavedSchedulesSheet from './SavedSchedulesSheet';
 
 interface HeaderProps {
   isDarkMode: boolean;
@@ -27,6 +30,23 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
       
       <TooltipProvider delayDuration={200}>
         <div className="flex items-center gap-1">
+          {/* Auto Planner */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span><AutoPlannerDialog /></span>
+            </TooltipTrigger>
+            <TooltipContent>انتخاب خودکار</TooltipContent>
+          </Tooltip>
+
+          {/* Saved Schedules */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span><SavedSchedulesSheet /></span>
+            </TooltipTrigger>
+            <TooltipContent>ترکیب‌های ذخیره شده</TooltipContent>
+          </Tooltip>
+
+          {/* Statistics */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -40,31 +60,10 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
             <TooltipContent>آمار</TooltipContent>
           </Tooltip>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-              >
-                <Layers className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>ترکیب‌های ذخیره شده</TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-              >
-                <Calendar className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>برنامه امتحانات</TooltipContent>
-          </Tooltip>
+          <div className="w-px h-5 bg-border mx-1" />
+          
+          {/* Exam Schedule */}
+          <ExamScheduleDialog />
 
           <div className="w-px h-5 bg-border mx-1" />
           
