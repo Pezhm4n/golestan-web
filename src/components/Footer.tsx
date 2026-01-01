@@ -32,19 +32,95 @@ const Footer = ({ isMobile = false }: FooterProps) => {
     toast.loading('در حال آماده‌سازی تصویر...', { id: 'download' });
 
     try {
-      const innerGrid = scheduleGrid.querySelector('.min-w-\\[900px\\]');
-      const targetElement = (innerGrid || scheduleGrid) as HTMLElement;
+      const scrollContainer = scheduleGrid.querySelector('.overflow-auto');
+      const gridElement = scrollContainer?.firstElementChild as HTMLElement;
+      
+      if (!gridElement) {
+        toast.error('جدول یافت نشد', { id: 'download' });
+        return;
+      }
 
-      const canvas = await html2canvas(targetElement, {
-        backgroundColor: '#ffffff',
-        scale: 2,
+      const rootStyles = getComputedStyle(document.documentElement);
+      const getHSL = (varName: string) => {
+        const v = rootStyles.getPropertyValue(varName).trim();
+        return v ? `hsl(${v})` : '#ffffff';
+      };
+
+      const bgColor = getHSL('--card');
+      const textColor = getHSL('--foreground');
+      const mutedColor = getHSL('--muted-foreground');
+      const borderColor = getHSL('--border');
+      const isDarkMode = document.documentElement.classList.contains('dark');
+
+      const canvas = await html2canvas(gridElement, {
+        backgroundColor: bgColor,
+        scale: 2.5,
         useCORS: true,
         logging: false,
-        width: targetElement.scrollWidth,
-        height: targetElement.scrollHeight,
-        windowWidth: targetElement.scrollWidth,
-        windowHeight: targetElement.scrollHeight,
+        width: gridElement.scrollWidth,
+        height: gridElement.scrollHeight,
+        windowWidth: gridElement.scrollWidth + 100,
+        windowHeight: gridElement.scrollHeight + 100,
+        onclone: (clonedDoc, clonedElement) => {
+          const style = clonedDoc.createElement('style');
+          style.innerHTML = `* { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }`;
+          clonedDoc.head.appendChild(style);
+
+          clonedElement.style.padding = '0';
+          clonedElement.style.margin = '0';
+          clonedElement.style.backgroundColor = bgColor;
+          clonedElement.style.border = `2px solid ${borderColor}`;
+
+          // Hide buttons
+          const buttons = clonedElement.querySelectorAll('button');
+          buttons.forEach((btn) => (btn as HTMLElement).style.display = 'none');
+
+          // Style header cells
+          const headerCells = clonedElement.querySelectorAll('[class*="bg-muted/95"]');
+          headerCells.forEach((cell) => {
+            (cell as HTMLElement).style.backgroundColor = getHSL('--muted');
+            (cell as HTMLElement).style.color = textColor;
+          });
+
+          // Style time cells
+          const timeCells = clonedElement.querySelectorAll('[class*="bg-muted/60"]');
+          timeCells.forEach((cell) => {
+            (cell as HTMLElement).style.backgroundColor = getHSL('--muted');
+            (cell as HTMLElement).style.color = mutedColor;
+          });
+
+          // Style course cells
+          const courseCells = clonedElement.querySelectorAll('[style*="background-color"]');
+          courseCells.forEach((cell) => {
+            const el = cell as HTMLElement;
+            el.style.padding = '8px';
+            el.style.borderRadius = '8px';
+            
+            const title = el.querySelector('h3');
+            if (title) {
+              (title as HTMLElement).style.fontSize = '13px';
+              (title as HTMLElement).style.fontWeight = '700';
+            }
+          });
+
+          // Remove truncate
+          const truncated = clonedElement.querySelectorAll('.truncate');
+          truncated.forEach((el) => {
+            (el as HTMLElement).style.overflow = 'visible';
+            (el as HTMLElement).style.whiteSpace = 'normal';
+          });
+        },
       });
+
+      // Add watermark
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.font = 'bold 28px Arial';
+        ctx.fillStyle = isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.12)';
+        const text = 'Golestoon';
+        const metrics = ctx.measureText(text);
+        ctx.fillText(text, canvas.width - metrics.width - 40, canvas.height - 30);
+      }
 
       canvas.toBlob((blob) => {
         if (!blob) {
