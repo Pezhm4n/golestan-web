@@ -8,8 +8,13 @@ import { cn } from '@/lib/utils';
 const TIME_SLOTS = Array.from({ length: 14 }, (_, i) => 7 + i);
 
 const ScheduleGrid = () => {
-  const { scheduledSessions } = useSchedule();
+  const { scheduledSessions, hoveredCourseId, allCourses } = useSchedule();
   const { showGridLines, getFontSizeClass } = useSettings();
+
+  // Get the hovered course's sessions for preview highlighting
+  const hoveredCourse = hoveredCourseId 
+    ? allCourses.find(c => c.id === hoveredCourseId) 
+    : null;
 
   const getSessionsForSlot = (day: number, time: number): ScheduledSession[] => {
     return scheduledSessions.filter(
@@ -20,6 +25,14 @@ const ScheduleGrid = () => {
   const isCellOccupiedByPrevious = (day: number, time: number): boolean => {
     return scheduledSessions.some(
       session => session.day === day && session.startTime < time && session.endTime > time
+    );
+  };
+
+  // Check if this cell would be occupied by the hovered course
+  const isHoveredCourseCell = (day: number, time: number): boolean => {
+    if (!hoveredCourse) return false;
+    return hoveredCourse.sessions.some(
+      session => session.day === day && time >= session.startTime && time < session.endTime
     );
   };
 
@@ -84,6 +97,7 @@ const ScheduleGrid = () => {
               {DAYS.map((_, dayIndex) => {
                 const sessions = getSessionsForSlot(dayIndex, time);
                 const isOccupied = isCellOccupiedByPrevious(dayIndex, time);
+                const isPreviewCell = isHoveredCourseCell(dayIndex, time);
 
                 if (isOccupied) return null;
 
@@ -94,10 +108,12 @@ const ScheduleGrid = () => {
                   <div
                     key={`cell-${dayIndex}-${time}`}
                     className={cn(
-                      "relative transition-colors duration-150",
+                      "relative transition-all duration-200",
                       showGridLines ? "border-l border-b border-border/60" : "",
                       rowIndex % 2 === 0 ? 'bg-background' : 'bg-muted/10',
-                      "hover:bg-accent/30"
+                      "hover:bg-accent/30",
+                      // Highlight cells where hovered course would appear
+                      isPreviewCell && !mainSession && "bg-primary/15 ring-1 ring-inset ring-primary/40"
                     )}
                     style={{ 
                       gridColumn: dayIndex + 2, 
