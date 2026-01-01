@@ -83,8 +83,8 @@ const CompactFilterPanel = ({
           >
             {[
               { value: 'all', label: 'همه' },
-              { value: 'male', label: 'برادران' },
-              { value: 'female', label: 'خواهران' },
+              { value: 'male', label: 'آقا' },
+              { value: 'female', label: 'خانم' },
               { value: 'mixed', label: 'مختلط' },
             ].map(opt => (
               <div key={opt.value} className="flex items-center gap-1">
