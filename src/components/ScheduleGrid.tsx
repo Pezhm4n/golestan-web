@@ -40,9 +40,9 @@ const ScheduleGrid = () => {
     return `${hour.toString().padStart(2, '0')}:۰۰`;
   };
 
-  const ROW_HEIGHT = 72;
-  const HEADER_HEIGHT = 48;
-  const TIME_COL_WIDTH = 72;
+  const ROW_HEIGHT = 44;
+  const HEADER_HEIGHT = 32;
+  const TIME_COL_WIDTH = 56;
 
   return (
     <div data-tour="schedule-grid" className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden bg-muted/20 p-4 md:p-6">
@@ -53,7 +53,7 @@ const ScheduleGrid = () => {
             display: 'grid',
             gridTemplateColumns: `${TIME_COL_WIDTH}px repeat(6, minmax(120px, 1fr))`,
             gridTemplateRows: `${HEADER_HEIGHT}px repeat(${TIME_SLOTS.length}, ${ROW_HEIGHT}px)`,
-            gap: '1px',
+            gap: '2px',
           }}
         >
           {/* Header Row */}

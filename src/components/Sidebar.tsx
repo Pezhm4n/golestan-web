@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
-import { Search, ChevronDown, ListChecks, Library, Filter, Save, Trash2, Plus } from 'lucide-react';
+import { Search, ChevronDown, Filter, Save, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
@@ -154,74 +154,41 @@ const Sidebar = () => {
         </CollapsibleContent>
       </Collapsible>
       
-      {/* Tabs */}
-      <Tabs defaultValue="available" className="flex-1 flex flex-col min-h-0">
-        <TabsList className="w-full rounded-none border-b border-border/50 h-8 bg-transparent p-0">
-          <TabsTrigger 
-            value="available" 
-            className="flex-1 h-full rounded-none text-[10px] gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-          >
-            <Library className="h-3 w-3" />
-            ارائه شده ({filteredCourses.length})
-          </TabsTrigger>
-          <TabsTrigger 
-            value="selected" 
-            className="flex-1 h-full rounded-none text-[10px] gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-          >
-            <ListChecks className="h-3 w-3" />
-            اخذ شده ({selectedCourses.length})
-          </TabsTrigger>
-        </TabsList>
+      {/* Course List - Only Available */}
+      <div className="flex-1 flex flex-col min-h-0">
 
-        <TabsContent value="available" className="flex-1 m-0 min-h-0">
-          <ScrollArea className="h-full">
-            {/* Available/Allowed Courses */}
-            {availableToTake.length > 0 && (
-              <div>
-                <div data-tour="available-courses" className="sticky top-0 z-10 bg-primary/10 px-3 py-1.5 text-[10px] font-bold text-primary border-b border-primary/20">
-                  دروس قابل اخذ ({availableToTake.length})
-                </div>
-                {availableToTake.map(course => (
-                  <SidebarCourseItem key={course.id} course={course} />
-                ))}
+        <ScrollArea className="h-full">
+          {/* Available/Allowed Courses */}
+          {availableToTake.length > 0 && (
+            <div>
+              <div data-tour="available-courses" className="sticky top-0 z-10 bg-primary/10 px-3 py-1.5 text-[10px] font-bold text-primary border-b border-primary/20">
+                دروس قابل اخذ ({availableToTake.length})
               </div>
-            )}
-
-            {/* Other Courses */}
-            {otherCourses.length > 0 && (
-              <div>
-                <div data-tour="unavailable-courses" className="sticky top-0 z-10 bg-muted/80 px-3 py-1.5 text-[10px] font-bold text-muted-foreground border-b border-border/30">
-                  دروس غیر قابل اخذ ({otherCourses.length})
-                </div>
-                {otherCourses.map(course => (
-                  <SidebarCourseItem key={course.id} course={course} />
-                ))}
-              </div>
-            )}
-
-            {filteredCourses.length === 0 && (
-              <p className="text-center text-muted-foreground text-[10px] py-8">
-                درسی یافت نشد
-              </p>
-            )}
-          </ScrollArea>
-        </TabsContent>
-
-        <TabsContent value="selected" className="flex-1 m-0 min-h-0">
-          <ScrollArea className="h-full">
-            {selectedCourses.length > 0 ? (
-              selectedCourses.map(course => (
+              {availableToTake.map(course => (
                 <SidebarCourseItem key={course.id} course={course} />
-              ))
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground text-[11px]">درسی انتخاب نشده</p>
-                <p className="text-muted-foreground text-[9px] mt-1">برای افزودن درس، روی آن کلیک کنید</p>
+              ))}
+            </div>
+          )}
+
+          {/* Other Courses */}
+          {otherCourses.length > 0 && (
+            <div>
+              <div data-tour="unavailable-courses" className="sticky top-0 z-10 bg-muted/80 px-3 py-1.5 text-[10px] font-bold text-muted-foreground border-b border-border/30">
+                دروس غیر قابل اخذ ({otherCourses.length})
               </div>
-            )}
-          </ScrollArea>
-        </TabsContent>
-      </Tabs>
+              {otherCourses.map(course => (
+                <SidebarCourseItem key={course.id} course={course} />
+              ))}
+            </div>
+          )}
+
+          {filteredCourses.length === 0 && (
+            <p className="text-center text-muted-foreground text-[10px] py-8">
+              درسی یافت نشد
+            </p>
+          )}
+        </ScrollArea>
+      </div>
 
       {/* Bottom Actions */}
       <div data-tour="actions" className="p-2 border-t border-border/50 bg-muted/30 flex flex-col gap-2">
