@@ -5,16 +5,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import SidebarCourseItem from './SidebarCourseItem';
 import CompactFilterPanel from './CompactFilterPanel';
-import { Course, Gender } from '@/types/course';
+import { Gender } from '@/types/course';
 import { availableCourses } from '@/data/mockCourses';
+import { useSchedule } from '@/contexts/ScheduleContext';
 
-interface SidebarProps {
-  selectedCourseIds?: string[];
-  onAddCourse?: (course: Course) => void;
-  onRemoveCourse?: (course: Course) => void;
-}
-
-const Sidebar = ({ selectedCourseIds = [], onAddCourse, onRemoveCourse }: SidebarProps) => {
+const Sidebar = () => {
+  const { selectedCourses } = useSchedule();
   const [searchQuery, setSearchQuery] = useState('');
   
   // Filter states
@@ -36,10 +32,6 @@ const Sidebar = ({ selectedCourseIds = [], onAddCourse, onRemoveCourse }: Sideba
     });
   }, [searchQuery, gender, showGeneralOnly, hideFull]);
 
-  const selectedCourses = useMemo(() => {
-    return availableCourses.filter(course => selectedCourseIds.includes(course.id));
-  }, [selectedCourseIds]);
-
   return (
     <aside className="w-[350px] border-l border-border bg-card flex flex-col shrink-0">
       {/* Header */}
@@ -60,7 +52,7 @@ const Sidebar = ({ selectedCourseIds = [], onAddCourse, onRemoveCourse }: Sideba
         </div>
       </div>
 
-      {/* Filters - Always Visible */}
+      {/* Filters */}
       <CompactFilterPanel
         timeFrom={timeFrom}
         timeTo={timeTo}
@@ -96,13 +88,7 @@ const Sidebar = ({ selectedCourseIds = [], onAddCourse, onRemoveCourse }: Sideba
         <TabsContent value="available" className="flex-1 m-0 min-h-0">
           <ScrollArea className="h-full">
             {filteredCourses.map(course => (
-              <SidebarCourseItem
-                key={course.id}
-                course={course}
-                isSelected={selectedCourseIds.includes(course.id)}
-                onAdd={onAddCourse}
-                onRemove={onRemoveCourse}
-              />
+              <SidebarCourseItem key={course.id} course={course} />
             ))}
             {filteredCourses.length === 0 && (
               <p className="text-center text-muted-foreground text-[10px] py-4">
@@ -116,12 +102,7 @@ const Sidebar = ({ selectedCourseIds = [], onAddCourse, onRemoveCourse }: Sideba
           <ScrollArea className="h-full">
             {selectedCourses.length > 0 ? (
               selectedCourses.map(course => (
-                <SidebarCourseItem
-                  key={course.id}
-                  course={course}
-                  isSelected={true}
-                  onRemove={onRemoveCourse}
-                />
+                <SidebarCourseItem key={course.id} course={course} />
               ))
             ) : (
               <p className="text-center text-muted-foreground text-[10px] py-4">
