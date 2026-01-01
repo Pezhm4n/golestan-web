@@ -61,9 +61,27 @@ const Sidebar = () => {
       toast.info('برنامه خالی است');
       return;
     }
+    
+    // Check if this is the first save
+    const hasSeenDonateHint = localStorage.getItem('golestan-donate-hint');
+    
     toast.success('برنامه ذخیره شد', {
       description: `${selectedCourses.length} درس ذخیره شد`,
     });
+
+    // Show donate hint after first save
+    if (!hasSeenDonateHint) {
+      localStorage.setItem('golestan-donate-hint', 'true');
+      setTimeout(() => {
+        toast('اگه این ابزار بهت کمک کرد، می‌تونی از ما حمایت کنی 💙', {
+          action: {
+            label: 'حمایت',
+            onClick: () => window.location.href = '/donate',
+          },
+          duration: 8000,
+        });
+      }, 1500);
+    }
   };
 
   const handleClearAll = () => {
