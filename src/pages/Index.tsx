@@ -22,8 +22,8 @@ const ScheduleApp = () => {
       <Header isDarkMode={isDarkMode} onToggleDarkMode={() => setIsDarkMode(!isDarkMode)} />
       
       <div className="flex-1 flex overflow-hidden min-h-0 mb-12">
-        <ScheduleGrid />
         <Sidebar />
+        <ScheduleGrid />
       </div>
       
       {/* Alert Banner - Below Grid, Above Footer */}
