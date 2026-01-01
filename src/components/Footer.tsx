@@ -16,9 +16,25 @@ const Footer = () => {
     examDates.some((other, j) => i !== j && exam.date === other.date && exam.time === other.time)
   );
 
-  // Check for time conflicts (simplified)
-  const hasTimeConflict = false; // Can be extended
+  // Check for time conflicts - count overlapping sessions
+  const timeConflictCount = (() => {
+    let conflicts = 0;
+    for (let i = 0; i < scheduledSessions.length; i++) {
+      for (let j = i + 1; j < scheduledSessions.length; j++) {
+        const s1 = scheduledSessions[i];
+        const s2 = scheduledSessions[j];
+        if (s1.day === s2.day && s1.startTime < s2.endTime && s2.startTime < s1.endTime) {
+          // Check week type
+          if (s1.weekType === 'both' || s2.weekType === 'both' || s1.weekType === s2.weekType) {
+            conflicts++;
+          }
+        }
+      }
+    }
+    return conflicts;
+  })();
 
+  const hasTimeConflict = timeConflictCount > 0;
   const hasAnyConflict = hasTimeConflict || hasExamConflict;
 
   // Unit status
@@ -33,7 +49,9 @@ const Footer = () => {
       return (
         <div className="flex items-center gap-1.5 text-destructive">
           <AlertCircle className="w-3.5 h-3.5" />
-          <span className="text-[11px] font-medium">تداخل زمانی</span>
+          <span className="text-[11px] font-medium">
+            {timeConflictCount} تداخل زمانی
+          </span>
         </div>
       );
     }
