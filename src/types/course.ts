@@ -38,6 +38,7 @@ export interface ScheduledSession extends CourseSession {
   credits: number;
   color: 'blue' | 'green' | 'orange' | 'purple' | 'pink' | 'teal';
   examDate?: string;
+  examTime?: string;
 }
 
 export const DAYS = [

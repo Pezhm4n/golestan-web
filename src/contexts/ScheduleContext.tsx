@@ -61,6 +61,7 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         credits: course.credits,
         color: course.color,
         examDate: course.examDate,
+        examTime: course.examTime,
       }))
     );
   }, [selectedCourses]);
