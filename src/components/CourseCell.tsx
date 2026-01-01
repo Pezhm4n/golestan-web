@@ -61,14 +61,14 @@ const SingleBlock = ({
         <TooltipTrigger asChild>
           <div
             className={cn(
-              "group relative flex flex-col justify-center items-center text-center overflow-hidden cursor-pointer",
-              "border-r-2 border-r-gray-600/40 transition-all duration-200",
+              "group relative flex flex-col justify-start items-start text-right overflow-hidden cursor-pointer",
+              "border-r-[3px] border-r-gray-700/50 transition-all duration-200 rounded-lg",
               isHalf ? 'h-1/2' : 'h-full',
-              isHalf && position === 'top' ? 'border-b border-dashed border-gray-600/30' : '',
-              isHighlighted && 'ring-2 ring-offset-1 ring-primary shadow-[0_0_15px_hsl(var(--primary)/0.4)] scale-[1.02]',
-              isDimmed && 'opacity-60',
-              'px-1 py-0.5 rounded-sm',
-              isStacked && 'absolute shadow-lg border border-gray-700/30'
+              isHalf && position === 'top' ? 'border-b border-dashed border-gray-500/40' : '',
+              isHighlighted && 'ring-2 ring-offset-2 ring-primary shadow-lg scale-[1.02]',
+              isDimmed && 'opacity-50',
+              'p-2.5',
+              isStacked && 'absolute shadow-xl border border-gray-600/40'
             )}
             style={{ 
               backgroundColor,
@@ -86,64 +86,69 @@ const SingleBlock = ({
             {/* Delete Button - appears on hover */}
             <button
               onClick={handleRemove}
-              className="absolute top-1 right-1 z-30 w-4 h-4 flex items-center justify-center bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-600 rounded-sm"
+              className="absolute top-2 right-2 z-30 w-5 h-5 flex items-center justify-center bg-red-500/90 text-white opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-600 rounded-md shadow-sm"
             >
-              <X className="w-2.5 h-2.5" />
+              <X className="w-3 h-3" />
             </button>
 
             {/* Week Type Badge */}
             {weekLabel && (
               <span className={`
-                absolute top-0 left-0 text-[7px] px-0.5 font-bold rounded-br-sm
-                ${session.weekType === 'odd' ? 'bg-amber-400/90 text-amber-900' : 'bg-sky-400/90 text-sky-900'}
+                absolute top-1 left-1 text-[8px] px-1.5 py-0.5 font-bold rounded-md shadow-sm
+                ${session.weekType === 'odd' ? 'bg-amber-400/95 text-amber-900' : 'bg-sky-400/95 text-sky-900'}
               `}>
                 {weekLabel}
               </span>
             )}
 
-            {/* Content - Centered Layout - Dark text for light backgrounds */}
-            <div className="flex flex-col items-center w-full px-1">
-              {/* Line 1: Course Name */}
-              <p className={cn(
-                "font-bold text-gray-800 leading-tight truncate w-full",
-                isHalf ? "text-[8px]" 
-                  : fontSize === 'small' ? "text-[10px]" : fontSize === 'large' ? "text-sm" : "text-xs"
+            {/* Content - Hierarchical Layout */}
+            <div className="flex flex-col items-start w-full gap-0.5">
+              {/* Title - Large and Bold */}
+              <h3 className={cn(
+                "font-bold text-gray-900 leading-snug line-clamp-2 w-full",
+                isHalf ? "text-[9px]" 
+                  : fontSize === 'small' ? "text-xs" : fontSize === 'large' ? "text-base" : "text-sm"
               )}>
                 {session.courseName}
-              </p>
+              </h3>
               
-              {/* Line 2: Instructor */}
+              {/* Subtitle - Instructor */}
               {!isHalf && (
                 <p className={cn(
-                  "text-gray-700 truncate w-full font-light",
-                  fontSize === 'small' ? "text-[8px]" : fontSize === 'large' ? "text-xs" : "text-[10px]"
+                  "text-gray-700 truncate w-full",
+                  fontSize === 'small' ? "text-[9px]" : fontSize === 'large' ? "text-sm" : "text-xs"
                 )}>
                   {session.instructor}
                 </p>
               )}
               
-              {/* Line 3: Course Code */}
-              <p className={cn(
-                "text-gray-600 truncate w-full",
-                isHalf ? "text-[6px]" : fontSize === 'small' ? "text-[7px]" : fontSize === 'large' ? "text-[10px]" : "text-[8px]"
-              )}>
-                کد: {session.courseId}
-              </p>
-              
-              {/* Line 4: Units + Group */}
-              <div className="flex items-center gap-1 mt-0.5">
+              {/* Metadata Row - Badges */}
+              <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                {/* Credits Badge */}
                 <span className={cn(
-                  "bg-gray-800/20 text-gray-800 px-1.5 rounded font-medium",
-                  isHalf ? "text-[6px]" : fontSize === 'small' ? "text-[7px]" : fontSize === 'large' ? "text-[10px]" : "text-[8px]"
+                  "bg-gray-800/15 text-gray-800 px-2 py-0.5 rounded-md font-semibold",
+                  isHalf ? "text-[7px]" : fontSize === 'small' ? "text-[8px]" : fontSize === 'large' ? "text-xs" : "text-[9px]"
                 )}>
                   {session.credits} واحد
                 </span>
+                
+                {/* Group Badge */}
                 <span className={cn(
-                  "text-gray-600",
-                  isHalf ? "text-[5px]" : fontSize === 'small' ? "text-[6px]" : fontSize === 'large' ? "text-[9px]" : "text-[7px]"
+                  "bg-gray-700/10 text-gray-700 px-1.5 py-0.5 rounded-md",
+                  isHalf ? "text-[6px]" : fontSize === 'small' ? "text-[7px]" : fontSize === 'large' ? "text-[10px]" : "text-[8px]"
                 )}>
-                  ({GROUP_LABELS[session.group]})
+                  {GROUP_LABELS[session.group]}
                 </span>
+                
+                {/* Course Code - Small */}
+                {!isHalf && (
+                  <span className={cn(
+                    "text-gray-500",
+                    fontSize === 'small' ? "text-[7px]" : fontSize === 'large' ? "text-[10px]" : "text-[8px]"
+                  )}>
+                    {session.courseId}
+                  </span>
+                )}
               </div>
             </div>
           </div>
