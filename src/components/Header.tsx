@@ -114,7 +114,23 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
         }
       });
 
-      // Convert to blob and download
+      // Add watermark to canvas
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        // Watermark settings
+        ctx.save();
+        ctx.font = 'bold 24px Arial';
+        ctx.fillStyle = isDarkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)';
+        
+        // Position at bottom-right corner
+        const watermarkText = 'Golestoon';
+        const textMetrics = ctx.measureText(watermarkText);
+        const x = canvas.width - textMetrics.width - 30;
+        const y = canvas.height - 25;
+        
+        ctx.fillText(watermarkText, x, y);
+        ctx.restore();
+      }
 
       // Convert to blob and download
       canvas.toBlob((blob) => {

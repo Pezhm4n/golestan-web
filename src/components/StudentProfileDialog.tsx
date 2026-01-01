@@ -22,15 +22,8 @@ import {
   ReferenceLine,
 } from 'recharts';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { toast } from '@/hooks/use-toast';
-
-// Extend jsPDF type for autotable
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-  }
-}
 
 interface StudentProfileDialogProps {
   open: boolean;
@@ -149,7 +142,7 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
     doc.text('Academic Terms Summary', pageWidth / 2, yPos, { align: 'center' });
     yPos += 8;
 
-    doc.autoTable({
+    autoTable(doc, {
       startY: yPos,
       head: [['Term', 'GPA', 'Passed Units']],
       body: termData.map(term => [
@@ -181,7 +174,7 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
       yPos += 6;
 
       if (courses.length > 0) {
-        doc.autoTable({
+        autoTable(doc, {
           startY: yPos,
           head: [['Course Name', 'Units', 'Grade', 'Status']],
           body: courses.map(course => [
