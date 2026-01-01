@@ -65,13 +65,13 @@ const SidebarCourseItem = ({ course }: SidebarCourseItemProps) => {
             )}
           </div>
           
-          {/* Course Info - Single Line RTL */}
+          {/* Course Info - Single Line RTL with group number */}
           <p className={cn("flex-1 text-xs text-foreground truncate", getFontSizeClass())}>
             <span className="font-semibold">{course.name}</span>
             <span className="text-muted-foreground"> - </span>
             <span className="text-muted-foreground">{course.instructor}</span>
             <span className="text-muted-foreground"> - </span>
-            <span className="text-muted-foreground">گروه {course.group || 1}</span>
+            <span className="text-muted-foreground">گروه {course.groupNumber || 1}</span>
             {course.isGeneral && (
               <Badge variant="secondary" className="h-4 px-1 text-[8px] mr-1.5">عمومی</Badge>
             )}

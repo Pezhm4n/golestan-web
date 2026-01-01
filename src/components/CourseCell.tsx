@@ -101,13 +101,13 @@ const SingleBlock = ({
               </span>
             )}
 
-            {/* Content - Centered Layout */}
-            <div className="flex flex-col items-center justify-center w-full h-full text-center gap-0.5">
-              {/* Title - Large and Bold */}
+            {/* Content - Centered Layout with responsive text */}
+            <div className="flex flex-col items-center justify-center w-full h-full text-center gap-0.5 overflow-hidden">
+              {/* Title - Truncated to prevent overflow */}
               <h3 className={cn(
-                "font-bold text-gray-900 leading-snug line-clamp-2",
+                "font-bold text-gray-900 leading-tight w-full truncate",
                 isHalf ? "text-[9px]" 
-                  : fontSize === 'small' ? "text-xs" : fontSize === 'large' ? "text-base" : "text-sm"
+                  : fontSize === 'small' ? "text-[10px]" : fontSize === 'large' ? "text-sm" : "text-xs"
               )}>
                 {session.courseName}
               </h3>
@@ -116,39 +116,31 @@ const SingleBlock = ({
               {!isHalf && (
                 <p className={cn(
                   "text-gray-700 truncate w-full",
-                  fontSize === 'small' ? "text-[9px]" : fontSize === 'large' ? "text-sm" : "text-xs"
+                  fontSize === 'small' ? "text-[8px]" : fontSize === 'large' ? "text-xs" : "text-[10px]"
                 )}>
                   {session.instructor}
                 </p>
               )}
               
-              {/* Course Code */}
-              {!isHalf && (
-                <p className={cn(
-                  "text-gray-600 font-mono",
-                  fontSize === 'small' ? "text-[9px]" : fontSize === 'large' ? "text-xs" : "text-[10px]"
-                )}>
-                  {session.courseId}
-                </p>
-              )}
-              
-              {/* Metadata Row - Badges */}
-              <div className="flex items-center justify-center gap-1.5 flex-wrap">
+              {/* Metadata Row - Credits and Group Number */}
+              <div className="flex items-center justify-center gap-1 flex-wrap">
                 {/* Credits Badge */}
                 <span className={cn(
-                  "bg-gray-800/15 text-gray-800 px-1.5 py-0.5 rounded-md font-semibold",
-                  isHalf ? "text-[7px]" : fontSize === 'small' ? "text-[8px]" : fontSize === 'large' ? "text-xs" : "text-[9px]"
+                  "bg-gray-800/15 text-gray-800 px-1 py-0.5 rounded font-semibold whitespace-nowrap",
+                  isHalf ? "text-[6px]" : fontSize === 'small' ? "text-[7px]" : fontSize === 'large' ? "text-[10px]" : "text-[8px]"
                 )}>
                   {session.credits} واحد
                 </span>
                 
-                {/* Group Badge */}
-                <span className={cn(
-                  "bg-gray-700/10 text-gray-700 px-1.5 py-0.5 rounded-md",
-                  isHalf ? "text-[6px]" : fontSize === 'small' ? "text-[7px]" : fontSize === 'large' ? "text-[10px]" : "text-[8px]"
-                )}>
-                  {GROUP_LABELS[session.group]}
-                </span>
+                {/* Group Number Badge */}
+                {session.groupNumber && (
+                  <span className={cn(
+                    "bg-gray-700/10 text-gray-700 px-1 py-0.5 rounded whitespace-nowrap",
+                    isHalf ? "text-[6px]" : fontSize === 'small' ? "text-[7px]" : fontSize === 'large' ? "text-[10px]" : "text-[8px]"
+                  )}>
+                    گروه {session.groupNumber}
+                  </span>
+                )}
               </div>
             </div>
           </div>

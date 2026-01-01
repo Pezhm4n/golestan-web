@@ -30,6 +30,7 @@ export interface Course {
   departmentId?: string; // Department this course belongs to
   sessions: CourseSession[]; // Multi-session support
   group: CourseGroup; // نوع درس برای رنگ‌بندی
+  groupNumber?: number; // شماره گروه (مثلاً گروه ۱، ۲، ۳)
 }
 
 // For grid rendering - a flattened session with course info
@@ -40,6 +41,7 @@ export interface ScheduledSession extends CourseSession {
   instructor: string;
   credits: number;
   group: CourseGroup;
+  groupNumber?: number; // شماره گروه
   examDate?: string;
   examTime?: string;
 }
