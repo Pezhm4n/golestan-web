@@ -96,9 +96,9 @@ const Sidebar = () => {
   return (
     <aside data-tour="sidebar" dir="rtl" className="w-[320px] border-l border-border bg-card/50 backdrop-blur-sm flex flex-col shrink-0 rounded-l-xl overflow-hidden">
       {/* Department Selector - Integrated with course list */}
-      <div className="p-2 bg-muted/30">
+      <div className="px-2 pt-2 pb-1">
         <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-          <SelectTrigger className="h-9 text-xs font-medium">
+          <SelectTrigger className="h-9 text-xs font-medium border-b-0 rounded-b-none">
             <SelectValue placeholder="انتخاب دانشکده/رشته" />
           </SelectTrigger>
           <SelectContent>
@@ -111,8 +111,8 @@ const Sidebar = () => {
         </Select>
       </div>
       
-      {/* Search */}
-      <div className="p-2">
+      {/* Search - connected to department selector */}
+      <div className="px-2 pb-2 border-b border-border/50">
         <div className="relative">
           <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input

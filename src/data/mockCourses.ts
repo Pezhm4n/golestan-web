@@ -26,6 +26,7 @@ export const availableCourses: Course[] = [
     category: 'available',
     departmentId: '1',
     group: 'basic', // پایه
+    groupNumber: 29,
     sessions: [
       { day: 0, startTime: 8, endTime: 10, location: 'کلاس ۱۰۱', weekType: 'both' },
       { day: 2, startTime: 8, endTime: 10, location: 'کلاس ۱۰۱', weekType: 'both' },
@@ -47,7 +48,8 @@ export const availableCourses: Course[] = [
     isGeneral: false,
     category: 'available',
     departmentId: '2',
-    group: 'basic', // پایه
+    group: 'basic',
+    groupNumber: 12,
     sessions: [
       { day: 1, startTime: 14, endTime: 16, location: 'آزمایشگاه ۳', weekType: 'both' },
     ]
@@ -68,7 +70,8 @@ export const availableCourses: Course[] = [
     isGeneral: true,
     category: 'available',
     departmentId: '4',
-    group: 'general', // عمومی
+    group: 'general',
+    groupNumber: 5,
     sessions: [
       { day: 3, startTime: 10, endTime: 12, location: 'سالن ۱', weekType: 'odd' },
     ]
@@ -89,7 +92,8 @@ export const availableCourses: Course[] = [
     isGeneral: false,
     category: 'available',
     departmentId: '1',
-    group: 'specialized', // تخصصی
+    group: 'specialized',
+    groupNumber: 1,
     sessions: [
       { day: 0, startTime: 10, endTime: 12, location: 'کلاس ۲۰۵', weekType: 'both' },
       { day: 4, startTime: 14, endTime: 16, location: 'لابراتوار ۱', weekType: 'both' },
@@ -111,7 +115,8 @@ export const availableCourses: Course[] = [
     isGeneral: true,
     category: 'available',
     departmentId: '4',
-    group: 'general', // عمومی
+    group: 'general',
+    groupNumber: 8,
     sessions: [
       { day: 3, startTime: 10, endTime: 12, location: 'کلاس ۳۰۱', weekType: 'even' },
     ]
@@ -132,7 +137,8 @@ export const availableCourses: Course[] = [
     isGeneral: false,
     category: 'other',
     departmentId: '2',
-    group: 'specialized', // تخصصی
+    group: 'specialized',
+    groupNumber: 3,
     sessions: [
       { day: 4, startTime: 10, endTime: 12, location: 'آزمایشگاه ۵', weekType: 'both' },
     ]
@@ -153,7 +159,8 @@ export const availableCourses: Course[] = [
     isGeneral: false,
     category: 'other',
     departmentId: '4',
-    group: 'basic', // پایه
+    group: 'basic',
+    groupNumber: 15,
     sessions: [
       { day: 2, startTime: 10, endTime: 12, location: 'کلاس ۱۰۲', weekType: 'both' },
     ]
@@ -174,7 +181,8 @@ export const availableCourses: Course[] = [
     isGeneral: false,
     category: 'other',
     departmentId: '3',
-    group: 'general', // عمومی
+    group: 'general',
+    groupNumber: 2,
     sessions: [
       { day: 5, startTime: 8, endTime: 10, location: 'کارگاه ۲', weekType: 'both' },
     ]
@@ -195,7 +203,8 @@ export const availableCourses: Course[] = [
     isGeneral: false,
     category: 'available',
     departmentId: '1',
-    group: 'basic', // پایه
+    group: 'basic',
+    groupNumber: 7,
     sessions: [
       { day: 1, startTime: 8, endTime: 10, location: 'کلاس ۲۰۱', weekType: 'both' },
       { day: 3, startTime: 8, endTime: 10, location: 'کلاس ۲۰۱', weekType: 'both' },
@@ -217,12 +226,12 @@ export const availableCourses: Course[] = [
     isGeneral: true,
     category: 'other',
     departmentId: '4',
-    group: 'general', // عمومی
+    group: 'general',
+    groupNumber: 10,
     sessions: [
       { day: 5, startTime: 10, endTime: 12, location: 'سالن ورزشی', weekType: 'both' },
     ]
   },
-  // درس‌های با تداخل زمانی برای تست
   {
     id: '11',
     courseId: '۴۰۱۲۱۵۰۸',
@@ -240,8 +249,9 @@ export const availableCourses: Course[] = [
     category: 'available',
     departmentId: '1',
     group: 'specialized',
+    groupNumber: 4,
     sessions: [
-      { day: 0, startTime: 8, endTime: 10, location: 'کلاس ۳۰۲', weekType: 'both' }, // تداخل با ریاضی عمومی
+      { day: 0, startTime: 8, endTime: 10, location: 'کلاس ۳۰۲', weekType: 'both' },
     ]
   },
   {
@@ -261,8 +271,9 @@ export const availableCourses: Course[] = [
     category: 'available',
     departmentId: '1',
     group: 'specialized',
+    groupNumber: 6,
     sessions: [
-      { day: 0, startTime: 8, endTime: 10, location: 'کلاس ۴۰۱', weekType: 'both' }, // تداخل با ریاضی و ساختمان داده
+      { day: 0, startTime: 8, endTime: 10, location: 'کلاس ۴۰۱', weekType: 'both' },
     ]
   },
   {
@@ -282,8 +293,9 @@ export const availableCourses: Course[] = [
     category: 'available',
     departmentId: '1',
     group: 'specialized',
+    groupNumber: 11,
     sessions: [
-      { day: 0, startTime: 10, endTime: 12, location: 'کلاس ۲۰۶', weekType: 'both' }, // تداخل با برنامه‌سازی پیشرفته
+      { day: 0, startTime: 10, endTime: 12, location: 'کلاس ۲۰۶', weekType: 'both' },
     ]
   }
 ];

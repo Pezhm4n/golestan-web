@@ -70,6 +70,7 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         instructor: course.instructor,
         credits: course.credits,
         group: course.group,
+        groupNumber: course.groupNumber,
         examDate: course.examDate,
         examTime: course.examTime,
       }))
