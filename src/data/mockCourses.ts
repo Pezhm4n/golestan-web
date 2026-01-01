@@ -1,4 +1,4 @@
-import { Course, ScheduledCourse } from '@/types/course';
+import { Course } from '@/types/course';
 
 export const availableCourses: Course[] = [
   {
@@ -15,7 +15,11 @@ export const availableCourses: Course[] = [
     capacity: 40,
     enrolled: 35,
     type: 'theoretical',
-    isGeneral: false
+    isGeneral: false,
+    sessions: [
+      { day: 0, startTime: 8, endTime: 10, location: 'کلاس ۱۰۱', weekType: 'both' },
+      { day: 2, startTime: 8, endTime: 10, location: 'کلاس ۱۰۱', weekType: 'both' },
+    ]
   },
   {
     id: '2',
@@ -31,7 +35,10 @@ export const availableCourses: Course[] = [
     capacity: 35,
     enrolled: 35,
     type: 'both',
-    isGeneral: false
+    isGeneral: false,
+    sessions: [
+      { day: 1, startTime: 14, endTime: 16, location: 'آزمایشگاه ۳', weekType: 'both' },
+    ]
   },
   {
     id: '3',
@@ -47,7 +54,10 @@ export const availableCourses: Course[] = [
     capacity: 50,
     enrolled: 30,
     type: 'theoretical',
-    isGeneral: true
+    isGeneral: true,
+    sessions: [
+      { day: 3, startTime: 10, endTime: 12, location: 'سالن ۱', weekType: 'odd' },
+    ]
   },
   {
     id: '4',
@@ -63,7 +73,11 @@ export const availableCourses: Course[] = [
     capacity: 30,
     enrolled: 28,
     type: 'both',
-    isGeneral: false
+    isGeneral: false,
+    sessions: [
+      { day: 0, startTime: 10, endTime: 12, location: 'کلاس ۲۰۵', weekType: 'both' },
+      { day: 4, startTime: 14, endTime: 16, location: 'لابراتوار ۱', weekType: 'both' },
+    ]
   },
   {
     id: '5',
@@ -79,7 +93,10 @@ export const availableCourses: Course[] = [
     capacity: 25,
     enrolled: 20,
     type: 'theoretical',
-    isGeneral: true
+    isGeneral: true,
+    sessions: [
+      { day: 3, startTime: 10, endTime: 12, location: 'کلاس ۳۰۱', weekType: 'even' },
+    ]
   },
   {
     id: '6',
@@ -95,7 +112,10 @@ export const availableCourses: Course[] = [
     capacity: 35,
     enrolled: 32,
     type: 'practical',
-    isGeneral: false
+    isGeneral: false,
+    sessions: [
+      { day: 4, startTime: 10, endTime: 12, location: 'آزمایشگاه ۵', weekType: 'both' },
+    ]
   },
   {
     id: '7',
@@ -111,7 +131,10 @@ export const availableCourses: Course[] = [
     capacity: 40,
     enrolled: 38,
     type: 'theoretical',
-    isGeneral: false
+    isGeneral: false,
+    sessions: [
+      { day: 2, startTime: 10, endTime: 12, location: 'کلاس ۱۰۲', weekType: 'both' },
+    ]
   },
   {
     id: '8',
@@ -127,74 +150,48 @@ export const availableCourses: Course[] = [
     capacity: 20,
     enrolled: 20,
     type: 'practical',
-    isGeneral: false
-  }
-];
-
-export const scheduledCourses: ScheduledCourse[] = [
-  {
-    ...availableCourses[0],
-    day: 0,
-    startTime: 8,
-    endTime: 10,
-    location: 'کلاس ۱۰۱',
-    weekType: 'odd',
+    isGeneral: false,
+    sessions: [
+      { day: 5, startTime: 8, endTime: 10, location: 'کارگاه ۲', weekType: 'both' },
+    ]
   },
   {
-    ...availableCourses[6],
-    id: '1b',
-    day: 0,
-    startTime: 8,
-    endTime: 10,
-    location: 'کلاس ۱۰۲',
-    weekType: 'even',
+    id: '9',
+    courseId: '۴۰۱۲۱۵۰۷',
+    name: 'معادلات دیفرانسیل',
+    instructor: 'دکتر کاظمی',
+    credits: 3,
+    color: 'purple',
+    examDate: '۱۴۰۳/۰۴/۱۷',
+    examTime: '۱۰:۰۰',
+    description: 'حل معادلات دیفرانسیل معمولی',
+    gender: 'mixed',
+    capacity: 35,
+    enrolled: 30,
+    type: 'theoretical',
+    isGeneral: false,
+    sessions: [
+      { day: 1, startTime: 8, endTime: 10, location: 'کلاس ۲۰۱', weekType: 'both' },
+      { day: 3, startTime: 8, endTime: 10, location: 'کلاس ۲۰۱', weekType: 'both' },
+    ]
   },
   {
-    ...availableCourses[3],
-    day: 1,
-    startTime: 10,
-    endTime: 12,
-    location: 'کلاس ۲۰۵',
-    weekType: 'both',
-  },
-  {
-    ...availableCourses[1],
-    day: 2,
-    startTime: 14,
-    endTime: 16,
-    location: 'آزمایشگاه ۳',
-    weekType: 'both',
-  },
-  {
-    ...availableCourses[2],
-    day: 3,
-    startTime: 8,
-    endTime: 10,
-    location: 'سالن ۱',
-    weekType: 'odd',
-  },
-  {
-    ...availableCourses[4],
-    day: 3,
-    startTime: 8,
-    endTime: 10,
-    location: 'کلاس ۳۰۱',
-    weekType: 'even',
-  },
-  {
-    ...availableCourses[5],
-    day: 4,
-    startTime: 10,
-    endTime: 12,
-    location: 'آزمایشگاه ۵',
-    weekType: 'both',
-  },
-  {
-    ...availableCourses[7],
-    day: 5,
-    startTime: 8,
-    endTime: 9,
-    location: 'کارگاه ۲',
-    weekType: 'both',
+    id: '10',
+    courseId: '۴۰۱۳۱۵۰۳',
+    name: 'تربیت بدنی',
+    instructor: 'استاد مرادی',
+    credits: 1,
+    color: 'green',
+    examDate: '',
+    examTime: '',
+    description: 'ورزش و تندرستی',
+    gender: 'male',
+    capacity: 30,
+    enrolled: 25,
+    type: 'practical',
+    isGeneral: true,
+    sessions: [
+      { day: 5, startTime: 10, endTime: 12, location: 'سالن ورزشی', weekType: 'both' },
+    ]
   }
 ];
