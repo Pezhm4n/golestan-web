@@ -70,13 +70,32 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
         logging: false,
         width: gridElement.scrollWidth,
         height: gridElement.scrollHeight,
-        windowWidth: gridElement.scrollWidth + 100,
-        windowHeight: gridElement.scrollHeight + 100,
+        windowWidth: gridElement.scrollWidth,
+        windowHeight: gridElement.scrollHeight,
         x: 0,
         y: 0,
         scrollX: 0,
         scrollY: 0,
         onclone: (clonedDoc, clonedElement) => {
+          // Ensure tight crop (no body margins) and anchor at top-left
+          clonedDoc.documentElement.style.margin = '0';
+          clonedDoc.documentElement.style.padding = '0';
+          clonedDoc.documentElement.dir = 'rtl';
+          clonedDoc.body.style.margin = '0';
+          clonedDoc.body.style.padding = '0';
+          clonedDoc.body.style.backgroundColor = bgColor;
+          clonedDoc.body.style.width = `${gridElement.scrollWidth}px`;
+          clonedDoc.body.style.height = `${gridElement.scrollHeight}px`;
+          clonedDoc.body.style.overflow = 'hidden';
+
+          (clonedElement as HTMLElement).style.position = 'absolute';
+          (clonedElement as HTMLElement).style.top = '0';
+          (clonedElement as HTMLElement).style.left = '0';
+          (clonedElement as HTMLElement).style.right = 'auto';
+          (clonedElement as HTMLElement).style.transform = 'none';
+          (clonedElement as HTMLElement).style.width = `${gridElement.scrollWidth}px`;
+          (clonedElement as HTMLElement).style.height = `${gridElement.scrollHeight}px`;
+
           // Add print styles
           const style = clonedDoc.createElement('style');
           style.innerHTML = `
