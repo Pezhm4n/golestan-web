@@ -12,12 +12,12 @@ import { Course, Gender } from '@/types/course';
 import { availableCourses } from '@/data/mockCourses';
 
 interface CourseSidebarProps {
-  selectedCourseIds: string[];
-  onAddCourse: (course: Course) => void;
-  onRemoveCourse: (course: Course) => void;
+  selectedCourseIds?: string[];
+  onAddCourse?: (course: Course) => void;
+  onRemoveCourse?: (course: Course) => void;
 }
 
-const CourseSidebar = ({ selectedCourseIds, onAddCourse, onRemoveCourse }: CourseSidebarProps) => {
+const CourseSidebar = ({ selectedCourseIds = [], onAddCourse, onRemoveCourse }: CourseSidebarProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   
