@@ -98,126 +98,181 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
   const newTotalUnits = passedUnits + predictUnits;
   const predictedGPA = newTotalPoints / newTotalUnits;
 
-  const handleDownloadTranscript = () => {
-    const doc = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4',
-    });
+  const handleDownloadTranscript = async () => {
+    try {
+      toast({
+        title: 'در حال آماده‌سازی...',
+        description: 'لطفاً صبر کنید',
+      });
 
-    // Add Persian font support - use built-in Helvetica for now
-    doc.setFont('Helvetica');
-    
-    const pageWidth = doc.internal.pageSize.getWidth();
-    let yPos = 20;
-
-    // Title
-    doc.setFontSize(18);
-    doc.setTextColor(59, 130, 246);
-    doc.text('Student Transcript - Golestoon', pageWidth / 2, yPos, { align: 'center' });
-    yPos += 15;
-
-    // Student Info Box
-    doc.setFillColor(248, 250, 252);
-    doc.roundedRect(15, yPos, pageWidth - 30, 35, 3, 3, 'F');
-    
-    doc.setFontSize(11);
-    doc.setTextColor(0, 0, 0);
-    yPos += 8;
-    doc.text('Student Name: Guest User', 20, yPos);
-    doc.text('Student ID: 400123456', pageWidth - 20, yPos, { align: 'right' });
-    yPos += 7;
-    doc.text('Faculty: Engineering', 20, yPos);
-    doc.text('Major: Computer Engineering', pageWidth - 20, yPos, { align: 'right' });
-    yPos += 7;
-    doc.text(`Total GPA: ${totalGPA.toFixed(2)}`, 20, yPos);
-    doc.text(`Passed Units: ${passedUnits} / ${totalUnits}`, pageWidth - 20, yPos, { align: 'right' });
-    yPos += 7;
-    doc.text(`Best Term GPA: ${bestTerm.toFixed(2)}`, 20, yPos);
-    yPos += 15;
-
-    // Terms Summary Table
-    doc.setFontSize(13);
-    doc.setTextColor(59, 130, 246);
-    doc.text('Academic Terms Summary', pageWidth / 2, yPos, { align: 'center' });
-    yPos += 8;
-
-    autoTable(doc, {
-      startY: yPos,
-      head: [['Term', 'GPA', 'Passed Units']],
-      body: termData.map(term => [
-        term.term,
-        term.gpa.toFixed(2),
-        term.passedUnits
-      ]),
-      styles: { fontSize: 9, cellPadding: 3 },
-      headStyles: { fillColor: [59, 130, 246], textColor: 255 },
-      alternateRowStyles: { fillColor: [248, 250, 252] },
-      margin: { left: 15, right: 15 },
-    });
-
-    yPos = (doc as any).lastAutoTable.finalY + 15;
-
-    // All Terms Courses
-    termData.forEach((term, termIndex) => {
-      const courses = allTermCourses[term.id] || [];
+      // Fetch the Vazirmatn font
+      const fontResponse = await fetch('/fonts/Vazirmatn-Regular.ttf');
+      if (!fontResponse.ok) {
+        throw new Error('Failed to load font');
+      }
+      const fontBuffer = await fontResponse.arrayBuffer();
       
-      // Check if we need a new page
-      if (yPos > 250) {
-        doc.addPage();
-        yPos = 20;
+      // Convert ArrayBuffer to base64
+      const fontBytes = new Uint8Array(fontBuffer);
+      let binary = '';
+      for (let i = 0; i < fontBytes.length; i++) {
+        binary += String.fromCharCode(fontBytes[i]);
       }
+      const fontBase64 = btoa(binary);
 
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      // Register the Persian font
+      doc.addFileToVFS('Vazirmatn-Regular.ttf', fontBase64);
+      doc.addFont('Vazirmatn-Regular.ttf', 'Vazirmatn', 'normal');
+      doc.setFont('Vazirmatn');
+
+      const pageWidth = doc.internal.pageSize.getWidth();
+      let yPos = 20;
+
+      // Title
+      doc.setFontSize(18);
+      doc.setTextColor(59, 130, 246);
+      doc.text('کارنامه تحصیلی دانشجو - گلستون', pageWidth / 2, yPos, { align: 'center' });
+      yPos += 15;
+
+      // Student Info Box
+      doc.setFillColor(248, 250, 252);
+      doc.roundedRect(15, yPos, pageWidth - 30, 40, 3, 3, 'F');
+      
       doc.setFontSize(11);
-      doc.setTextColor(16, 185, 129);
-      doc.text(`${term.term}`, pageWidth / 2, yPos, { align: 'center' });
-      yPos += 6;
+      doc.setTextColor(0, 0, 0);
+      yPos += 10;
+      
+      // Right-aligned Persian labels
+      doc.text('نام دانشجو: کاربر مهمان', pageWidth - 20, yPos, { align: 'right' });
+      doc.text('شماره دانشجویی: ۴۰۰۱۲۳۴۵۶', 20, yPos, { align: 'left' });
+      yPos += 8;
+      doc.text('دانشکده: فنی و مهندسی', pageWidth - 20, yPos, { align: 'right' });
+      doc.text('رشته تحصیلی: مهندسی کامپیوتر', 20, yPos, { align: 'left' });
+      yPos += 8;
+      doc.text(`معدل کل: ${totalGPA.toFixed(2)}`, pageWidth - 20, yPos, { align: 'right' });
+      doc.text(`واحدهای گذرانده: ${passedUnits} از ${totalUnits}`, 20, yPos, { align: 'left' });
+      yPos += 8;
+      doc.text(`بهترین معدل ترم: ${bestTerm.toFixed(2)}`, pageWidth - 20, yPos, { align: 'right' });
+      yPos += 15;
 
-      if (courses.length > 0) {
-        autoTable(doc, {
-          startY: yPos,
-          head: [['Course Name', 'Units', 'Grade', 'Status']],
-          body: courses.map(course => [
-            course.name,
-            course.units.toString(),
-            course.grade.toFixed(2),
-            course.grade >= 10 ? 'Passed' : 'Failed'
-          ]),
-          styles: { fontSize: 8, cellPadding: 2 },
-          headStyles: { fillColor: [16, 185, 129], textColor: 255 },
-          alternateRowStyles: { fillColor: [248, 250, 252] },
-          margin: { left: 15, right: 15 },
-        });
-        yPos = (doc as any).lastAutoTable.finalY + 10;
-      } else {
-        doc.setFontSize(9);
+      // Terms Summary Table
+      doc.setFontSize(13);
+      doc.setTextColor(59, 130, 246);
+      doc.text('خلاصه ترم‌های تحصیلی', pageWidth / 2, yPos, { align: 'center' });
+      yPos += 8;
+
+      autoTable(doc, {
+        startY: yPos,
+        head: [['واحدهای گذرانده', 'معدل ترم', 'ترم تحصیلی']],
+        body: termData.map(term => [
+          term.passedUnits,
+          term.gpa.toFixed(2),
+          term.term
+        ]),
+        styles: { 
+          font: 'Vazirmatn', 
+          fontSize: 9, 
+          cellPadding: 3,
+          halign: 'right'
+        },
+        headStyles: { 
+          fillColor: [59, 130, 246], 
+          textColor: 255,
+          halign: 'right',
+          font: 'Vazirmatn'
+        },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+        margin: { left: 15, right: 15 },
+      });
+
+      yPos = (doc as any).lastAutoTable.finalY + 15;
+
+      // All Terms Courses
+      termData.forEach((term) => {
+        const courses = allTermCourses[term.id] || [];
+        
+        // Check if we need a new page
+        if (yPos > 250) {
+          doc.addPage();
+          yPos = 20;
+        }
+
+        doc.setFontSize(11);
+        doc.setTextColor(16, 185, 129);
+        doc.setFont('Vazirmatn');
+        doc.text(`${term.term}`, pageWidth / 2, yPos, { align: 'center' });
+        yPos += 6;
+
+        if (courses.length > 0) {
+          autoTable(doc, {
+            startY: yPos,
+            head: [['وضعیت', 'نمره', 'واحد', 'نام درس']],
+            body: courses.map(course => [
+              course.grade >= 10 ? 'قبول' : 'رد',
+              course.grade.toFixed(2),
+              course.units.toString(),
+              course.name
+            ]),
+            styles: { 
+              font: 'Vazirmatn', 
+              fontSize: 8, 
+              cellPadding: 2,
+              halign: 'right'
+            },
+            headStyles: { 
+              fillColor: [16, 185, 129], 
+              textColor: 255,
+              halign: 'right',
+              font: 'Vazirmatn'
+            },
+            alternateRowStyles: { fillColor: [248, 250, 252] },
+            margin: { left: 15, right: 15 },
+          });
+          yPos = (doc as any).lastAutoTable.finalY + 10;
+        } else {
+          doc.setFontSize(9);
+          doc.setTextColor(150, 150, 150);
+          doc.text('درسی یافت نشد', pageWidth / 2, yPos, { align: 'center' });
+          yPos += 10;
+        }
+      });
+
+      // Footer
+      const pageCount = doc.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setFont('Vazirmatn');
         doc.setTextColor(150, 150, 150);
-        doc.text('No courses found', pageWidth / 2, yPos, { align: 'center' });
-        yPos += 10;
+        doc.text(
+          `ساخته شده توسط گلستون - صفحه ${i} از ${pageCount}`,
+          pageWidth / 2,
+          doc.internal.pageSize.getHeight() - 10,
+          { align: 'center' }
+        );
       }
-    });
 
-    // Footer
-    const pageCount = doc.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFontSize(8);
-      doc.setTextColor(150, 150, 150);
-      doc.text(
-        `Generated by Golestoon - Page ${i} of ${pageCount}`,
-        pageWidth / 2,
-        doc.internal.pageSize.getHeight() - 10,
-        { align: 'center' }
-      );
+      // Save the PDF
+      doc.save('کارنامه-گلستون.pdf');
+      
+      toast({
+        title: 'کارنامه ذخیره شد',
+        description: 'فایل PDF کارنامه با موفقیت دانلود شد',
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: 'خطا در ذخیره کارنامه',
+        description: 'مشکلی در ایجاد فایل PDF رخ داد. لطفاً دوباره تلاش کنید.',
+        variant: 'destructive',
+      });
     }
-
-    // Save the PDF
-    doc.save('transcript-golestoon.pdf');
-    
-    toast({
-      title: 'کارنامه ذخیره شد',
-      description: 'فایل PDF کارنامه با موفقیت دانلود شد',
-    });
   };
 
   return (
