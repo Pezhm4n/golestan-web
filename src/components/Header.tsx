@@ -35,22 +35,47 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
     toast.loading('در حال آماده‌سازی تصویر...', { id: 'download' });
 
     try {
-      // Find the inner scrollable container
-      const innerContainer = scheduleGrid.querySelector('.overflow-auto');
-      const targetElement = (innerContainer || scheduleGrid) as HTMLElement;
+      // Find the inner grid container (the actual table, not the scroll wrapper)
+      const innerGrid = scheduleGrid.querySelector('.min-w-\\[800px\\]');
+      const targetElement = (innerGrid || scheduleGrid) as HTMLElement;
 
-      const canvas = await html2canvas(targetElement, {
+      // Clone the element to avoid modifying the original
+      const clone = targetElement.cloneNode(true) as HTMLElement;
+      clone.style.position = 'absolute';
+      clone.style.left = '-9999px';
+      clone.style.top = '0';
+      clone.style.width = `${targetElement.scrollWidth}px`;
+      clone.style.height = `${targetElement.scrollHeight}px`;
+      clone.style.overflow = 'visible';
+      clone.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--background') 
+        ? `hsl(${getComputedStyle(document.documentElement).getPropertyValue('--card').trim()})` 
+        : '#1a1a2e';
+      clone.style.borderRadius = '12px';
+      clone.style.padding = '8px';
+      
+      document.body.appendChild(clone);
+
+      const canvas = await html2canvas(clone, {
         backgroundColor: null,
-        scale: 2, // Higher quality
+        scale: 3, // Higher quality for better text clarity
         useCORS: true,
         logging: false,
-        windowWidth: targetElement.scrollWidth,
-        windowHeight: targetElement.scrollHeight,
-        width: targetElement.scrollWidth,
-        height: targetElement.scrollHeight,
-        scrollX: 0,
-        scrollY: 0,
+        width: clone.scrollWidth,
+        height: clone.scrollHeight,
+        onclone: (clonedDoc) => {
+          // Ensure all text is rendered clearly
+          const elements = clonedDoc.querySelectorAll('*');
+          elements.forEach((el) => {
+            const htmlEl = el as HTMLElement;
+            if (htmlEl.style) {
+              htmlEl.style.imageRendering = 'auto';
+            }
+          });
+        }
       });
+
+      // Remove the clone
+      document.body.removeChild(clone);
 
       // Convert to blob and download
       canvas.toBlob((blob) => {
