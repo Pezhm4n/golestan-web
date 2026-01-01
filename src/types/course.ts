@@ -1,13 +1,22 @@
 export type WeekType = 'odd' | 'even' | 'both';
+export type Gender = 'male' | 'female' | 'mixed';
+export type CourseType = 'theoretical' | 'practical' | 'both';
 
 export interface Course {
   id: string;
+  courseId: string; // کد درس
   name: string;
   instructor: string;
   credits: number;
   color: 'blue' | 'green' | 'orange' | 'purple' | 'pink' | 'teal';
   examDate?: string;
+  examTime?: string;
   description?: string;
+  gender: Gender;
+  capacity: number;
+  enrolled: number;
+  type: CourseType;
+  isGeneral: boolean; // دروس عمومی
 }
 
 export interface ScheduledCourse extends Course {
