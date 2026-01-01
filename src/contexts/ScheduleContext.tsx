@@ -16,6 +16,7 @@ interface ScheduleContextType {
   // Actions
   addCourse: (course: Course) => boolean;
   removeCourse: (courseId: string) => void;
+  clearAll: () => void;
   toggleCourse: (course: Course) => void;
   setHoveredCourseId: (id: string | null) => void;
   
@@ -130,6 +131,11 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
+  // Clear all courses
+  const clearAll = useCallback(() => {
+    setSelectedCourseIds([]);
+  }, []);
+
   // Toggle course (add/remove)
   const toggleCourse = useCallback((course: Course) => {
     if (selectedCourseIds.includes(course.id)) {
@@ -147,6 +153,7 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     totalUnits,
     addCourse,
     removeCourse,
+    clearAll,
     toggleCourse,
     setHoveredCourseId,
     isCourseSelected,
