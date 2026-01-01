@@ -42,7 +42,7 @@ const Sidebar = () => {
   const otherCourses = filteredCourses.filter(c => c.category === 'other');
 
   return (
-    <aside className="w-[320px] border-l border-border bg-card/50 backdrop-blur-sm flex flex-col shrink-0 rounded-l-xl overflow-hidden order-last">
+    <aside className="w-[320px] border-r border-border bg-card/50 backdrop-blur-sm flex flex-col shrink-0 rounded-r-xl overflow-hidden">
       {/* Department Selector */}
       <div className="p-3 border-b border-border/50 bg-muted/30">
         <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
