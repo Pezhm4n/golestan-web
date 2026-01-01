@@ -30,7 +30,7 @@ const ScheduleApp = () => {
     <div className="h-screen flex flex-col overflow-hidden bg-muted/30">
       <Header isDarkMode={isDarkMode} onToggleDarkMode={() => setIsDarkMode(!isDarkMode)} />
       
-      <div className="flex-1 flex overflow-hidden min-h-0 mb-10">
+      <div className={`flex-1 flex overflow-hidden min-h-0 ${showMobileSidebar ? 'mb-14' : 'mb-12'}`}>
         {/* Desktop Sidebar */}
         {!showMobileSidebar && <Sidebar />}
         
@@ -43,7 +43,7 @@ const ScheduleApp = () => {
         <>
           <Button
             onClick={() => setIsSidebarOpen(true)}
-            className="fixed bottom-20 right-4 z-50 h-14 w-14 rounded-full shadow-xl flex items-center justify-center p-0"
+            className="fixed bottom-[4.5rem] right-4 z-50 h-14 w-14 rounded-full shadow-xl flex items-center justify-center p-0"
             size="lg"
           >
             <div className="relative">

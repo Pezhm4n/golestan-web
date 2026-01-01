@@ -142,12 +142,12 @@ const Footer = ({ isMobile = false }: FooterProps) => {
     );
   };
 
-  // Mobile Footer - Simplified
+  // Mobile Footer - Simplified (no tooltips for touch)
   if (isMobile) {
     return (
       <footer className="fixed bottom-0 left-0 right-0 h-14 border-t-2 border-border bg-card px-3 flex items-center justify-between z-40 shadow-xl">
         {/* Left - Quick Stats */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <div className="flex items-center gap-1">
             <span className={`text-base font-bold tabular-nums ${unitStatus === 'low' ? 'text-amber-500' : unitStatus === 'high' ? 'text-destructive' : 'text-primary'}`}>
               {totalUnits}
@@ -155,47 +155,49 @@ const Footer = ({ isMobile = false }: FooterProps) => {
             <span className="text-[9px] text-muted-foreground">واحد</span>
           </div>
           
+          <div className="w-px h-5 bg-border" />
+          
+          <div className="flex items-center gap-1">
+            <span className="text-xs font-medium text-foreground">{selectedCourses.length}</span>
+            <span className="text-[9px] text-muted-foreground">درس</span>
+          </div>
+          
           {hasAnyConflict && (
-            <div className="flex items-center gap-1 text-destructive">
-              <AlertCircle className="w-3.5 h-3.5" />
-              <span className="text-[10px]">{timeConflictCount}</span>
-            </div>
+            <>
+              <div className="w-px h-5 bg-border" />
+              <div className="flex items-center gap-1 text-destructive">
+                <AlertCircle className="w-3.5 h-3.5" />
+                <span className="text-[10px]">{timeConflictCount}</span>
+              </div>
+            </>
           )}
         </div>
 
-        {/* Center - Main Actions */}
+        {/* Right - Actions (no tooltips) */}
         <div className="flex items-center gap-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="h-10 w-10 p-0"
-                onClick={handleDownloadImage}
-                disabled={isDownloading}
-              >
-                {isDownloading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Download className="h-4 w-4" />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>دانلود تصویر</TooltipContent>
-          </Tooltip>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="h-10 w-10 p-0"
+            onClick={handleDownloadImage}
+            disabled={isDownloading}
+          >
+            {isDownloading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+          </Button>
           
           <ExamScheduleDialog />
+          
+          {/* Status indicator */}
+          {!hasAnyConflict && selectedCourses.length > 0 && (
+            <div className="flex items-center text-emerald-600">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+          )}
         </div>
-
-        {/* Right - Status */}
-        {!hasAnyConflict && selectedCourses.length > 0 && (
-          <div className="flex items-center gap-1 text-emerald-600">
-            <CheckCircle2 className="w-4 h-4" />
-          </div>
-        )}
-        {selectedCourses.length === 0 && (
-          <div className="text-[10px] text-muted-foreground">v1.0.0</div>
-        )}
       </footer>
     );
   }
