@@ -143,7 +143,7 @@ const GuidedTour = ({ isOpen, onClose }: GuidedTourProps) => {
       return { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
     }
 
-    const padding = 20;
+    const padding = 40; // Increased padding for better spacing
     const tooltipWidth = 340;
     const tooltipHeight = 220;
 
@@ -169,9 +169,9 @@ const GuidedTour = ({ isOpen, onClose }: GuidedTourProps) => {
         break;
     }
 
-    // Keep in viewport
-    left = Math.max(16, Math.min(left, window.innerWidth - tooltipWidth - 16));
-    top = Math.max(16, Math.min(top, window.innerHeight - tooltipHeight - 16));
+    // Keep in viewport with more margin
+    left = Math.max(24, Math.min(left, window.innerWidth - tooltipWidth - 24));
+    top = Math.max(24, Math.min(top, window.innerHeight - tooltipHeight - 24));
 
     return { top: `${top}px`, left: `${left}px` };
   };
