@@ -11,9 +11,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import StudentProfileDialog from './StudentProfileDialog';
+import GuidedTour from './GuidedTour';
 
 const ProfileDropdown = () => {
   const [profileOpen, setProfileOpen] = useState(false);
+  const [tourOpen, setTourOpen] = useState(false);
 
   const handleLogout = () => {
     toast.info('از حساب کاربری خارج شدید');
@@ -21,10 +23,6 @@ const ProfileDropdown = () => {
 
   const handleSettings = () => {
     toast.info('تنظیمات در حال توسعه است');
-  };
-
-  const handleHelp = () => {
-    toast.info('راهنما در حال توسعه است');
   };
 
   const handleAbout = () => {
@@ -60,7 +58,7 @@ const ProfileDropdown = () => {
             تنظیمات
           </DropdownMenuItem>
           
-          <DropdownMenuItem onClick={handleHelp} className="text-xs gap-2 cursor-pointer">
+          <DropdownMenuItem onClick={() => setTourOpen(true)} className="text-xs gap-2 cursor-pointer">
             <HelpCircle className="h-3.5 w-3.5" />
             راهنما
           </DropdownMenuItem>
@@ -83,6 +81,7 @@ const ProfileDropdown = () => {
       </DropdownMenu>
 
       <StudentProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
+      <GuidedTour isOpen={tourOpen} onClose={() => setTourOpen(false)} />
     </>
   );
 };

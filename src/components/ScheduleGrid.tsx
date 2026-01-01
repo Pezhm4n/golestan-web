@@ -29,7 +29,7 @@ const ScheduleGrid = () => {
   const TIME_COL_WIDTH = 60;
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden bg-muted/30 p-3">
+    <div data-tour="schedule-grid" className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden bg-muted/30 p-3">
       <div className="flex-1 overflow-auto bg-card rounded-xl shadow-sm border border-border/50">
         <div 
           className="min-w-[800px]"
