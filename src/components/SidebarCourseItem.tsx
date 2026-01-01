@@ -85,7 +85,7 @@ const SidebarCourseItem = ({ course }: SidebarCourseItemProps) => {
         </div>
       </HoverCardTrigger>
       
-      <HoverCardContent side="right" align="start" className="w-72 p-3" sideOffset={8}>
+      <HoverCardContent side="left" align="start" className="w-72 p-3 z-[100]" sideOffset={16}>
         <div className="space-y-2">
           {/* Header */}
           <div>
