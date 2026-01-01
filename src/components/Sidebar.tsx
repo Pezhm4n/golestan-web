@@ -76,7 +76,7 @@ const Sidebar = () => {
   };
 
   return (
-    <aside className="w-[320px] border-l border-border bg-card/50 backdrop-blur-sm flex flex-col shrink-0 rounded-l-xl overflow-hidden">
+    <aside data-tour="sidebar" className="w-[320px] border-l border-border bg-card/50 backdrop-blur-sm flex flex-col shrink-0 rounded-l-xl overflow-hidden">
       {/* Department Selector */}
       <div className="p-3 border-b border-border/50 bg-muted/30">
         <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
@@ -107,7 +107,7 @@ const Sidebar = () => {
       </div>
 
       {/* Collapsible Filters */}
-      <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
+      <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen} data-tour="filters">
         <CollapsibleTrigger asChild>
           <Button 
             variant="ghost" 
@@ -206,7 +206,7 @@ const Sidebar = () => {
       </Tabs>
 
       {/* Bottom Actions */}
-      <div className="p-2 border-t border-border/50 bg-muted/30 flex flex-col gap-2">
+      <div data-tour="actions" className="p-2 border-t border-border/50 bg-muted/30 flex flex-col gap-2">
         {/* Add Course Button */}
         <AddCourseDialog onAddCourse={handleAddCourse} />
         
