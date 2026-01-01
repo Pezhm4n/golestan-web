@@ -44,9 +44,9 @@ const SingleBlock = ({
     removeCourse(session.parentId);
   };
 
-  // Calculate offset for stacked view - bring hovered to front
-  const baseStackOffset = isStacked ? stackIndex * 8 : 0;
-  const stackWidth = isStacked ? `calc(100% - ${(totalStacked - 1) * 8}px)` : '100%';
+  // Calculate offset for stacked view - more spacing for easier hover
+  const baseStackOffset = isStacked ? stackIndex * 20 : 0;
+  const stackWidth = isStacked ? `calc(100% - ${(totalStacked - 1) * 20}px)` : '100%';
   
   // When hovered, bring to front with z-index 100
   const getZIndex = () => {
@@ -107,7 +107,6 @@ const SingleBlock = ({
               <p className={cn(
                 "font-bold text-gray-800 leading-tight truncate w-full",
                 isHalf ? "text-[8px]" 
-                  : isStacked ? "text-[9px]"
                   : fontSize === 'small' ? "text-[10px]" : fontSize === 'large' ? "text-sm" : "text-xs"
               )}>
                 {session.courseName}
@@ -117,7 +116,7 @@ const SingleBlock = ({
               {!isHalf && (
                 <p className={cn(
                   "text-gray-700 truncate w-full font-light",
-                  isStacked ? "text-[7px]" : fontSize === 'small' ? "text-[8px]" : fontSize === 'large' ? "text-xs" : "text-[10px]"
+                  fontSize === 'small' ? "text-[8px]" : fontSize === 'large' ? "text-xs" : "text-[10px]"
                 )}>
                   {session.instructor}
                 </p>
@@ -126,22 +125,22 @@ const SingleBlock = ({
               {/* Line 3: Course Code */}
               <p className={cn(
                 "text-gray-600 truncate w-full",
-                isHalf ? "text-[6px]" : isStacked ? "text-[6px]" : fontSize === 'small' ? "text-[7px]" : fontSize === 'large' ? "text-[10px]" : "text-[8px]"
+                isHalf ? "text-[6px]" : fontSize === 'small' ? "text-[7px]" : fontSize === 'large' ? "text-[10px]" : "text-[8px]"
               )}>
                 کد: {session.courseId}
               </p>
               
               {/* Line 4: Units + Group */}
-              <div className={cn("flex items-center gap-1 mt-0.5", isStacked && "hidden group-hover:flex")}>
+              <div className="flex items-center gap-1 mt-0.5">
                 <span className={cn(
                   "bg-gray-800/20 text-gray-800 px-1.5 rounded font-medium",
-                  isHalf ? "text-[6px]" : isStacked ? "text-[6px]" : fontSize === 'small' ? "text-[7px]" : fontSize === 'large' ? "text-[10px]" : "text-[8px]"
+                  isHalf ? "text-[6px]" : fontSize === 'small' ? "text-[7px]" : fontSize === 'large' ? "text-[10px]" : "text-[8px]"
                 )}>
                   {session.credits} واحد
                 </span>
                 <span className={cn(
                   "text-gray-600",
-                  isHalf ? "text-[5px]" : isStacked ? "text-[5px]" : fontSize === 'small' ? "text-[6px]" : fontSize === 'large' ? "text-[9px]" : "text-[7px]"
+                  isHalf ? "text-[5px]" : fontSize === 'small' ? "text-[6px]" : fontSize === 'large' ? "text-[9px]" : "text-[7px]"
                 )}>
                   ({GROUP_LABELS[session.group]})
                 </span>
