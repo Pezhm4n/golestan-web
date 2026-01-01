@@ -23,8 +23,9 @@ const AutoPlannerDialog = () => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+        <Button variant="ghost" size="sm" className="h-8 gap-1.5 px-2 text-xs">
           <Wand2 className="h-4 w-4" />
+          <span className="hidden md:inline">انتخاب خودکار</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md" dir="rtl">
