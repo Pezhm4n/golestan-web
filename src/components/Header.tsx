@@ -145,6 +145,7 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
           <Tooltip>
             <TooltipTrigger asChild>
               <Button 
+                data-tour="download-image"
                 variant="outline" 
                 size="sm" 
                 className="h-8 px-3 text-xs gap-1.5"
@@ -165,7 +166,9 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
           <div className="w-px h-5 bg-border mx-1" />
 
           {/* Profile Dropdown */}
-          <ProfileDropdown />
+          <div data-tour="profile">
+            <ProfileDropdown />
+          </div>
         </div>
       </TooltipProvider>
     </header>

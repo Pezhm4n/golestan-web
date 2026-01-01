@@ -178,7 +178,7 @@ const Sidebar = () => {
             {/* Available/Allowed Courses */}
             {availableToTake.length > 0 && (
               <div>
-                <div className="sticky top-0 z-10 bg-primary/10 px-3 py-1.5 text-[10px] font-bold text-primary border-b border-primary/20">
+                <div data-tour="available-courses" className="sticky top-0 z-10 bg-primary/10 px-3 py-1.5 text-[10px] font-bold text-primary border-b border-primary/20">
                   دروس قابل اخذ ({availableToTake.length})
                 </div>
                 {availableToTake.map(course => (
@@ -190,8 +190,8 @@ const Sidebar = () => {
             {/* Other Courses */}
             {otherCourses.length > 0 && (
               <div>
-                <div className="sticky top-0 z-10 bg-muted/80 px-3 py-1.5 text-[10px] font-bold text-muted-foreground border-b border-border/30">
-                  سایر دروس ({otherCourses.length})
+                <div data-tour="unavailable-courses" className="sticky top-0 z-10 bg-muted/80 px-3 py-1.5 text-[10px] font-bold text-muted-foreground border-b border-border/30">
+                  دروس غیر قابل اخذ ({otherCourses.length})
                 </div>
                 {otherCourses.map(course => (
                   <SidebarCourseItem key={course.id} course={course} />
