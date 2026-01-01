@@ -1,4 +1,5 @@
-import { Moon, Sun, Download } from 'lucide-react';
+import { Moon, Sun, Download, Heart } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -30,7 +31,24 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
       
       <TooltipProvider delayDuration={200}>
         <div className="flex items-center gap-1">
-          {/* Saved Schedules */}
+          {/* Donate Button */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link to="/donate">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-8 px-2.5 text-xs gap-1.5 text-pink-500 hover:text-pink-600 hover:bg-pink-500/10 group"
+                >
+                  <Heart className="h-4 w-4 group-hover:animate-pulse group-hover:fill-pink-500" />
+                  <span className="hidden sm:inline">حمایت</span>
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>حمایت از ما 💙</TooltipContent>
+          </Tooltip>
+
+          <div className="w-px h-5 bg-border mx-1" />
 
           {/* Saved Schedules - Icon + Text on desktop */}
           <SavedSchedulesSheet />
