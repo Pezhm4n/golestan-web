@@ -31,9 +31,9 @@ const SingleBlock = ({
   position?: 'top' | 'bottom';
 }) => {
   const { hoveredCourseId, setHoveredCourseId, removeCourse } = useSchedule();
-  const { getFontSizeClass, fontSize, isDarkMode } = useSettings();
+  const { getFontSizeClass, fontSize } = useSettings();
   
-  const backgroundColor = getCourseColor(session.parentId, session.group, isDarkMode);
+  const backgroundColor = getCourseColor(session.parentId, session.group);
   
   const isHighlighted = hoveredCourseId === session.parentId;
   const isDimmed = hoveredCourseId !== null && hoveredCourseId !== session.parentId;
@@ -44,9 +44,16 @@ const SingleBlock = ({
     removeCourse(session.parentId);
   };
 
-  // Calculate offset for stacked view
-  const stackOffset = isStacked ? stackIndex * 12 : 0;
-  const stackWidth = isStacked ? `calc(100% - ${(totalStacked - 1) * 12}px)` : '100%';
+  // Calculate offset for stacked view - bring hovered to front
+  const baseStackOffset = isStacked ? stackIndex * 8 : 0;
+  const stackWidth = isStacked ? `calc(100% - ${(totalStacked - 1) * 8}px)` : '100%';
+  
+  // When hovered, bring to front with z-index 100
+  const getZIndex = () => {
+    if (isHighlighted) return 100;
+    if (isStacked) return totalStacked - stackIndex;
+    return 1;
+  };
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -55,22 +62,22 @@ const SingleBlock = ({
           <div
             className={cn(
               "group relative flex flex-col justify-center items-center text-center overflow-hidden cursor-pointer",
-              "border-r-2 border-r-foreground/40 transition-all duration-200",
+              "border-r-2 border-r-gray-600/40 transition-all duration-200",
               isHalf ? 'h-1/2' : 'h-full',
-              isHalf && position === 'top' ? 'border-b border-dashed border-foreground/30' : '',
-              isHighlighted && 'ring-2 ring-offset-1 ring-primary shadow-[0_0_15px_hsl(var(--primary)/0.4)] scale-[1.02] z-50',
-              isDimmed && 'opacity-70',
+              isHalf && position === 'top' ? 'border-b border-dashed border-gray-600/30' : '',
+              isHighlighted && 'ring-2 ring-offset-1 ring-primary shadow-[0_0_15px_hsl(var(--primary)/0.4)] scale-[1.02]',
+              isDimmed && 'opacity-60',
               'px-1 py-0.5 rounded-sm',
-              isStacked && 'absolute shadow-md border border-foreground/20'
+              isStacked && 'absolute shadow-lg border border-gray-700/30'
             )}
             style={{ 
               backgroundColor,
               ...(isStacked && {
-                right: `${stackOffset}px`,
-                top: `${stackOffset}px`,
+                right: `${baseStackOffset}px`,
+                top: `${baseStackOffset}px`,
                 width: stackWidth,
-                height: `calc(100% - ${stackOffset}px)`,
-                zIndex: totalStacked - stackIndex,
+                height: `calc(100% - ${baseStackOffset}px)`,
+                zIndex: getZIndex(),
               })
             }}
             onMouseEnter={() => setHoveredCourseId(session.parentId)}
@@ -79,7 +86,7 @@ const SingleBlock = ({
             {/* Delete Button - appears on hover */}
             <button
               onClick={handleRemove}
-              className="absolute top-1 right-1 z-30 w-4 h-4 flex items-center justify-center bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-destructive/80 rounded-sm"
+              className="absolute top-1 right-1 z-30 w-4 h-4 flex items-center justify-center bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-600 rounded-sm"
             >
               <X className="w-2.5 h-2.5" />
             </button>
@@ -94,23 +101,23 @@ const SingleBlock = ({
               </span>
             )}
 
-            {/* Content - Centered Layout */}
+            {/* Content - Centered Layout - Dark text for light backgrounds */}
             <div className="flex flex-col items-center w-full px-1">
               {/* Line 1: Course Name */}
               <p className={cn(
-                "font-bold text-foreground leading-tight truncate w-full",
-                isHalf || isStacked
-                  ? "text-[8px]" 
+                "font-bold text-gray-800 leading-tight truncate w-full",
+                isHalf ? "text-[8px]" 
+                  : isStacked ? "text-[9px]"
                   : fontSize === 'small' ? "text-[10px]" : fontSize === 'large' ? "text-sm" : "text-xs"
               )}>
                 {session.courseName}
               </p>
               
               {/* Line 2: Instructor */}
-              {!isHalf && !isStacked && (
+              {!isHalf && (
                 <p className={cn(
-                  "text-foreground/70 truncate w-full font-light",
-                  fontSize === 'small' ? "text-[8px]" : fontSize === 'large' ? "text-xs" : "text-[10px]"
+                  "text-gray-700 truncate w-full font-light",
+                  isStacked ? "text-[7px]" : fontSize === 'small' ? "text-[8px]" : fontSize === 'large' ? "text-xs" : "text-[10px]"
                 )}>
                   {session.instructor}
                 </p>
@@ -118,29 +125,27 @@ const SingleBlock = ({
               
               {/* Line 3: Course Code */}
               <p className={cn(
-                "text-foreground/60 truncate w-full",
-                isHalf || isStacked ? "text-[6px]" : fontSize === 'small' ? "text-[7px]" : fontSize === 'large' ? "text-[10px]" : "text-[8px]"
+                "text-gray-600 truncate w-full",
+                isHalf ? "text-[6px]" : isStacked ? "text-[6px]" : fontSize === 'small' ? "text-[7px]" : fontSize === 'large' ? "text-[10px]" : "text-[8px]"
               )}>
                 کد: {session.courseId}
               </p>
               
               {/* Line 4: Units + Group */}
-              {!isStacked && (
-                <div className="flex items-center gap-1 mt-0.5">
-                  <span className={cn(
-                    "bg-foreground/20 text-foreground/80 px-1.5 rounded font-medium",
-                    isHalf ? "text-[6px]" : fontSize === 'small' ? "text-[7px]" : fontSize === 'large' ? "text-[10px]" : "text-[8px]"
-                  )}>
-                    {session.credits} واحد
-                  </span>
-                  <span className={cn(
-                    "text-foreground/50",
-                    isHalf ? "text-[5px]" : fontSize === 'small' ? "text-[6px]" : fontSize === 'large' ? "text-[9px]" : "text-[7px]"
-                  )}>
-                    ({GROUP_LABELS[session.group]})
-                  </span>
-                </div>
-              )}
+              <div className={cn("flex items-center gap-1 mt-0.5", isStacked && "hidden group-hover:flex")}>
+                <span className={cn(
+                  "bg-gray-800/20 text-gray-800 px-1.5 rounded font-medium",
+                  isHalf ? "text-[6px]" : isStacked ? "text-[6px]" : fontSize === 'small' ? "text-[7px]" : fontSize === 'large' ? "text-[10px]" : "text-[8px]"
+                )}>
+                  {session.credits} واحد
+                </span>
+                <span className={cn(
+                  "text-gray-600",
+                  isHalf ? "text-[5px]" : isStacked ? "text-[5px]" : fontSize === 'small' ? "text-[6px]" : fontSize === 'large' ? "text-[9px]" : "text-[7px]"
+                )}>
+                  ({GROUP_LABELS[session.group]})
+                </span>
+              </div>
             </div>
           </div>
         </TooltipTrigger>
