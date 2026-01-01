@@ -9,11 +9,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import ExamScheduleDialog from './ExamScheduleDialog';
 import SavedSchedulesSheet from './SavedSchedulesSheet';
 import ProfileDropdown from './ProfileDropdown';
 import LanguageToggle from './LanguageToggle';
 import { toast } from 'sonner';
+import { useResponsive } from '@/hooks/use-responsive';
+import MobileHeader from './MobileHeader';
 
 interface HeaderProps {
   isDarkMode: boolean;
@@ -22,6 +23,12 @@ interface HeaderProps {
 
 const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
   const [isDownloading, setIsDownloading] = useState(false);
+  const { isMobile, isTablet } = useResponsive();
+
+  // Use mobile header for mobile devices
+  if (isMobile) {
+    return <MobileHeader isDarkMode={isDarkMode} onToggleDarkMode={onToggleDarkMode} />;
+  }
 
   const handleDownloadImage = async () => {
     const scheduleGrid = document.querySelector('[data-tour="schedule-grid"]');

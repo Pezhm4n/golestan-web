@@ -62,13 +62,18 @@ const SingleBlock = ({
           <div
             className={cn(
               "group relative flex flex-col justify-center items-center text-center overflow-hidden cursor-pointer",
-              "border-r-[3px] border-r-gray-700/50 transition-all duration-200 rounded-lg",
+              "border-r-[3px] border-r-gray-700/50 rounded-lg",
+              // Faster transitions for mobile
+              "transition-all duration-150",
               isHalf ? 'h-1/2' : 'h-full',
               isHalf && position === 'top' ? 'border-b border-dashed border-gray-500/40' : '',
-              isHighlighted && 'ring-2 ring-offset-2 ring-primary shadow-lg scale-[1.02]',
+              isHighlighted && 'ring-2 ring-offset-1 ring-primary shadow-lg scale-[1.01]',
               isDimmed && 'opacity-50',
-              'p-2.5',
-              isStacked && 'absolute shadow-xl border border-gray-600/40'
+              // Responsive padding
+              'p-1.5 sm:p-2 md:p-2.5',
+              isStacked && 'absolute shadow-xl border border-gray-600/40',
+              // Touch feedback
+              'active:scale-[0.98]'
             )}
             style={{ 
               backgroundColor,
@@ -82,13 +87,19 @@ const SingleBlock = ({
             }}
             onMouseEnter={() => setHoveredCourseId(session.parentId)}
             onMouseLeave={() => setHoveredCourseId(null)}
+            onTouchStart={() => setHoveredCourseId(session.parentId)}
+            onTouchEnd={() => setHoveredCourseId(null)}
           >
-            {/* Delete Button - appears on hover */}
+            {/* Delete Button - larger touch target on mobile */}
             <button
               onClick={handleRemove}
-              className="absolute top-2 right-2 z-30 w-5 h-5 flex items-center justify-center bg-red-500/90 text-white opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-600 rounded-md shadow-sm"
+              className={cn(
+                "absolute z-30 flex items-center justify-center bg-red-500/90 text-white transition-all duration-200 hover:bg-red-600 rounded-md shadow-sm",
+                // Larger on mobile, visible by default on touch
+                "top-1 right-1 w-6 h-6 opacity-100 sm:top-2 sm:right-2 sm:w-5 sm:h-5 sm:opacity-0 sm:group-hover:opacity-100"
+              )}
             >
-              <X className="w-3 h-3" />
+              <X className="w-3 h-3 sm:w-3 sm:h-3" />
             </button>
 
             {/* Week Type Badge */}
