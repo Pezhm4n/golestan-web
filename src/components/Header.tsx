@@ -40,7 +40,7 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
       const targetElement = (innerGrid || scheduleGrid) as HTMLElement;
 
       const canvas = await html2canvas(targetElement, {
-        backgroundColor: isDarkMode ? '#1a1a2e' : '#ffffff',
+        backgroundColor: isDarkMode ? '#1e1e2e' : '#f8fafc',
         scale: 2,
         useCORS: true,
         logging: false,
@@ -49,6 +49,33 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
         windowWidth: targetElement.scrollWidth + 100,
         windowHeight: targetElement.scrollHeight + 100,
         onclone: (clonedDoc, element) => {
+          // Set proper background for the entire grid
+          element.style.backgroundColor = isDarkMode ? '#1e1e2e' : '#f8fafc';
+          element.style.borderRadius = '12px';
+          element.style.padding = '4px';
+          
+          // Fix all cell backgrounds - ensure no black backgrounds
+          const allCells = element.querySelectorAll('div');
+          allCells.forEach((cell) => {
+            const htmlCell = cell as HTMLElement;
+            const computedBg = getComputedStyle(htmlCell).backgroundColor;
+            // If background is transparent or black, set proper color
+            if (computedBg === 'rgba(0, 0, 0, 0)' || computedBg === 'transparent' || computedBg === 'rgb(0, 0, 0)') {
+              htmlCell.style.backgroundColor = isDarkMode ? '#1e1e2e' : '#f8fafc';
+            }
+          });
+
+          // Fix muted/alternating row backgrounds
+          const mutedCells = element.querySelectorAll('.bg-muted\\/10, .bg-background, .bg-muted\\/50');
+          mutedCells.forEach((cell) => {
+            const htmlCell = cell as HTMLElement;
+            if (isDarkMode) {
+              htmlCell.style.backgroundColor = '#252536';
+            } else {
+              htmlCell.style.backgroundColor = '#f1f5f9';
+            }
+          });
+
           // Remove truncate class from all elements to show full text
           const truncatedElements = element.querySelectorAll('.truncate');
           truncatedElements.forEach((el) => {
@@ -59,12 +86,13 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
             (el as HTMLElement).style.wordBreak = 'break-word';
           });
 
-          // Make course cells larger to fit text
+          // Make course cells stand out better
           const courseCells = element.querySelectorAll('[class*="bg-course-"]');
           courseCells.forEach((cell) => {
             const htmlCell = cell as HTMLElement;
             htmlCell.style.padding = '8px';
-            htmlCell.style.fontSize = '12px';
+            htmlCell.style.borderRadius = '6px';
+            htmlCell.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
           });
 
           // Increase font size for better readability
@@ -73,8 +101,15 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
             const htmlEl = el as HTMLElement;
             const currentSize = parseFloat(getComputedStyle(htmlEl).fontSize);
             if (currentSize < 10) {
-              htmlEl.style.fontSize = '10px';
+              htmlEl.style.fontSize = '11px';
             }
+          });
+
+          // Fix header row background
+          const headerCells = element.querySelectorAll('.bg-muted\\/80');
+          headerCells.forEach((cell) => {
+            const htmlCell = cell as HTMLElement;
+            htmlCell.style.backgroundColor = isDarkMode ? '#2a2a3d' : '#e2e8f0';
           });
         }
       });
