@@ -1,6 +1,7 @@
 import { Plus, Check, AlertTriangle } from 'lucide-react';
 import { Course } from '@/types/course';
 import { useSchedule } from '@/contexts/ScheduleContext';
+import { Badge } from '@/components/ui/badge';
 
 interface SidebarCourseItemProps {
   course: Course;
@@ -17,30 +18,30 @@ const SidebarCourseItem = ({ course }: SidebarCourseItemProps) => {
   
   const isSelected = isCourseSelected(course.id);
   const conflict = !isSelected ? hasConflict(course) : { hasConflict: false };
-  const isFull = course.enrolled >= course.capacity;
   const isHighlighted = hoveredCourseId === course.id;
   const isDimmed = hoveredCourseId !== null && hoveredCourseId !== course.id;
   
   const handleClick = () => {
-    if (!isFull || isSelected) {
-      toggleCourse(course);
-    }
+    toggleCourse(course);
   };
 
   return (
     <div 
       className={`
-        flex items-center gap-2 px-2 py-1.5 border-b border-border/50 
-        transition-all duration-150 cursor-pointer text-[11px]
+        flex items-center gap-2 px-2 py-2 border-b border-border/30 
+        transition-all duration-200 cursor-pointer text-[11px]
+        hover:bg-accent/50
         ${isSelected 
-          ? 'bg-primary/10 border-l-2 border-l-primary' 
+          ? 'bg-primary/10 border-r-2 border-r-primary' 
           : conflict.hasConflict 
-            ? 'bg-destructive/5 border-l-2 border-l-destructive/50' 
-            : 'hover:bg-muted/50'
+            ? 'bg-destructive/5 border-r-2 border-r-destructive/50' 
+            : ''
         }
-        ${isHighlighted ? 'ring-1 ring-primary bg-primary/5' : ''}
-        ${isDimmed ? 'opacity-40' : ''}
-        ${isFull && !isSelected ? 'opacity-50' : ''}
+        ${isHighlighted 
+          ? 'bg-primary/15 shadow-sm scale-[1.01]' 
+          : ''
+        }
+        ${isDimmed ? 'opacity-80' : ''}
       `}
       onClick={handleClick}
       onMouseEnter={() => setHoveredCourseId(course.id)}
@@ -63,21 +64,20 @@ const SidebarCourseItem = ({ course }: SidebarCourseItemProps) => {
       
       {/* Course Info */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1">
-          <span className="font-bold text-foreground truncate">{course.name}</span>
-          <span className="text-muted-foreground shrink-0 text-[10px]">({course.courseId})</span>
+        <div className="flex items-center gap-1.5">
+          <span className="font-semibold text-foreground truncate">{course.name}</span>
+          {course.isGeneral && (
+            <Badge variant="secondary" className="h-4 px-1 text-[8px]">عمومی</Badge>
+          )}
         </div>
-        <div className="flex items-center gap-2 text-muted-foreground text-[10px]">
+        <div className="flex items-center gap-2 text-muted-foreground text-[10px] mt-0.5">
           <span className="truncate">{course.instructor}</span>
-          <span className="shrink-0">{course.credits}و</span>
-          <span className={`shrink-0 ${isFull ? 'text-destructive font-bold' : ''}`}>
-            {course.enrolled}/{course.capacity}
-          </span>
+          <span className="shrink-0 font-medium">{course.credits} واحد</span>
         </div>
       </div>
       
       {/* Sessions indicator */}
-      <div className="text-[9px] text-muted-foreground shrink-0">
+      <div className="text-[9px] text-muted-foreground shrink-0 bg-muted px-1.5 py-0.5 rounded">
         {course.sessions.length} جلسه
       </div>
     </div>

@@ -29,8 +29,8 @@ const ScheduleGrid = () => {
   const TIME_COL_WIDTH = 60;
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
-      <div className="flex-1 overflow-auto">
+    <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden bg-muted/30 p-3">
+      <div className="flex-1 overflow-auto bg-card rounded-xl shadow-sm border border-border/50">
         <div 
           className="min-w-[800px]"
           style={{
@@ -41,7 +41,7 @@ const ScheduleGrid = () => {
         >
           {/* Header Row */}
           <div 
-            className="sticky top-0 z-20 bg-muted border border-border flex items-center justify-center"
+            className="sticky top-0 z-20 bg-muted/80 backdrop-blur-sm border border-border flex items-center justify-center"
             style={{ gridColumn: 1, gridRow: 1 }}
           >
             <span className="text-[10px] font-bold text-muted-foreground">ساعت</span>
@@ -50,7 +50,7 @@ const ScheduleGrid = () => {
           {DAYS.map((day, dayIndex) => (
             <div
               key={`header-${day}`}
-              className="sticky top-0 z-20 bg-muted border-t border-b border-l border-border flex items-center justify-center font-bold text-[11px] text-foreground"
+              className="sticky top-0 z-20 bg-muted/80 backdrop-blur-sm border-t border-b border-l border-border flex items-center justify-center font-bold text-[11px] text-foreground"
               style={{ gridColumn: dayIndex + 2, gridRow: 1 }}
             >
               {day}
@@ -61,7 +61,7 @@ const ScheduleGrid = () => {
           {TIME_SLOTS.map((time, rowIndex) => (
             <React.Fragment key={`row-${time}`}>
               <div
-                className="bg-muted/70 border-l border-b border-border flex items-center justify-center text-[10px] text-muted-foreground font-mono"
+                className="bg-muted/50 border-l border-b border-border flex items-center justify-center text-[10px] text-muted-foreground font-mono"
                 style={{ gridColumn: 1, gridRow: rowIndex + 2 }}
               >
                 {formatTime(time)}
@@ -80,9 +80,9 @@ const ScheduleGrid = () => {
                   <div
                     key={`cell-${dayIndex}-${time}`}
                     className={`
-                      relative border-l border-b border-border
-                      ${rowIndex % 2 === 0 ? 'bg-card' : 'bg-muted/10'}
-                      hover:bg-accent/20 transition-colors
+                      relative border-l border-b border-border/60
+                      ${rowIndex % 2 === 0 ? 'bg-background' : 'bg-muted/10'}
+                      hover:bg-accent/30 transition-colors duration-150
                     `}
                     style={{ 
                       gridColumn: dayIndex + 2, 

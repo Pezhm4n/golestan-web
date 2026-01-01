@@ -1,6 +1,7 @@
 export type WeekType = 'odd' | 'even' | 'both';
 export type Gender = 'male' | 'female' | 'mixed';
 export type CourseType = 'theoretical' | 'practical' | 'both';
+export type CourseCategory = 'available' | 'other';
 
 export interface CourseSession {
   day: number; // 0 = Saturday, 5 = Thursday
@@ -25,6 +26,7 @@ export interface Course {
   enrolled: number;
   type: CourseType;
   isGeneral: boolean;
+  category: CourseCategory; // 'available' = allowed to take, 'other' = not allowed
   sessions: CourseSession[]; // Multi-session support
 }
 

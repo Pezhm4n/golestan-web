@@ -1,5 +1,12 @@
 import { Course } from '@/types/course';
 
+export const departments = [
+  { id: '1', name: 'مهندسی کامپیوتر' },
+  { id: '2', name: 'مهندسی برق' },
+  { id: '3', name: 'مهندسی مکانیک' },
+  { id: '4', name: 'علوم پایه' },
+];
+
 export const availableCourses: Course[] = [
   {
     id: '1',
@@ -16,6 +23,7 @@ export const availableCourses: Course[] = [
     enrolled: 35,
     type: 'theoretical',
     isGeneral: false,
+    category: 'available',
     sessions: [
       { day: 0, startTime: 8, endTime: 10, location: 'کلاس ۱۰۱', weekType: 'both' },
       { day: 2, startTime: 8, endTime: 10, location: 'کلاس ۱۰۱', weekType: 'both' },
@@ -36,6 +44,7 @@ export const availableCourses: Course[] = [
     enrolled: 35,
     type: 'both',
     isGeneral: false,
+    category: 'available',
     sessions: [
       { day: 1, startTime: 14, endTime: 16, location: 'آزمایشگاه ۳', weekType: 'both' },
     ]
@@ -55,6 +64,7 @@ export const availableCourses: Course[] = [
     enrolled: 30,
     type: 'theoretical',
     isGeneral: true,
+    category: 'available',
     sessions: [
       { day: 3, startTime: 10, endTime: 12, location: 'سالن ۱', weekType: 'odd' },
     ]
@@ -74,6 +84,7 @@ export const availableCourses: Course[] = [
     enrolled: 28,
     type: 'both',
     isGeneral: false,
+    category: 'available',
     sessions: [
       { day: 0, startTime: 10, endTime: 12, location: 'کلاس ۲۰۵', weekType: 'both' },
       { day: 4, startTime: 14, endTime: 16, location: 'لابراتوار ۱', weekType: 'both' },
@@ -94,6 +105,7 @@ export const availableCourses: Course[] = [
     enrolled: 20,
     type: 'theoretical',
     isGeneral: true,
+    category: 'available',
     sessions: [
       { day: 3, startTime: 10, endTime: 12, location: 'کلاس ۳۰۱', weekType: 'even' },
     ]
@@ -113,6 +125,7 @@ export const availableCourses: Course[] = [
     enrolled: 32,
     type: 'practical',
     isGeneral: false,
+    category: 'other',
     sessions: [
       { day: 4, startTime: 10, endTime: 12, location: 'آزمایشگاه ۵', weekType: 'both' },
     ]
@@ -132,6 +145,7 @@ export const availableCourses: Course[] = [
     enrolled: 38,
     type: 'theoretical',
     isGeneral: false,
+    category: 'other',
     sessions: [
       { day: 2, startTime: 10, endTime: 12, location: 'کلاس ۱۰۲', weekType: 'both' },
     ]
@@ -151,6 +165,7 @@ export const availableCourses: Course[] = [
     enrolled: 20,
     type: 'practical',
     isGeneral: false,
+    category: 'other',
     sessions: [
       { day: 5, startTime: 8, endTime: 10, location: 'کارگاه ۲', weekType: 'both' },
     ]
@@ -170,6 +185,7 @@ export const availableCourses: Course[] = [
     enrolled: 30,
     type: 'theoretical',
     isGeneral: false,
+    category: 'available',
     sessions: [
       { day: 1, startTime: 8, endTime: 10, location: 'کلاس ۲۰۱', weekType: 'both' },
       { day: 3, startTime: 8, endTime: 10, location: 'کلاس ۲۰۱', weekType: 'both' },
@@ -190,6 +206,7 @@ export const availableCourses: Course[] = [
     enrolled: 25,
     type: 'practical',
     isGeneral: true,
+    category: 'other',
     sessions: [
       { day: 5, startTime: 10, endTime: 12, location: 'سالن ورزشی', weekType: 'both' },
     ]
