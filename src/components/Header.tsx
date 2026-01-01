@@ -7,7 +7,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import ExamScheduleDialog from './ExamScheduleDialog';
-import AutoPlannerDialog from './AutoPlannerDialog';
 import SavedSchedulesSheet from './SavedSchedulesSheet';
 import ProfileDropdown from './ProfileDropdown';
 import LanguageToggle from './LanguageToggle';
@@ -31,8 +30,7 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
       
       <TooltipProvider delayDuration={200}>
         <div className="flex items-center gap-1">
-          {/* Auto Planner - Icon + Text on desktop */}
-          <AutoPlannerDialog />
+          {/* Saved Schedules */}
 
           {/* Saved Schedules - Icon + Text on desktop */}
           <SavedSchedulesSheet />
@@ -65,10 +63,10 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
             <TooltipTrigger asChild>
               <Button variant="outline" size="sm" className="h-8 px-3 text-xs gap-1.5">
                 <Download className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">خروجی</span>
+                <span className="hidden sm:inline">دانلود تصویر</span>
               </Button>
             </TooltipTrigger>
-            <TooltipContent className="sm:hidden">دانلود برنامه</TooltipContent>
+            <TooltipContent className="sm:hidden">دانلود تصویر</TooltipContent>
           </Tooltip>
 
           <div className="w-px h-5 bg-border mx-1" />
