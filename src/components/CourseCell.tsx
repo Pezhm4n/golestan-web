@@ -107,21 +107,21 @@ const SingleBlock = ({
                 </p>
               )}
               
-              {/* Line 3: Code + Units */}
-              <div className="flex items-center justify-center gap-1 mt-0.5">
-                <span className={cn(
-                  "text-foreground/60",
-                  isHalf ? "text-[6px]" : fontSize === 'small' ? "text-[7px]" : fontSize === 'large' ? "text-[10px]" : "text-[8px]"
-                )}>
-                  {session.courseId}
-                </span>
-                <span className={cn(
-                  "bg-foreground/20 text-foreground/80 px-1 rounded font-medium",
-                  isHalf ? "text-[6px]" : fontSize === 'small' ? "text-[7px]" : fontSize === 'large' ? "text-[10px]" : "text-[8px]"
-                )}>
-                  {session.credits}و
-                </span>
-              </div>
+              {/* Line 3: Course Code */}
+              <p className={cn(
+                "text-foreground/60 truncate w-full",
+                isHalf ? "text-[6px]" : fontSize === 'small' ? "text-[7px]" : fontSize === 'large' ? "text-[10px]" : "text-[8px]"
+              )}>
+                کد: {session.courseId}
+              </p>
+              
+              {/* Line 4: Units */}
+              <span className={cn(
+                "bg-foreground/20 text-foreground/80 px-1.5 rounded font-medium mt-0.5",
+                isHalf ? "text-[6px]" : fontSize === 'small' ? "text-[7px]" : fontSize === 'large' ? "text-[10px]" : "text-[8px]"
+              )}>
+                {session.credits} واحد
+              </span>
             </div>
           </div>
         </TooltipTrigger>
