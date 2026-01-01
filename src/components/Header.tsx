@@ -39,28 +39,31 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
       const innerGrid = scheduleGrid.querySelector('.min-w-\\[800px\\]');
       const targetElement = (innerGrid || scheduleGrid) as HTMLElement;
 
-      // Define actual colors for course blocks (CSS variables don't work in html2canvas)
-      const courseColors = isDarkMode ? {
-        blue: 'hsl(210, 60%, 35%)',
-        green: 'hsl(150, 50%, 30%)',
-        orange: 'hsl(30, 60%, 35%)',
-        purple: 'hsl(270, 50%, 35%)',
-        pink: 'hsl(330, 50%, 35%)',
-        teal: 'hsl(180, 50%, 30%)',
-      } : {
-        blue: 'hsl(210, 80%, 85%)',
-        green: 'hsl(150, 60%, 85%)',
-        orange: 'hsl(30, 80%, 85%)',
-        purple: 'hsl(270, 70%, 85%)',
-        pink: 'hsl(330, 70%, 85%)',
-        teal: 'hsl(180, 60%, 85%)',
+      // Read design tokens from CSS variables (so export matches theme)
+      const rootStyles = getComputedStyle(document.documentElement);
+      const hslVar = (varName: string, alpha = 1) => {
+        const v = rootStyles.getPropertyValue(varName).trim();
+        return v ? `hsl(${v} / ${alpha})` : '';
       };
 
-      const bgColor = isDarkMode ? '#171717' : '#f5f5f5';
-      const cardBg = isDarkMode ? '#242424' : '#fafafa';
-      const textColor = isDarkMode ? '#fafafa' : '#171717';
-      const mutedTextColor = isDarkMode ? '#a3a3a3' : '#525252';
-      const headerBg = isDarkMode ? '#2a2a3d' : '#e2e8f0';
+      const bgColor = hslVar('--background', 1);
+      const cardBg = hslVar('--card', 1);
+      const textColor = hslVar('--foreground', 1);
+      const mutedTextColor = hslVar('--muted-foreground', 1);
+      const headerBg = hslVar('--muted', 0.8);
+      const rowAltBg = hslVar('--muted', 0.1);
+      const timeColBg = hslVar('--muted', 0.5);
+      const gridLineColor = hslVar('--border', 0.9);
+
+      // Course colors (CSS vars sometimes export wrong; we apply them explicitly on clone)
+      const courseColors: Record<string, string> = {
+        blue: hslVar('--course-blue', 1),
+        green: hslVar('--course-green', 1),
+        orange: hslVar('--course-orange', 1),
+        purple: hslVar('--course-purple', 1),
+        pink: hslVar('--course-pink', 1),
+        teal: hslVar('--course-teal', 1),
+      };
 
       const canvas = await html2canvas(targetElement, {
         backgroundColor: bgColor,
@@ -69,25 +72,31 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
         logging: false,
         width: targetElement.scrollWidth,
         height: targetElement.scrollHeight,
-        windowWidth: targetElement.scrollWidth + 100,
-        windowHeight: targetElement.scrollHeight + 100,
+        windowWidth: targetElement.scrollWidth,
+        windowHeight: targetElement.scrollHeight,
         onclone: (clonedDoc, element) => {
-          // Set proper background for the entire grid
-          element.style.backgroundColor = bgColor;
-          element.style.borderRadius = '12px';
-          element.style.padding = '8px';
-          
-          // Fix all divs - ensure no transparent backgrounds
-          const allDivs = element.querySelectorAll('div');
-          allDivs.forEach((div) => {
-            const htmlDiv = div as HTMLElement;
-            const computedBg = getComputedStyle(htmlDiv).backgroundColor;
-            if (computedBg === 'rgba(0, 0, 0, 0)' || computedBg === 'transparent') {
-              htmlDiv.style.backgroundColor = 'transparent';
-            }
+          // Ensure colors are preserved
+          const style = clonedDoc.createElement('style');
+          style.innerHTML = `
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          `;
+          clonedDoc.head.appendChild(style);
+
+          // Remove extra padding/margins so the exported image is tightly cropped
+          element.style.margin = '0';
+          element.style.padding = '0';
+          element.style.borderRadius = '0';
+          element.style.backgroundColor = cardBg;
+          element.style.boxSizing = 'border-box';
+
+          // Make grid lines clearly visible by force-styling the grid container's direct children
+          Array.from(element.children).forEach((child) => {
+            const el = child as HTMLElement;
+            el.style.border = `1px solid ${gridLineColor}`;
+            el.style.boxSizing = 'border-box';
           });
 
-          // Fix course cell colors - apply actual HSL colors
+          // Fix course cell colors - apply explicit HSL colors
           Object.entries(courseColors).forEach(([colorName, colorValue]) => {
             const cells = element.querySelectorAll(`.bg-course-${colorName}`);
             cells.forEach((cell) => {
@@ -96,8 +105,33 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
               htmlCell.style.padding = '6px 4px';
               htmlCell.style.borderRadius = '6px';
               htmlCell.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
-              htmlCell.style.borderRight = `3px solid ${isDarkMode ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)'}`;
+              htmlCell.style.borderRight = `3px solid ${isDarkMode ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.18)'}`;
             });
+          });
+
+          // Fix cell backgrounds (bg-*) that rely on CSS vars/opacity
+          const bgBackgroundCells = element.querySelectorAll('.bg-background');
+          bgBackgroundCells.forEach((cell) => {
+            (cell as HTMLElement).style.backgroundColor = bgColor;
+          });
+
+          const altCells = element.querySelectorAll('.bg-muted\\/10');
+          altCells.forEach((cell) => {
+            (cell as HTMLElement).style.backgroundColor = rowAltBg;
+          });
+
+          const timeCells = element.querySelectorAll('.bg-muted\\/50');
+          timeCells.forEach((cell) => {
+            const htmlCell = cell as HTMLElement;
+            htmlCell.style.backgroundColor = timeColBg;
+            htmlCell.style.color = mutedTextColor;
+          });
+
+          const headerCells = element.querySelectorAll('.bg-muted\\/80');
+          headerCells.forEach((cell) => {
+            const htmlCell = cell as HTMLElement;
+            htmlCell.style.backgroundColor = headerBg;
+            htmlCell.style.color = textColor;
           });
 
           // Fix text colors
@@ -105,18 +139,18 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
           allText.forEach((el) => {
             const htmlEl = el as HTMLElement;
             const classes = htmlEl.className || '';
-            
-            // Fix main text
-            if (classes.includes('text-foreground')) {
-              htmlEl.style.color = textColor;
-            }
-            // Fix muted text
-            if (classes.includes('text-muted-foreground') || classes.includes('text-foreground/70') || classes.includes('text-foreground/60')) {
+
+            if (classes.includes('text-foreground')) htmlEl.style.color = textColor;
+            if (
+              classes.includes('text-muted-foreground') ||
+              classes.includes('text-foreground/70') ||
+              classes.includes('text-foreground/60')
+            ) {
               htmlEl.style.color = mutedTextColor;
             }
           });
 
-          // Remove truncate class from all elements
+          // Remove truncate so text isn't clipped in the export
           const truncatedElements = element.querySelectorAll('.truncate');
           truncatedElements.forEach((el) => {
             el.classList.remove('truncate');
@@ -126,39 +160,21 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
             (el as HTMLElement).style.wordBreak = 'break-word';
           });
 
-          // Fix muted/alternating row backgrounds
-          const mutedCells = element.querySelectorAll('.bg-muted\\/10, .bg-background, .bg-muted\\/50');
-          mutedCells.forEach((cell) => {
-            const htmlCell = cell as HTMLElement;
-            htmlCell.style.backgroundColor = isDarkMode ? '#1f1f1f' : '#f1f5f9';
-          });
-
-          // Fix header row background
-          const headerCells = element.querySelectorAll('.bg-muted\\/80');
-          headerCells.forEach((cell) => {
-            const htmlCell = cell as HTMLElement;
-            htmlCell.style.backgroundColor = headerBg;
-            htmlCell.style.color = textColor;
-          });
-
           // Hide delete buttons
           const deleteButtons = element.querySelectorAll('button');
           deleteButtons.forEach((btn) => {
             (btn as HTMLElement).style.display = 'none';
           });
 
-          // Increase font size for better readability
+          // Make small text readable
           const fontElements = element.querySelectorAll('p, span');
           fontElements.forEach((el) => {
             const htmlEl = el as HTMLElement;
             const currentSize = parseFloat(getComputedStyle(htmlEl).fontSize);
-            if (currentSize < 10) {
-              htmlEl.style.fontSize = '10px';
-            }
-            // Make text bolder
+            if (currentSize < 10) htmlEl.style.fontSize = '10px';
             htmlEl.style.fontWeight = '500';
           });
-        }
+        },
       });
 
       // Add watermark to canvas
