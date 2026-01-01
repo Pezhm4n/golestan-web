@@ -31,11 +31,9 @@ const SingleBlock = ({
   position?: 'top' | 'bottom';
 }) => {
   const { hoveredCourseId, setHoveredCourseId, removeCourse } = useSchedule();
-  const { getFontSizeClass, fontSize } = useSettings();
+  const { getFontSizeClass, fontSize, isDarkMode } = useSettings();
   
-  // Check if dark mode is active
-  const isDark = document.documentElement.classList.contains('dark');
-  const backgroundColor = getCourseColor(session.parentId, session.group, isDark);
+  const backgroundColor = getCourseColor(session.parentId, session.group, isDarkMode);
   
   const isHighlighted = hoveredCourseId === session.parentId;
   const isDimmed = hoveredCourseId !== null && hoveredCourseId !== session.parentId;
