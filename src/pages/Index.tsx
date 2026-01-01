@@ -1,15 +1,14 @@
 import { useState, useEffect, useMemo } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import CourseSidebar from '@/components/CourseSidebar';
-import WeeklySchedule from '@/components/WeeklySchedule';
+import Sidebar from '@/components/Sidebar';
+import ScheduleGrid from '@/components/ScheduleGrid';
 import { Course } from '@/types/course';
 import { scheduledCourses } from '@/data/mockCourses';
 
 const Index = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [selectedCourseIds, setSelectedCourseIds] = useState<string[]>(() => 
-    // Initialize with already scheduled courses
     scheduledCourses.map(c => c.id)
   );
 
@@ -35,23 +34,30 @@ const Index = () => {
     return scheduledCourses.reduce((sum, course) => sum + course.credits, 0);
   }, []);
 
+  const courseCount = useMemo(() => {
+    return scheduledCourses.length;
+  }, []);
+
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-background">
+      {/* Fixed Header - 50px */}
       <Header isDarkMode={isDarkMode} onToggleDarkMode={() => setIsDarkMode(!isDarkMode)} />
       
-      <div className="flex-1 flex overflow-hidden">
-        {/* Sidebar on the right (RTL) */}
-        <CourseSidebar 
+      {/* Main Content Area */}
+      <div className="flex-1 flex overflow-hidden min-h-0">
+        {/* Sidebar - Fixed 350px (Right in RTL) */}
+        <Sidebar 
           selectedCourseIds={selectedCourseIds}
           onAddCourse={handleAddCourse}
           onRemoveCourse={handleRemoveCourse}
         />
         
-        {/* Main content on the left (RTL) */}
-        <WeeklySchedule />
+        {/* Schedule Grid - Takes remaining space (Left in RTL) */}
+        <ScheduleGrid />
       </div>
       
-      <Footer totalUnits={totalUnits} />
+      {/* Fixed Footer - 30px */}
+      <Footer totalUnits={totalUnits} courseCount={courseCount} />
     </div>
   );
 };
