@@ -195,8 +195,8 @@ const CourseCell = ({ sessions = [] }: CourseCellProps) => {
   if (hasConflict) {
     return (
       <div className="absolute inset-[1px] rounded-sm overflow-visible">
-        {/* Conflict indicator badge */}
-        <div className="absolute -top-1 -left-1 z-[100] flex items-center gap-0.5 bg-destructive text-destructive-foreground px-1 py-0.5 rounded text-[8px] font-bold shadow-md">
+        {/* Conflict indicator badge - z-index set to NOT overlap dialogs */}
+        <div className="absolute -top-1 -left-1 z-[10] flex items-center gap-0.5 bg-destructive text-destructive-foreground px-1 py-0.5 rounded text-[8px] font-bold shadow-md">
           <AlertTriangle className="w-2.5 h-2.5" />
           تداخل ({sessions.length})
         </div>

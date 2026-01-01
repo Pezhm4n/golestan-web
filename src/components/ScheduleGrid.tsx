@@ -40,8 +40,8 @@ const ScheduleGrid = () => {
     return `${hour.toString().padStart(2, '0')}:۰۰`;
   };
 
-  const ROW_HEIGHT = 44;
-  const HEADER_HEIGHT = 32;
+  const ROW_HEIGHT = 52;
+  const HEADER_HEIGHT = 36;
   const TIME_COL_WIDTH = 56;
 
   return (

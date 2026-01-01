@@ -94,9 +94,9 @@ const Sidebar = () => {
   };
 
   return (
-    <aside data-tour="sidebar" className="w-[320px] border-l border-border bg-card/50 backdrop-blur-sm flex flex-col shrink-0 rounded-l-xl overflow-hidden">
-      {/* Department Selector */}
-      <div className="p-3 border-b border-border/50 bg-muted/30">
+    <aside data-tour="sidebar" dir="rtl" className="w-[320px] border-l border-border bg-card/50 backdrop-blur-sm flex flex-col shrink-0 rounded-l-xl overflow-hidden">
+      {/* Department Selector - Integrated with course list */}
+      <div className="p-2 bg-muted/30">
         <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
           <SelectTrigger className="h-9 text-xs font-medium">
             <SelectValue placeholder="انتخاب دانشکده/رشته" />
@@ -112,7 +112,7 @@ const Sidebar = () => {
       </div>
       
       {/* Search */}
-      <div className="p-2 border-b border-border/50">
+      <div className="p-2">
         <div className="relative">
           <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
