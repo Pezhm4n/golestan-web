@@ -1,5 +1,7 @@
-import { Moon, Sun, Download, Heart } from 'lucide-react';
+import { Moon, Sun, Download, Heart, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import html2canvas from 'html2canvas';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -11,6 +13,7 @@ import ExamScheduleDialog from './ExamScheduleDialog';
 import SavedSchedulesSheet from './SavedSchedulesSheet';
 import ProfileDropdown from './ProfileDropdown';
 import LanguageToggle from './LanguageToggle';
+import { toast } from 'sonner';
 
 interface HeaderProps {
   isDarkMode: boolean;
@@ -18,6 +21,68 @@ interface HeaderProps {
 }
 
 const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownloadImage = async () => {
+    const scheduleGrid = document.querySelector('[data-tour="schedule-grid"]');
+    
+    if (!scheduleGrid) {
+      toast.error('جدول برنامه یافت نشد');
+      return;
+    }
+
+    setIsDownloading(true);
+    toast.loading('در حال آماده‌سازی تصویر...', { id: 'download' });
+
+    try {
+      // Find the inner scrollable container
+      const innerContainer = scheduleGrid.querySelector('.overflow-auto');
+      const targetElement = (innerContainer || scheduleGrid) as HTMLElement;
+
+      const canvas = await html2canvas(targetElement, {
+        backgroundColor: null,
+        scale: 2, // Higher quality
+        useCORS: true,
+        logging: false,
+        windowWidth: targetElement.scrollWidth,
+        windowHeight: targetElement.scrollHeight,
+        width: targetElement.scrollWidth,
+        height: targetElement.scrollHeight,
+        scrollX: 0,
+        scrollY: 0,
+      });
+
+      // Convert to blob and download
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          toast.error('خطا در ایجاد تصویر', { id: 'download' });
+          return;
+        }
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        
+        // Generate filename with date
+        const date = new Date();
+        const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        link.download = `golestoon-schedule-${dateStr}.png`;
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        toast.success('تصویر با موفقیت دانلود شد', { id: 'download' });
+      }, 'image/png', 1.0);
+    } catch (error) {
+      console.error('Error capturing schedule:', error);
+      toast.error('خطا در ذخیره تصویر', { id: 'download' });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <header className="h-[50px] border-b border-border bg-card/80 backdrop-blur-sm px-4 flex items-center justify-between shrink-0">
       <div className="flex items-center gap-3">
@@ -79,8 +144,18 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
           
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 px-3 text-xs gap-1.5">
-                <Download className="h-3.5 w-3.5" />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-8 px-3 text-xs gap-1.5"
+                onClick={handleDownloadImage}
+                disabled={isDownloading}
+              >
+                {isDownloading ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Download className="h-3.5 w-3.5" />
+                )}
                 <span className="hidden sm:inline">دانلود تصویر</span>
               </Button>
             </TooltipTrigger>
