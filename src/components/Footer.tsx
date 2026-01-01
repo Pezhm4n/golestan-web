@@ -1,6 +1,5 @@
-import { CheckCircle2, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, AlertCircle } from 'lucide-react';
 import { useSchedule } from '@/contexts/ScheduleContext';
-import { DAYS } from '@/types/course';
 
 const Footer = () => {
   const { totalUnits, selectedCourses, scheduledSessions } = useSchedule();
@@ -8,60 +7,88 @@ const Footer = () => {
   // Calculate active days
   const activeDays = new Set(scheduledSessions.map(s => s.day)).size;
 
-  // Check for conflicts (simplified)
-  const hasAnyConflict = false; // Can be extended with real conflict detection
+  // Check for exam conflicts
+  const examDates = selectedCourses
+    .filter(c => c.examDate && c.examTime)
+    .map(c => ({ id: c.id, name: c.name, date: c.examDate, time: c.examTime }));
+  
+  const hasExamConflict = examDates.some((exam, i) => 
+    examDates.some((other, j) => i !== j && exam.date === other.date && exam.time === other.time)
+  );
+
+  // Check for time conflicts (simplified)
+  const hasTimeConflict = false; // Can be extended
+
+  const hasAnyConflict = hasTimeConflict || hasExamConflict;
 
   // Unit status
   const unitStatus = totalUnits < 12 ? 'low' : totalUnits > 20 ? 'high' : 'normal';
 
-  return (
-    <footer className="fixed bottom-0 left-0 right-0 h-12 border-t border-border bg-card/95 backdrop-blur-sm px-6 flex items-center justify-between z-40 shadow-lg">
-      <div className="flex items-center gap-4">
-        {/* Status - PRIMARY (Most Important) */}
-        <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-muted/50">
-          {hasAnyConflict ? (
-            <div className="flex items-center gap-1.5 text-destructive">
-              <AlertTriangle className="w-4 h-4" />
-              <span className="text-sm font-bold">تداخل</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1.5 text-emerald-600">
-              <CheckCircle2 className="w-4 h-4" />
-              <span className="text-sm font-bold">برنامه معتبر</span>
-            </div>
-          )}
+  // Conflict status display
+  const getConflictStatus = () => {
+    if (selectedCourses.length === 0) {
+      return null;
+    }
+    if (hasTimeConflict) {
+      return (
+        <div className="flex items-center gap-1.5 text-destructive">
+          <AlertCircle className="w-3.5 h-3.5" />
+          <span className="text-[11px] font-medium">تداخل زمانی</span>
         </div>
+      );
+    }
+    if (hasExamConflict) {
+      return (
+        <div className="flex items-center gap-1.5 text-amber-600">
+          <AlertTriangle className="w-3.5 h-3.5" />
+          <span className="text-[11px] font-medium">تداخل امتحان</span>
+        </div>
+      );
+    }
+    return (
+      <div className="flex items-center gap-1.5 text-emerald-600">
+        <CheckCircle2 className="w-3.5 h-3.5" />
+        <span className="text-[11px] font-medium">بدون تداخل</span>
+      </div>
+    );
+  };
 
-        <div className="w-px h-6 bg-border" />
-
+  return (
+    <footer className="fixed bottom-0 left-0 right-0 h-10 border-t border-border bg-card/95 backdrop-blur-sm px-4 flex items-center justify-between z-40 shadow-lg">
+      <div className="flex items-center gap-3">
         {/* Total Units - PROMINENT */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <span className={`
-            text-2xl font-black tabular-nums
+            text-lg font-bold tabular-nums
             ${unitStatus === 'low' ? 'text-amber-500' : unitStatus === 'high' ? 'text-destructive' : 'text-primary'}
           `}>
             {totalUnits}
           </span>
-          <span className="text-xs text-muted-foreground">واحد</span>
+          <span className="text-[10px] text-muted-foreground">واحد</span>
         </div>
 
-        <div className="w-px h-6 bg-border" />
+        <div className="w-px h-5 bg-border" />
 
         {/* Secondary Stats */}
-        <div className="flex items-center gap-4 text-muted-foreground">
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm font-medium text-foreground">{selectedCourses.length}</span>
-            <span className="text-[11px]">درس</span>
+        <div className="flex items-center gap-3 text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <span className="text-xs font-medium text-foreground">{selectedCourses.length}</span>
+            <span className="text-[10px]">درس</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm font-medium text-foreground">{activeDays}</span>
-            <span className="text-[11px]">روز فعال</span>
+          <div className="flex items-center gap-1">
+            <span className="text-xs font-medium text-foreground">{activeDays}</span>
+            <span className="text-[10px]">روز</span>
           </div>
         </div>
+
+        <div className="w-px h-5 bg-border" />
+
+        {/* Conflict Status - Integrated */}
+        {getConflictStatus()}
       </div>
 
-      <div className="text-[10px] text-muted-foreground">
-        نسخه ۱.۰.۰
+      <div className="text-[9px] text-muted-foreground">
+        v1.0.0
       </div>
     </footer>
   );

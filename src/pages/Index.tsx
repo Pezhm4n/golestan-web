@@ -3,7 +3,6 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Sidebar from '@/components/Sidebar';
 import ScheduleGrid from '@/components/ScheduleGrid';
-import AlertBanner from '@/components/AlertBanner';
 import { ScheduleProvider } from '@/contexts/ScheduleContext';
 
 const ScheduleApp = () => {
@@ -21,15 +20,12 @@ const ScheduleApp = () => {
     <div className="h-screen flex flex-col overflow-hidden bg-muted/30">
       <Header isDarkMode={isDarkMode} onToggleDarkMode={() => setIsDarkMode(!isDarkMode)} />
       
-      <div className="flex-1 flex overflow-hidden min-h-0 mb-12">
+      <div className="flex-1 flex overflow-hidden min-h-0 mb-10">
         <Sidebar />
         <ScheduleGrid />
       </div>
       
-      {/* Alert Banner - Below Grid, Above Footer */}
-      <AlertBanner />
-      
-      {/* Fixed Footer with Stats */}
+      {/* Fixed Footer with Stats & Conflict Status */}
       <Footer />
     </div>
   );
