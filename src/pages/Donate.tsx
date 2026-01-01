@@ -38,6 +38,7 @@ const donationOptions: DonationOption[] = [
     emoji: '☕',
     icon: <Coffee className="h-6 w-6" />,
     description: 'برای شروع یه روز پرانرژی',
+    popular: true,
   },
   {
     id: 'pizza',
@@ -46,7 +47,6 @@ const donationOptions: DonationOption[] = [
     emoji: '🍕',
     icon: <Pizza className="h-6 w-6" />,
     description: 'برای یه شب کدنویسی',
-    popular: true,
   },
   {
     id: 'love',
@@ -71,7 +71,7 @@ const formatNumber = (num: number): string => {
 };
 
 const Donate = () => {
-  const [selectedOption, setSelectedOption] = useState<string>('pizza');
+  const [selectedOption, setSelectedOption] = useState<string>('coffee');
   const [customAmount, setCustomAmount] = useState<string>('');
   const [donorName, setDonorName] = useState<string>('');
   const [showInSupporters, setShowInSupporters] = useState<boolean>(true);
@@ -126,31 +126,14 @@ const Donate = () => {
             <Heart className="h-10 w-10 text-pink-500 animate-pulse" />
           </div>
           <h1 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
-            از برنامه‌ریز گلستان حمایت کن 💙
+            از گلستون حمایت کن 💙
           </h1>
           <p className="text-muted-foreground text-lg max-w-xl mx-auto leading-relaxed">
             این ابزار رایگانه و همیشه رایگان می‌مونه. اما اگه بهت کمک کرده، 
-            می‌تونی با یه قهوه یا پیتزا انرژی ما رو شارژ کنی!
+            می‌تونی با یه قهوه یا پیتزا انرژی تیم چوپولوفسکی رو شارژ کنی!
           </p>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-12">
-          {[
-            { icon: <Users className="h-5 w-5" />, value: '۵,۰۰۰+', label: 'کاربر فعال' },
-            { icon: <Rocket className="h-5 w-5" />, value: '۵۰+', label: 'به‌روزرسانی' },
-            { icon: <Star className="h-5 w-5" />, value: '۴.۸', label: 'امتیاز کاربران' },
-          ].map((stat, idx) => (
-            <Card 
-              key={idx} 
-              className="p-4 text-center bg-card/50 backdrop-blur-sm border-border/50 hover:border-primary/30 transition-all duration-300"
-            >
-              <div className="flex justify-center text-primary mb-2">{stat.icon}</div>
-              <div className="text-xl font-bold">{stat.value}</div>
-              <div className="text-xs text-muted-foreground">{stat.label}</div>
-            </Card>
-          ))}
-        </div>
 
         {/* Donation Cards */}
         <div className="mb-8">
@@ -300,10 +283,9 @@ const Donate = () => {
           </div>
         </Card>
 
-        {/* Footer Message */}
         <div className="text-center mt-12 text-muted-foreground">
           <p className="text-sm mb-2">با تشکر از حمایت شما 💙</p>
-          <p className="text-xs">تیم برنامه‌ریز گلستان</p>
+          <p className="text-xs">تیم چوپولوفسکی</p>
         </div>
       </main>
     </div>

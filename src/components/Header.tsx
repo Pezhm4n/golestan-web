@@ -22,7 +22,7 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
     <header className="h-[50px] border-b border-border bg-card/80 backdrop-blur-sm px-4 flex items-center justify-between shrink-0">
       <div className="flex items-center gap-3">
         <h1 className="text-sm font-bold text-foreground">
-          برنامه‌ریز گلستان
+          گلستون
         </h1>
         <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
           نیمسال ۱۴۰۳-۱
