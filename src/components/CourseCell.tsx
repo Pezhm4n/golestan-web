@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/tooltip';
 
 interface CourseCellProps {
-  sessions: ScheduledSession[];
+  sessions?: ScheduledSession[];
 }
 
 const colorClasses: Record<string, string> = {
@@ -125,8 +125,8 @@ const SingleBlock = ({
   );
 };
 
-const CourseCell = ({ sessions }: CourseCellProps) => {
-  if (sessions.length === 0) return null;
+const CourseCell = ({ sessions = [] }: CourseCellProps) => {
+  if (!sessions || sessions.length === 0) return null;
 
   const hasDual = sessions.length === 2;
   const hasConflict = sessions.length > 2 || 
