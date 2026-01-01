@@ -42,157 +42,183 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
     toast.loading('در حال آماده‌سازی تصویر...', { id: 'download' });
 
     try {
-      // Find the inner grid container (the actual table, not the scroll wrapper)
-      const innerGrid = scheduleGrid.querySelector('.min-w-\\[800px\\]');
-      const targetElement = (innerGrid || scheduleGrid) as HTMLElement;
+      // Find the actual grid (the div with display: grid)
+      const scrollContainer = scheduleGrid.querySelector('.overflow-auto');
+      const gridElement = scrollContainer?.firstElementChild as HTMLElement;
+      
+      if (!gridElement) {
+        toast.error('جدول یافت نشد', { id: 'download' });
+        return;
+      }
 
-      // Read design tokens from CSS variables (so export matches theme)
+      // Get computed styles
       const rootStyles = getComputedStyle(document.documentElement);
-      const hslVar = (varName: string, alpha = 1) => {
+      const getHSL = (varName: string) => {
         const v = rootStyles.getPropertyValue(varName).trim();
-        return v ? `hsl(${v} / ${alpha})` : '';
+        return v ? `hsl(${v})` : '#ffffff';
       };
 
-      const bgColor = hslVar('--background', 1);
-      const cardBg = hslVar('--card', 1);
-      const textColor = hslVar('--foreground', 1);
-      const mutedTextColor = hslVar('--muted-foreground', 1);
-      const headerBg = hslVar('--muted', 0.8);
-      const rowAltBg = hslVar('--muted', 0.1);
-      const timeColBg = hslVar('--muted', 0.5);
-      const gridLineColor = hslVar('--border', 0.9);
+      const bgColor = getHSL('--card');
+      const textColor = getHSL('--foreground');
+      const mutedColor = getHSL('--muted-foreground');
+      const borderColor = getHSL('--border');
 
-      // Note: Course colors are now dynamic via inline styles, no need for static mapping
-
-      const canvas = await html2canvas(targetElement, {
+      const canvas = await html2canvas(gridElement, {
         backgroundColor: bgColor,
-        scale: 2,
+        scale: 2.5,
         useCORS: true,
         logging: false,
-        width: targetElement.scrollWidth,
-        height: targetElement.scrollHeight,
-        windowWidth: targetElement.scrollWidth,
-        windowHeight: targetElement.scrollHeight,
-        onclone: (clonedDoc, element) => {
-          // Ensure colors are preserved
+        width: gridElement.scrollWidth,
+        height: gridElement.scrollHeight,
+        windowWidth: gridElement.scrollWidth + 100,
+        windowHeight: gridElement.scrollHeight + 100,
+        x: 0,
+        y: 0,
+        scrollX: 0,
+        scrollY: 0,
+        onclone: (clonedDoc, clonedElement) => {
+          // Add print styles
           const style = clonedDoc.createElement('style');
           style.innerHTML = `
-            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            * { 
+              -webkit-print-color-adjust: exact !important; 
+              print-color-adjust: exact !important;
+              box-sizing: border-box !important;
+            }
           `;
           clonedDoc.head.appendChild(style);
 
-          // Remove extra padding/margins so the exported image is tightly cropped
-          element.style.margin = '0';
-          element.style.padding = '0';
-          element.style.borderRadius = '0';
-          element.style.backgroundColor = cardBg;
-          element.style.boxSizing = 'border-box';
+          // Style the cloned grid element
+          clonedElement.style.padding = '0';
+          clonedElement.style.margin = '0';
+          clonedElement.style.backgroundColor = bgColor;
+          clonedElement.style.borderRadius = '0';
+          clonedElement.style.border = `2px solid ${borderColor}`;
 
-          // Make grid lines clearly visible by force-styling the grid container's direct children
-          Array.from(element.children).forEach((child) => {
-            const el = child as HTMLElement;
-            el.style.border = `1px solid ${gridLineColor}`;
-            el.style.boxSizing = 'border-box';
-          });
-
-          // Fix course cell colors - apply explicit HSL colors
-          // Course cells now use inline backgroundColor style, so we just enhance styling
-          const courseCells = element.querySelectorAll('[style*="background-color: hsl"]');
-          courseCells.forEach((cell) => {
-            const htmlCell = cell as HTMLElement;
-            htmlCell.style.padding = '6px 4px';
-            htmlCell.style.borderRadius = '6px';
-            htmlCell.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
-            htmlCell.style.borderRight = `3px solid ${isDarkMode ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.18)'}`;
-          });
-
-          // Fix cell backgrounds (bg-*) that rely on CSS vars/opacity
-          const bgBackgroundCells = element.querySelectorAll('.bg-background');
-          bgBackgroundCells.forEach((cell) => {
-            (cell as HTMLElement).style.backgroundColor = bgColor;
-          });
-
-          const altCells = element.querySelectorAll('.bg-muted\\/10');
-          altCells.forEach((cell) => {
-            (cell as HTMLElement).style.backgroundColor = rowAltBg;
-          });
-
-          const timeCells = element.querySelectorAll('.bg-muted\\/50');
-          timeCells.forEach((cell) => {
-            const htmlCell = cell as HTMLElement;
-            htmlCell.style.backgroundColor = timeColBg;
-            htmlCell.style.color = mutedTextColor;
-          });
-
-          const headerCells = element.querySelectorAll('.bg-muted\\/80');
-          headerCells.forEach((cell) => {
-            const htmlCell = cell as HTMLElement;
-            htmlCell.style.backgroundColor = headerBg;
-            htmlCell.style.color = textColor;
-          });
-
-          // Fix text colors
-          const allText = element.querySelectorAll('p, span, div');
-          allText.forEach((el) => {
-            const htmlEl = el as HTMLElement;
-            const classes = htmlEl.className || '';
-
-            if (classes.includes('text-foreground')) htmlEl.style.color = textColor;
-            if (
-              classes.includes('text-muted-foreground') ||
-              classes.includes('text-foreground/70') ||
-              classes.includes('text-foreground/60')
-            ) {
-              htmlEl.style.color = mutedTextColor;
-            }
-          });
-
-          // Remove truncate so text isn't clipped in the export
-          const truncatedElements = element.querySelectorAll('.truncate');
-          truncatedElements.forEach((el) => {
-            el.classList.remove('truncate');
-            (el as HTMLElement).style.overflow = 'visible';
-            (el as HTMLElement).style.textOverflow = 'clip';
-            (el as HTMLElement).style.whiteSpace = 'normal';
-            (el as HTMLElement).style.wordBreak = 'break-word';
-          });
-
-          // Hide delete buttons
-          const deleteButtons = element.querySelectorAll('button');
-          deleteButtons.forEach((btn) => {
+          // Hide all delete buttons
+          const buttons = clonedElement.querySelectorAll('button');
+          buttons.forEach((btn) => {
             (btn as HTMLElement).style.display = 'none';
           });
 
-          // Make small text readable
-          const fontElements = element.querySelectorAll('p, span');
-          fontElements.forEach((el) => {
+          // Style header cells (bg-muted/95)
+          const headerCells = clonedElement.querySelectorAll('[class*="bg-muted/95"], [class*="bg-muted\\/95"]');
+          headerCells.forEach((cell) => {
+            const el = cell as HTMLElement;
+            el.style.backgroundColor = getHSL('--muted');
+            el.style.color = textColor;
+          });
+
+          // Style time column cells
+          const timeCells = clonedElement.querySelectorAll('[class*="bg-muted/60"], [class*="bg-muted\\/60"]');
+          timeCells.forEach((cell) => {
+            const el = cell as HTMLElement;
+            el.style.backgroundColor = getHSL('--muted');
+            el.style.color = mutedColor;
+          });
+
+          // Style alternating row cells
+          const bgCells = clonedElement.querySelectorAll('[class*="bg-background"]');
+          bgCells.forEach((cell) => {
+            (cell as HTMLElement).style.backgroundColor = bgColor;
+          });
+
+          const altCells = clonedElement.querySelectorAll('[class*="bg-muted/10"], [class*="bg-muted\\/10"]');
+          altCells.forEach((cell) => {
+            const el = cell as HTMLElement;
+            el.style.backgroundColor = isDarkMode ? 'hsl(0 0% 15%)' : 'hsl(0 0% 97%)';
+          });
+
+          // Make text more readable
+          const allTextElements = clonedElement.querySelectorAll('h3, p, span, div');
+          allTextElements.forEach((el) => {
             const htmlEl = el as HTMLElement;
-            const currentSize = parseFloat(getComputedStyle(htmlEl).fontSize);
-            if (currentSize < 10) htmlEl.style.fontSize = '10px';
-            htmlEl.style.fontWeight = '500';
+            const classes = htmlEl.className || '';
+            
+            // Set minimum font size for readability
+            const fontSize = parseFloat(getComputedStyle(htmlEl).fontSize);
+            if (fontSize < 11) {
+              htmlEl.style.fontSize = '11px';
+            }
+
+            // Ensure text is visible
+            if (classes.includes('text-gray-900')) {
+              htmlEl.style.color = '#1a1a1a';
+            }
+            if (classes.includes('text-gray-700')) {
+              htmlEl.style.color = '#374151';
+            }
+            if (classes.includes('text-gray-800')) {
+              htmlEl.style.color = '#1f2937';
+            }
+            if (classes.includes('text-foreground')) {
+              htmlEl.style.color = textColor;
+            }
+            if (classes.includes('text-muted-foreground')) {
+              htmlEl.style.color = mutedColor;
+            }
+          });
+
+          // Style course cells - ensure they have proper padding and are readable
+          const courseCells = clonedElement.querySelectorAll('[style*="background-color"]');
+          courseCells.forEach((cell) => {
+            const el = cell as HTMLElement;
+            el.style.padding = '8px';
+            el.style.borderRadius = '8px';
+            el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.1)';
+            
+            // Make inner text more readable
+            const title = el.querySelector('h3');
+            if (title) {
+              (title as HTMLElement).style.fontSize = '13px';
+              (title as HTMLElement).style.fontWeight = '700';
+              (title as HTMLElement).style.marginBottom = '4px';
+              (title as HTMLElement).style.overflow = 'visible';
+              (title as HTMLElement).style.textOverflow = 'clip';
+              (title as HTMLElement).style.whiteSpace = 'normal';
+            }
+            
+            const instructor = el.querySelector('p');
+            if (instructor) {
+              (instructor as HTMLElement).style.fontSize = '11px';
+              (instructor as HTMLElement).style.marginBottom = '4px';
+              (instructor as HTMLElement).style.overflow = 'visible';
+              (instructor as HTMLElement).style.textOverflow = 'clip';
+              (instructor as HTMLElement).style.whiteSpace = 'normal';
+            }
+            
+            // Style badges
+            const badges = el.querySelectorAll('span');
+            badges.forEach((badge) => {
+              (badge as HTMLElement).style.fontSize = '10px';
+              (badge as HTMLElement).style.padding = '2px 6px';
+            });
+          });
+
+          // Remove truncate class effects
+          const truncated = clonedElement.querySelectorAll('.truncate');
+          truncated.forEach((el) => {
+            const htmlEl = el as HTMLElement;
+            htmlEl.style.overflow = 'visible';
+            htmlEl.style.textOverflow = 'clip';
+            htmlEl.style.whiteSpace = 'normal';
           });
         },
       });
 
-      // Add watermark to canvas
+      // Add watermark
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        // Watermark settings
         ctx.save();
-        ctx.font = 'bold 24px Arial';
-        ctx.fillStyle = isDarkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)';
-        
-        // Position at bottom-right corner
-        const watermarkText = 'Golestoon';
-        const textMetrics = ctx.measureText(watermarkText);
-        const x = canvas.width - textMetrics.width - 30;
-        const y = canvas.height - 25;
-        
-        ctx.fillText(watermarkText, x, y);
+        ctx.font = 'bold 28px Arial';
+        ctx.fillStyle = isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.12)';
+        const text = 'Golestoon';
+        const metrics = ctx.measureText(text);
+        ctx.fillText(text, canvas.width - metrics.width - 40, canvas.height - 30);
         ctx.restore();
       }
 
-      // Convert to blob and download
+      // Download
       canvas.toBlob((blob) => {
         if (!blob) {
           toast.error('خطا در ایجاد تصویر', { id: 'download' });
@@ -203,7 +229,6 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
         const link = document.createElement('a');
         link.href = url;
         
-        // Generate filename with date
         const date = new Date();
         const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         link.download = `golestoon-schedule-${dateStr}.png`;
