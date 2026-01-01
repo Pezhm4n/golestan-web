@@ -42,22 +42,22 @@ const SingleBlock = ({
   };
 
   return (
-    <TooltipProvider delayDuration={100}>
+    <TooltipProvider delayDuration={300}>
       <Tooltip>
         <TooltipTrigger asChild>
           <div
             className={`
-              group relative flex flex-col justify-between overflow-hidden cursor-pointer
+              group relative flex flex-col justify-center items-center text-center overflow-hidden cursor-pointer
               ${colorClasses[session.color]} 
               border-r-2 border-r-foreground/40
               transition-all duration-200
               ${isHalf ? 'h-1/2' : 'h-full'}
               ${isHalf && position === 'top' ? 'border-b border-dashed border-foreground/30' : ''}
               ${isHighlighted 
-                ? 'ring-2 ring-primary scale-[1.02] shadow-lg z-20 border-r-primary' 
+                ? 'ring-2 ring-offset-1 ring-primary shadow-[0_0_15px_hsl(var(--primary)/0.4)] scale-[1.02] z-50' 
                 : ''
               }
-              ${isDimmed ? 'opacity-85' : ''}
+              ${isDimmed ? 'opacity-80' : ''}
               px-1 py-0.5
               rounded-sm
             `}
@@ -67,48 +67,50 @@ const SingleBlock = ({
             {/* Delete Button - appears on hover */}
             <button
               onClick={handleRemove}
-              className={`
-                absolute top-0 left-0 z-30
-                w-4 h-4 flex items-center justify-center
-                bg-destructive text-destructive-foreground
-                opacity-0 group-hover:opacity-100
-                transition-all duration-200
-                hover:bg-destructive/80
-                rounded-br-sm
-              `}
+              className="absolute top-1 right-1 z-30 w-4 h-4 flex items-center justify-center bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-destructive/80 rounded-sm"
             >
-              <X className="w-3 h-3" />
+              <X className="w-2.5 h-2.5" />
             </button>
 
             {/* Week Type Badge */}
             {weekLabel && (
               <span className={`
-                absolute top-0 right-0 text-[7px] px-0.5 font-bold rounded-bl-sm
+                absolute top-0 left-0 text-[7px] px-0.5 font-bold rounded-br-sm
                 ${session.weekType === 'odd' ? 'bg-amber-400/90 text-amber-900' : 'bg-sky-400/90 text-sky-900'}
               `}>
                 {weekLabel}
               </span>
             )}
 
-            <div className={`flex flex-col ${weekLabel ? 'mt-2' : ''}`}>
-              <p className={`font-bold text-foreground leading-tight truncate ${isHalf ? 'text-[8px]' : 'text-[9px]'}`}>
+            {/* Content - Centered Layout */}
+            <div className="flex flex-col items-center w-full px-1">
+              {/* Line 1: Course Name */}
+              <p className={`font-bold text-foreground leading-tight truncate w-full ${isHalf ? 'text-[8px]' : 'text-xs'}`}>
                 {session.courseName}
               </p>
+              
+              {/* Line 2: Instructor */}
               {!isHalf && (
-                <p className="text-[8px] text-foreground/70 truncate">
+                <p className="text-[10px] text-foreground/70 truncate w-full font-light">
                   {session.instructor}
                 </p>
               )}
+              
+              {/* Line 3: Code + Units */}
+              <div className="flex items-center justify-center gap-1 mt-0.5">
+                <span className={`text-foreground/60 ${isHalf ? 'text-[6px]' : 'text-[8px]'}`}>
+                  {session.courseId}
+                </span>
+                <span className={`bg-foreground/20 text-foreground/80 px-1 rounded font-medium ${isHalf ? 'text-[6px]' : 'text-[8px]'}`}>
+                  {session.credits}و
+                </span>
+              </div>
             </div>
-
-            <p className={`text-foreground/60 text-left ${isHalf ? 'text-[6px]' : 'text-[7px]'}`}>
-              {session.location}
-            </p>
           </div>
         </TooltipTrigger>
-        <TooltipContent side="left" className="max-w-xs p-2" sideOffset={5}>
+        <TooltipContent side="top" className="max-w-xs p-2" sideOffset={8}>
           <div className="space-y-1 text-[11px]">
-            <h4 className="font-bold text-sm">{session.courseName}</h4>
+            <h4 className="font-bold text-sm">{session.courseName} ({session.courseId})</h4>
             <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5">
               <span className="text-muted-foreground">استاد:</span>
               <span>{session.instructor}</span>
@@ -119,7 +121,7 @@ const SingleBlock = ({
               {session.examDate && (
                 <>
                   <span className="text-muted-foreground">امتحان:</span>
-                  <span>{session.examDate}</span>
+                  <span>{session.examDate} - {session.examTime}</span>
                 </>
               )}
             </div>

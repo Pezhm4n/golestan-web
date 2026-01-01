@@ -4,11 +4,10 @@ import Footer from '@/components/Footer';
 import Sidebar from '@/components/Sidebar';
 import ScheduleGrid from '@/components/ScheduleGrid';
 import AlertBanner from '@/components/AlertBanner';
-import { ScheduleProvider, useSchedule } from '@/contexts/ScheduleContext';
+import { ScheduleProvider } from '@/contexts/ScheduleContext';
 
 const ScheduleApp = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const { totalUnits, selectedCourses } = useSchedule();
 
   useEffect(() => {
     if (isDarkMode) {
@@ -22,15 +21,16 @@ const ScheduleApp = () => {
     <div className="h-screen flex flex-col overflow-hidden bg-muted/30">
       <Header isDarkMode={isDarkMode} onToggleDarkMode={() => setIsDarkMode(!isDarkMode)} />
       
-      {/* Alert Banner */}
-      <AlertBanner />
-      
-      <div className="flex-1 flex overflow-hidden min-h-0">
+      <div className="flex-1 flex overflow-hidden min-h-0 mb-12">
         <ScheduleGrid />
         <Sidebar />
       </div>
       
-      <Footer totalUnits={totalUnits} courseCount={selectedCourses.length} />
+      {/* Alert Banner - Below Grid, Above Footer */}
+      <AlertBanner />
+      
+      {/* Fixed Footer with Stats */}
+      <Footer />
     </div>
   );
 };

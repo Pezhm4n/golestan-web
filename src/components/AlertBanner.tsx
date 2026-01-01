@@ -1,9 +1,8 @@
 import { AlertTriangle, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useSchedule } from '@/contexts/ScheduleContext';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const AlertBanner = () => {
-  const { selectedCourses, scheduledSessions } = useSchedule();
+  const { selectedCourses } = useSchedule();
 
   // Check for time conflicts (simplified)
   const hasTimeConflict = false; // Can be extended
@@ -23,33 +22,27 @@ const AlertBanner = () => {
 
   if (hasTimeConflict) {
     return (
-      <Alert variant="destructive" className="rounded-none border-x-0 border-t-0 py-2">
+      <div className="fixed bottom-12 left-0 right-0 z-30 bg-destructive/95 text-destructive-foreground px-4 py-2 flex items-center justify-center gap-2 backdrop-blur-sm">
         <AlertCircle className="h-4 w-4" />
-        <AlertDescription className="text-xs font-medium mr-2">
-          ⛔ تداخل زمانی در برنامه وجود دارد
-        </AlertDescription>
-      </Alert>
+        <span className="text-xs font-medium">⛔ تداخل زمانی در برنامه وجود دارد</span>
+      </div>
     );
   }
 
   if (hasExamConflict) {
     return (
-      <Alert className="rounded-none border-x-0 border-t-0 py-2 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800">
-        <AlertTriangle className="h-4 w-4 text-amber-600" />
-        <AlertDescription className="text-xs font-medium mr-2 text-amber-700 dark:text-amber-400">
-          ⚠️ تداخل تاریخ امتحان وجود دارد
-        </AlertDescription>
-      </Alert>
+      <div className="fixed bottom-12 left-0 right-0 z-30 bg-amber-500/95 text-amber-950 px-4 py-2 flex items-center justify-center gap-2 backdrop-blur-sm">
+        <AlertTriangle className="h-4 w-4" />
+        <span className="text-xs font-medium">⚠️ تداخل تاریخ امتحان وجود دارد</span>
+      </div>
     );
   }
 
   return (
-    <Alert className="rounded-none border-x-0 border-t-0 py-1.5 bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800">
-      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-      <AlertDescription className="text-[11px] text-emerald-700 dark:text-emerald-400 mr-2">
-        ✅ برنامه بدون تداخل است
-      </AlertDescription>
-    </Alert>
+    <div className="fixed bottom-12 left-0 right-0 z-30 bg-emerald-500/90 text-emerald-950 px-4 py-1.5 flex items-center justify-center gap-2 backdrop-blur-sm">
+      <CheckCircle2 className="h-3.5 w-3.5" />
+      <span className="text-[11px] font-medium">✅ برنامه بدون تداخل است</span>
+    </div>
   );
 };
 

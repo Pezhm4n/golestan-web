@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
 import SidebarCourseItem from './SidebarCourseItem';
-import SidebarStats from './SidebarStats';
 import SidebarActions from './SidebarActions';
 import CompactFilterPanel from './CompactFilterPanel';
 import { Gender } from '@/types/course';
@@ -174,9 +173,6 @@ const Sidebar = () => {
           </ScrollArea>
         </TabsContent>
       </Tabs>
-
-      {/* Stats Panel - Fixed at bottom */}
-      <SidebarStats />
     </aside>
   );
 };
