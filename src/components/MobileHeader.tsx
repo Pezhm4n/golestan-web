@@ -10,9 +10,10 @@ import ProfileDropdown from './ProfileDropdown';
 interface MobileHeaderProps {
   isDarkMode: boolean;
   onToggleDarkMode: () => void;
+  isTablet?: boolean;
 }
 
-const MobileHeader = ({ isDarkMode, onToggleDarkMode }: MobileHeaderProps) => {
+const MobileHeader = ({ isDarkMode, onToggleDarkMode, isTablet = false }: MobileHeaderProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
@@ -27,6 +28,23 @@ const MobileHeader = ({ isDarkMode, onToggleDarkMode }: MobileHeaderProps) => {
 
       {/* Right Side Actions */}
       <div className="flex items-center gap-1">
+        {/* Tablet: Show more actions inline with icons */}
+        {isTablet && (
+          <>
+            <Link to="/donate">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-9 w-9 p-0 text-pink-500 hover:text-pink-600 hover:bg-pink-500/10"
+              >
+                <Heart className="h-4 w-4" />
+              </Button>
+            </Link>
+            <SavedSchedulesSheet />
+            <LanguageToggle />
+          </>
+        )}
+
         {/* Dark Mode Toggle */}
         <Button
           variant="ghost"
@@ -58,27 +76,33 @@ const MobileHeader = ({ isDarkMode, onToggleDarkMode }: MobileHeaderProps) => {
 
               {/* Menu Items */}
               <div className="flex-1 p-4 space-y-3">
-                {/* Donate */}
-                <Link to="/donate" onClick={() => setIsMenuOpen(false)}>
-                  <Button 
-                    variant="ghost" 
-                    className="w-full justify-start h-12 text-sm gap-3 text-pink-500 hover:text-pink-600 hover:bg-pink-500/10"
-                  >
-                    <Heart className="h-5 w-5" />
-                    حمایت از ما
-                  </Button>
-                </Link>
+                {/* Donate - only show in menu for mobile */}
+                {!isTablet && (
+                  <Link to="/donate" onClick={() => setIsMenuOpen(false)}>
+                    <Button 
+                      variant="ghost" 
+                      className="w-full justify-start h-12 text-sm gap-3 text-pink-500 hover:text-pink-600 hover:bg-pink-500/10"
+                    >
+                      <Heart className="h-5 w-5" />
+                      حمایت از ما
+                    </Button>
+                  </Link>
+                )}
 
-                {/* Saved Schedules */}
-                <div onClick={() => setIsMenuOpen(false)}>
-                  <SavedSchedulesSheet />
-                </div>
+                {/* Saved Schedules - only show in menu for mobile */}
+                {!isTablet && (
+                  <div onClick={() => setIsMenuOpen(false)}>
+                    <SavedSchedulesSheet />
+                  </div>
+                )}
 
-                {/* Language Toggle */}
-                <div className="flex items-center justify-between px-4 py-3 bg-muted/50 rounded-lg">
-                  <span className="text-sm">زبان</span>
-                  <LanguageToggle />
-                </div>
+                {/* Language Toggle - only show in menu for mobile */}
+                {!isTablet && (
+                  <div className="flex items-center justify-between px-4 py-3 bg-muted/50 rounded-lg">
+                    <span className="text-sm">زبان</span>
+                    <LanguageToggle />
+                  </div>
+                )}
 
                 {/* Profile */}
                 <div className="flex items-center justify-between px-4 py-3 bg-muted/50 rounded-lg">

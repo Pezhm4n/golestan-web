@@ -25,9 +25,9 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const { isMobile, isTablet } = useResponsive();
 
-  // Use mobile header for mobile devices
-  if (isMobile) {
-    return <MobileHeader isDarkMode={isDarkMode} onToggleDarkMode={onToggleDarkMode} />;
+  // Use mobile header for mobile and tablet devices
+  if (isMobile || isTablet) {
+    return <MobileHeader isDarkMode={isDarkMode} onToggleDarkMode={onToggleDarkMode} isTablet={isTablet} />;
   }
 
   const handleDownloadImage = async () => {
