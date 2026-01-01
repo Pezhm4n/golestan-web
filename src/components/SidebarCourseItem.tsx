@@ -37,8 +37,9 @@ const SidebarCourseItem = ({ course }: SidebarCourseItemProps) => {
     <HoverCard openDelay={700} closeDelay={100}>
       <HoverCardTrigger asChild>
         <div 
+          dir="rtl"
           className={cn(
-            "flex items-center gap-2 px-2 py-2 border-b border-border/30 transition-all duration-200 cursor-pointer hover:bg-accent/50",
+            "flex items-center gap-2 px-2 py-1.5 border-b border-border/30 transition-all duration-200 cursor-pointer hover:bg-accent/50",
             getFontSizeClass(),
             isSelected && "bg-primary/10 border-r-2 border-r-primary",
             !isSelected && conflict.hasConflict && "bg-destructive/5 border-r-2 border-r-destructive/50",
@@ -50,7 +51,7 @@ const SidebarCourseItem = ({ course }: SidebarCourseItemProps) => {
           onMouseLeave={() => setHoveredCourseId(null)}
         >
           {/* Status Icon */}
-          <div className="w-5 h-5 flex items-center justify-center shrink-0">
+          <div className="w-4 h-4 flex items-center justify-center shrink-0">
             {isSelected ? (
               <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center">
                 <Check className="w-3 h-3 text-primary-foreground" />
@@ -64,19 +65,17 @@ const SidebarCourseItem = ({ course }: SidebarCourseItemProps) => {
             )}
           </div>
           
-          {/* Course Info - Single Line */}
-          <div className="flex-1 min-w-0">
-            <div className={cn("flex items-center gap-1.5 text-foreground truncate", getFontSizeClass())}>
-              <span className="font-semibold truncate">{course.name}</span>
-              <span className="text-muted-foreground">-</span>
-              <span className="text-muted-foreground truncate">{course.instructor}</span>
-              <span className="text-muted-foreground">-</span>
-              <span className="text-muted-foreground shrink-0">گروه {course.group || 1}</span>
-              {course.isGeneral && (
-                <Badge variant="secondary" className="h-4 px-1 text-[8px] shrink-0">عمومی</Badge>
-              )}
-            </div>
-          </div>
+          {/* Course Info - Single Line RTL */}
+          <p className={cn("flex-1 text-xs text-foreground truncate", getFontSizeClass())}>
+            <span className="font-semibold">{course.name}</span>
+            <span className="text-muted-foreground"> - </span>
+            <span className="text-muted-foreground">{course.instructor}</span>
+            <span className="text-muted-foreground"> - </span>
+            <span className="text-muted-foreground">گروه {course.group || 1}</span>
+            {course.isGeneral && (
+              <Badge variant="secondary" className="h-4 px-1 text-[8px] mr-1.5">عمومی</Badge>
+            )}
+          </p>
         </div>
       </HoverCardTrigger>
       

@@ -140,7 +140,7 @@ const Footer = () => {
 
   return (
     <TooltipProvider delayDuration={200}>
-      <footer className="fixed bottom-0 left-0 right-0 h-10 border-t border-border bg-card/95 backdrop-blur-sm px-4 flex items-center justify-between z-40 shadow-lg">
+      <footer className="fixed bottom-0 left-0 right-0 h-12 border-t-2 border-border bg-card px-4 flex items-center justify-between z-40 shadow-xl">
         {/* Left Section - Stats */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
@@ -171,35 +171,30 @@ const Footer = () => {
           {getConflictStatus()}
         </div>
 
-        {/* Center Section - Exam Schedule */}
-        <div className="absolute left-1/2 -translate-x-1/2">
+        {/* Center Section - Exam Schedule & Download */}
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3">
+          <Button 
+            data-tour="download-image"
+            variant="outline" 
+            size="sm" 
+            className="h-8 px-3 text-xs gap-1.5 border-primary/30 hover:bg-primary/10"
+            onClick={handleDownloadImage}
+            disabled={isDownloading}
+          >
+            {isDownloading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            <span>دانلود تصویر</span>
+          </Button>
+          
           <ExamScheduleDialog />
         </div>
 
-        {/* Right Section - Download & Version */}
-        <div className="flex items-center gap-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                data-tour="download-image"
-                variant="ghost" 
-                size="sm" 
-                className="h-7 px-2 text-xs gap-1"
-                onClick={handleDownloadImage}
-                disabled={isDownloading}
-              >
-                {isDownloading ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Download className="h-3.5 w-3.5" />
-                )}
-                <span className="hidden sm:inline text-[10px]">دانلود</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>دانلود تصویر برنامه</TooltipContent>
-          </Tooltip>
-          
-          <div className="text-[9px] text-muted-foreground">
+        {/* Right Section - Version */}
+        <div className="flex items-center">
+          <div className="text-[10px] text-muted-foreground">
             v1.0.0
           </div>
         </div>
