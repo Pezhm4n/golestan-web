@@ -39,8 +39,31 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
       const innerGrid = scheduleGrid.querySelector('.min-w-\\[800px\\]');
       const targetElement = (innerGrid || scheduleGrid) as HTMLElement;
 
+      // Define actual colors for course blocks (CSS variables don't work in html2canvas)
+      const courseColors = isDarkMode ? {
+        blue: 'hsl(210, 60%, 35%)',
+        green: 'hsl(150, 50%, 30%)',
+        orange: 'hsl(30, 60%, 35%)',
+        purple: 'hsl(270, 50%, 35%)',
+        pink: 'hsl(330, 50%, 35%)',
+        teal: 'hsl(180, 50%, 30%)',
+      } : {
+        blue: 'hsl(210, 80%, 85%)',
+        green: 'hsl(150, 60%, 85%)',
+        orange: 'hsl(30, 80%, 85%)',
+        purple: 'hsl(270, 70%, 85%)',
+        pink: 'hsl(330, 70%, 85%)',
+        teal: 'hsl(180, 60%, 85%)',
+      };
+
+      const bgColor = isDarkMode ? '#171717' : '#f5f5f5';
+      const cardBg = isDarkMode ? '#242424' : '#fafafa';
+      const textColor = isDarkMode ? '#fafafa' : '#171717';
+      const mutedTextColor = isDarkMode ? '#a3a3a3' : '#525252';
+      const headerBg = isDarkMode ? '#2a2a3d' : '#e2e8f0';
+
       const canvas = await html2canvas(targetElement, {
-        backgroundColor: isDarkMode ? '#1e1e2e' : '#f8fafc',
+        backgroundColor: bgColor,
         scale: 2,
         useCORS: true,
         logging: false,
@@ -50,33 +73,50 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
         windowHeight: targetElement.scrollHeight + 100,
         onclone: (clonedDoc, element) => {
           // Set proper background for the entire grid
-          element.style.backgroundColor = isDarkMode ? '#1e1e2e' : '#f8fafc';
+          element.style.backgroundColor = bgColor;
           element.style.borderRadius = '12px';
-          element.style.padding = '4px';
+          element.style.padding = '8px';
           
-          // Fix all cell backgrounds - ensure no black backgrounds
-          const allCells = element.querySelectorAll('div');
-          allCells.forEach((cell) => {
-            const htmlCell = cell as HTMLElement;
-            const computedBg = getComputedStyle(htmlCell).backgroundColor;
-            // If background is transparent or black, set proper color
-            if (computedBg === 'rgba(0, 0, 0, 0)' || computedBg === 'transparent' || computedBg === 'rgb(0, 0, 0)') {
-              htmlCell.style.backgroundColor = isDarkMode ? '#1e1e2e' : '#f8fafc';
+          // Fix all divs - ensure no transparent backgrounds
+          const allDivs = element.querySelectorAll('div');
+          allDivs.forEach((div) => {
+            const htmlDiv = div as HTMLElement;
+            const computedBg = getComputedStyle(htmlDiv).backgroundColor;
+            if (computedBg === 'rgba(0, 0, 0, 0)' || computedBg === 'transparent') {
+              htmlDiv.style.backgroundColor = 'transparent';
             }
           });
 
-          // Fix muted/alternating row backgrounds
-          const mutedCells = element.querySelectorAll('.bg-muted\\/10, .bg-background, .bg-muted\\/50');
-          mutedCells.forEach((cell) => {
-            const htmlCell = cell as HTMLElement;
-            if (isDarkMode) {
-              htmlCell.style.backgroundColor = '#252536';
-            } else {
-              htmlCell.style.backgroundColor = '#f1f5f9';
+          // Fix course cell colors - apply actual HSL colors
+          Object.entries(courseColors).forEach(([colorName, colorValue]) => {
+            const cells = element.querySelectorAll(`.bg-course-${colorName}`);
+            cells.forEach((cell) => {
+              const htmlCell = cell as HTMLElement;
+              htmlCell.style.backgroundColor = colorValue;
+              htmlCell.style.padding = '6px 4px';
+              htmlCell.style.borderRadius = '6px';
+              htmlCell.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+              htmlCell.style.borderRight = `3px solid ${isDarkMode ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)'}`;
+            });
+          });
+
+          // Fix text colors
+          const allText = element.querySelectorAll('p, span, div');
+          allText.forEach((el) => {
+            const htmlEl = el as HTMLElement;
+            const classes = htmlEl.className || '';
+            
+            // Fix main text
+            if (classes.includes('text-foreground')) {
+              htmlEl.style.color = textColor;
+            }
+            // Fix muted text
+            if (classes.includes('text-muted-foreground') || classes.includes('text-foreground/70') || classes.includes('text-foreground/60')) {
+              htmlEl.style.color = mutedTextColor;
             }
           });
 
-          // Remove truncate class from all elements to show full text
+          // Remove truncate class from all elements
           const truncatedElements = element.querySelectorAll('.truncate');
           truncatedElements.forEach((el) => {
             el.classList.remove('truncate');
@@ -86,30 +126,37 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
             (el as HTMLElement).style.wordBreak = 'break-word';
           });
 
-          // Make course cells stand out better
-          const courseCells = element.querySelectorAll('[class*="bg-course-"]');
-          courseCells.forEach((cell) => {
+          // Fix muted/alternating row backgrounds
+          const mutedCells = element.querySelectorAll('.bg-muted\\/10, .bg-background, .bg-muted\\/50');
+          mutedCells.forEach((cell) => {
             const htmlCell = cell as HTMLElement;
-            htmlCell.style.padding = '8px';
-            htmlCell.style.borderRadius = '6px';
-            htmlCell.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
-          });
-
-          // Increase font size for better readability
-          const textElements = element.querySelectorAll('p, span');
-          textElements.forEach((el) => {
-            const htmlEl = el as HTMLElement;
-            const currentSize = parseFloat(getComputedStyle(htmlEl).fontSize);
-            if (currentSize < 10) {
-              htmlEl.style.fontSize = '11px';
-            }
+            htmlCell.style.backgroundColor = isDarkMode ? '#1f1f1f' : '#f1f5f9';
           });
 
           // Fix header row background
           const headerCells = element.querySelectorAll('.bg-muted\\/80');
           headerCells.forEach((cell) => {
             const htmlCell = cell as HTMLElement;
-            htmlCell.style.backgroundColor = isDarkMode ? '#2a2a3d' : '#e2e8f0';
+            htmlCell.style.backgroundColor = headerBg;
+            htmlCell.style.color = textColor;
+          });
+
+          // Hide delete buttons
+          const deleteButtons = element.querySelectorAll('button');
+          deleteButtons.forEach((btn) => {
+            (btn as HTMLElement).style.display = 'none';
+          });
+
+          // Increase font size for better readability
+          const fontElements = element.querySelectorAll('p, span');
+          fontElements.forEach((el) => {
+            const htmlEl = el as HTMLElement;
+            const currentSize = parseFloat(getComputedStyle(htmlEl).fontSize);
+            if (currentSize < 10) {
+              htmlEl.style.fontSize = '10px';
+            }
+            // Make text bolder
+            htmlEl.style.fontWeight = '500';
           });
         }
       });
