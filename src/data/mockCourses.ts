@@ -15,7 +15,6 @@ export const availableCourses: Course[] = [
     name: 'ریاضی عمومی ۱',
     instructor: 'دکتر احمدی',
     credits: 3,
-    color: 'blue',
     examDate: '۱۴۰۳/۰۴/۱۵',
     examTime: '۰۸:۰۰',
     description: 'مباحث پایه ریاضیات شامل حد، مشتق و انتگرال',
@@ -26,6 +25,7 @@ export const availableCourses: Course[] = [
     isGeneral: false,
     category: 'available',
     departmentId: '1',
+    group: 'basic', // پایه
     sessions: [
       { day: 0, startTime: 8, endTime: 10, location: 'کلاس ۱۰۱', weekType: 'both' },
       { day: 2, startTime: 8, endTime: 10, location: 'کلاس ۱۰۱', weekType: 'both' },
@@ -37,7 +37,6 @@ export const availableCourses: Course[] = [
     name: 'فیزیک ۲',
     instructor: 'دکتر محمدی',
     credits: 3,
-    color: 'green',
     examDate: '۱۴۰۳/۰۴/۱۸',
     examTime: '۱۰:۰۰',
     description: 'الکتریسیته و مغناطیس',
@@ -48,6 +47,7 @@ export const availableCourses: Course[] = [
     isGeneral: false,
     category: 'available',
     departmentId: '2',
+    group: 'basic', // پایه
     sessions: [
       { day: 1, startTime: 14, endTime: 16, location: 'آزمایشگاه ۳', weekType: 'both' },
     ]
@@ -58,7 +58,6 @@ export const availableCourses: Course[] = [
     name: 'اندیشه اسلامی',
     instructor: 'استاد حسینی',
     credits: 2,
-    color: 'orange',
     examDate: '۱۴۰۳/۰۴/۲۰',
     examTime: '۱۴:۰۰',
     description: 'مباحث اعتقادی و فکری اسلام',
@@ -69,6 +68,7 @@ export const availableCourses: Course[] = [
     isGeneral: true,
     category: 'available',
     departmentId: '4',
+    group: 'general', // عمومی
     sessions: [
       { day: 3, startTime: 10, endTime: 12, location: 'سالن ۱', weekType: 'odd' },
     ]
@@ -79,7 +79,6 @@ export const availableCourses: Course[] = [
     name: 'برنامه‌سازی پیشرفته',
     instructor: 'دکتر رضایی',
     credits: 3,
-    color: 'purple',
     examDate: '۱۴۰۳/۰۴/۲۲',
     examTime: '۰۸:۰۰',
     description: 'ساختمان داده و الگوریتم‌های پیشرفته',
@@ -90,6 +89,7 @@ export const availableCourses: Course[] = [
     isGeneral: false,
     category: 'available',
     departmentId: '1',
+    group: 'specialized', // تخصصی
     sessions: [
       { day: 0, startTime: 10, endTime: 12, location: 'کلاس ۲۰۵', weekType: 'both' },
       { day: 4, startTime: 14, endTime: 16, location: 'لابراتوار ۱', weekType: 'both' },
@@ -101,7 +101,6 @@ export const availableCourses: Course[] = [
     name: 'زبان انگلیسی',
     instructor: 'استاد کریمی',
     credits: 2,
-    color: 'pink',
     examDate: '۱۴۰۳/۰۴/۲۵',
     examTime: '۱۰:۰۰',
     description: 'مهارت‌های خواندن و نوشتن انگلیسی',
@@ -112,6 +111,7 @@ export const availableCourses: Course[] = [
     isGeneral: true,
     category: 'available',
     departmentId: '4',
+    group: 'general', // عمومی
     sessions: [
       { day: 3, startTime: 10, endTime: 12, location: 'کلاس ۳۰۱', weekType: 'even' },
     ]
@@ -122,7 +122,6 @@ export const availableCourses: Course[] = [
     name: 'مدارهای الکتریکی',
     instructor: 'دکتر علوی',
     credits: 3,
-    color: 'teal',
     examDate: '۱۴۰۳/۰۴/۲۸',
     examTime: '۱۴:۰۰',
     description: 'تحلیل مدارهای الکتریکی DC و AC',
@@ -133,6 +132,7 @@ export const availableCourses: Course[] = [
     isGeneral: false,
     category: 'other',
     departmentId: '2',
+    group: 'specialized', // تخصصی
     sessions: [
       { day: 4, startTime: 10, endTime: 12, location: 'آزمایشگاه ۵', weekType: 'both' },
     ]
@@ -143,7 +143,6 @@ export const availableCourses: Course[] = [
     name: 'آمار و احتمال',
     instructor: 'دکتر نوری',
     credits: 3,
-    color: 'blue',
     examDate: '۱۴۰۳/۰۴/۱۶',
     examTime: '۱۶:۰۰',
     description: 'مبانی آمار توصیفی و استنباطی',
@@ -154,6 +153,7 @@ export const availableCourses: Course[] = [
     isGeneral: false,
     category: 'other',
     departmentId: '4',
+    group: 'basic', // پایه
     sessions: [
       { day: 2, startTime: 10, endTime: 12, location: 'کلاس ۱۰۲', weekType: 'both' },
     ]
@@ -164,7 +164,6 @@ export const availableCourses: Course[] = [
     name: 'کارگاه عمومی',
     instructor: 'مهندس صالحی',
     credits: 1,
-    color: 'orange',
     examDate: '۱۴۰۳/۰۴/۳۰',
     examTime: '۰۸:۰۰',
     description: 'آشنایی با ابزارهای کارگاهی',
@@ -175,6 +174,7 @@ export const availableCourses: Course[] = [
     isGeneral: false,
     category: 'other',
     departmentId: '3',
+    group: 'general', // عمومی
     sessions: [
       { day: 5, startTime: 8, endTime: 10, location: 'کارگاه ۲', weekType: 'both' },
     ]
@@ -185,7 +185,6 @@ export const availableCourses: Course[] = [
     name: 'معادلات دیفرانسیل',
     instructor: 'دکتر کاظمی',
     credits: 3,
-    color: 'purple',
     examDate: '۱۴۰۳/۰۴/۱۷',
     examTime: '۱۰:۰۰',
     description: 'حل معادلات دیفرانسیل معمولی',
@@ -196,6 +195,7 @@ export const availableCourses: Course[] = [
     isGeneral: false,
     category: 'available',
     departmentId: '1',
+    group: 'basic', // پایه
     sessions: [
       { day: 1, startTime: 8, endTime: 10, location: 'کلاس ۲۰۱', weekType: 'both' },
       { day: 3, startTime: 8, endTime: 10, location: 'کلاس ۲۰۱', weekType: 'both' },
@@ -207,7 +207,6 @@ export const availableCourses: Course[] = [
     name: 'تربیت بدنی',
     instructor: 'استاد مرادی',
     credits: 1,
-    color: 'green',
     examDate: '',
     examTime: '',
     description: 'ورزش و تندرستی',
@@ -218,6 +217,7 @@ export const availableCourses: Course[] = [
     isGeneral: true,
     category: 'other',
     departmentId: '4',
+    group: 'general', // عمومی
     sessions: [
       { day: 5, startTime: 10, endTime: 12, location: 'سالن ورزشی', weekType: 'both' },
     ]

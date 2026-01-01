@@ -2,6 +2,7 @@ export type WeekType = 'odd' | 'even' | 'both';
 export type Gender = 'male' | 'female' | 'mixed';
 export type CourseType = 'theoretical' | 'practical' | 'both';
 export type CourseCategory = 'available' | 'other';
+export type CourseGroup = 'specialized' | 'general' | 'basic'; // تخصصی، عمومی، پایه
 
 export interface CourseSession {
   day: number; // 0 = Saturday, 5 = Thursday
@@ -17,7 +18,6 @@ export interface Course {
   name: string;
   instructor: string;
   credits: number;
-  color: 'blue' | 'green' | 'orange' | 'purple' | 'pink' | 'teal';
   examDate?: string;
   examTime?: string;
   description?: string;
@@ -29,15 +29,17 @@ export interface Course {
   category: CourseCategory; // 'available' = allowed to take, 'other' = not allowed
   departmentId?: string; // Department this course belongs to
   sessions: CourseSession[]; // Multi-session support
+  group: CourseGroup; // نوع درس برای رنگ‌بندی
 }
 
 // For grid rendering - a flattened session with course info
 export interface ScheduledSession extends CourseSession {
   courseId: string; // Reference to parent course
+  parentId: string; // Parent course ID for color generation
   courseName: string;
   instructor: string;
   credits: number;
-  color: 'blue' | 'green' | 'orange' | 'purple' | 'pink' | 'teal';
+  group: CourseGroup;
   examDate?: string;
   examTime?: string;
 }

@@ -2,6 +2,7 @@ import { X } from 'lucide-react';
 import { ScheduledSession } from '@/types/course';
 import { useSchedule } from '@/contexts/ScheduleContext';
 import { useSettings } from '@/contexts/SettingsContext';
+import { getCourseColor, GROUP_LABELS } from '@/hooks/useCourseColors';
 import {
   Tooltip,
   TooltipContent,
@@ -13,15 +14,6 @@ import { cn } from '@/lib/utils';
 interface CourseCellProps {
   sessions?: ScheduledSession[];
 }
-
-const colorClasses: Record<string, string> = {
-  blue: 'bg-course-blue',
-  green: 'bg-course-green',
-  orange: 'bg-course-orange',
-  purple: 'bg-course-purple',
-  pink: 'bg-course-pink',
-  teal: 'bg-course-teal',
-};
 
 const SingleBlock = ({ 
   session, 
@@ -35,13 +27,17 @@ const SingleBlock = ({
   const { hoveredCourseId, setHoveredCourseId, removeCourse } = useSchedule();
   const { getFontSizeClass, fontSize } = useSettings();
   
-  const isHighlighted = hoveredCourseId === session.courseId;
-  const isDimmed = hoveredCourseId !== null && hoveredCourseId !== session.courseId;
+  // Check if dark mode is active
+  const isDark = document.documentElement.classList.contains('dark');
+  const backgroundColor = getCourseColor(session.parentId, session.group, isDark);
+  
+  const isHighlighted = hoveredCourseId === session.parentId;
+  const isDimmed = hoveredCourseId !== null && hoveredCourseId !== session.parentId;
   const weekLabel = session.weekType === 'odd' ? 'فرد' : session.weekType === 'even' ? 'زوج' : null;
 
   const handleRemove = (e: React.MouseEvent) => {
     e.stopPropagation();
-    removeCourse(session.courseId);
+    removeCourse(session.parentId);
   };
 
   return (
@@ -51,7 +47,6 @@ const SingleBlock = ({
           <div
             className={`
               group relative flex flex-col justify-center items-center text-center overflow-hidden cursor-pointer
-              ${colorClasses[session.color]} 
               border-r-2 border-r-foreground/40
               transition-all duration-200
               ${isHalf ? 'h-1/2' : 'h-full'}
@@ -64,7 +59,8 @@ const SingleBlock = ({
               px-1 py-0.5
               rounded-sm
             `}
-            onMouseEnter={() => setHoveredCourseId(session.courseId)}
+            style={{ backgroundColor }}
+            onMouseEnter={() => setHoveredCourseId(session.parentId)}
             onMouseLeave={() => setHoveredCourseId(null)}
           >
             {/* Delete Button - appears on hover */}
@@ -115,13 +111,21 @@ const SingleBlock = ({
                 کد: {session.courseId}
               </p>
               
-              {/* Line 4: Units */}
-              <span className={cn(
-                "bg-foreground/20 text-foreground/80 px-1.5 rounded font-medium mt-0.5",
-                isHalf ? "text-[6px]" : fontSize === 'small' ? "text-[7px]" : fontSize === 'large' ? "text-[10px]" : "text-[8px]"
-              )}>
-                {session.credits} واحد
-              </span>
+              {/* Line 4: Units + Group */}
+              <div className="flex items-center gap-1 mt-0.5">
+                <span className={cn(
+                  "bg-foreground/20 text-foreground/80 px-1.5 rounded font-medium",
+                  isHalf ? "text-[6px]" : fontSize === 'small' ? "text-[7px]" : fontSize === 'large' ? "text-[10px]" : "text-[8px]"
+                )}>
+                  {session.credits} واحد
+                </span>
+                <span className={cn(
+                  "text-foreground/50",
+                  isHalf ? "text-[5px]" : fontSize === 'small' ? "text-[6px]" : fontSize === 'large' ? "text-[9px]" : "text-[7px]"
+                )}>
+                  ({GROUP_LABELS[session.group]})
+                </span>
+              </div>
             </div>
           </div>
         </TooltipTrigger>
@@ -135,6 +139,8 @@ const SingleBlock = ({
               <span>{session.location}</span>
               <span className="text-muted-foreground">واحد:</span>
               <span>{session.credits}</span>
+              <span className="text-muted-foreground">نوع:</span>
+              <span>{GROUP_LABELS[session.group]}</span>
               {session.examDate && (
                 <>
                   <span className="text-muted-foreground">امتحان:</span>
