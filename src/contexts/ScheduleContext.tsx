@@ -1,17 +1,19 @@
 import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
 import { Course, ScheduledSession, WeekType } from '@/types/course';
-import { availableCourses } from '@/data/mockCourses';
+import { availableCourses as mockCourses } from '@/data/mockCourses';
 import { toast } from 'sonner';
 
 interface ScheduleContextType {
   // State
   selectedCourseIds: string[];
   hoveredCourseId: string | null;
+  customCourses: Course[];
   
   // Derived
   selectedCourses: Course[];
   scheduledSessions: ScheduledSession[];
   totalUnits: number;
+  allCourses: Course[];
   
   // Actions
   addCourse: (course: Course) => boolean;
@@ -19,6 +21,7 @@ interface ScheduleContextType {
   clearAll: () => void;
   toggleCourse: (course: Course) => void;
   setHoveredCourseId: (id: string | null) => void;
+  addCustomCourse: (course: Course) => void;
   
   // Helpers
   isCourseSelected: (courseId: string) => boolean;
@@ -44,11 +47,17 @@ const weekTypesConflict = (type1: WeekType, type2: WeekType): boolean => {
 export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [selectedCourseIds, setSelectedCourseIds] = useState<string[]>(['1', '4']); // Pre-select some
   const [hoveredCourseId, setHoveredCourseId] = useState<string | null>(null);
+  const [customCourses, setCustomCourses] = useState<Course[]>([]);
+
+  // All available courses (mock + custom)
+  const allCourses = useMemo(() => {
+    return [...mockCourses, ...customCourses];
+  }, [customCourses]);
 
   // Get selected courses
   const selectedCourses = useMemo(() => {
-    return availableCourses.filter(c => selectedCourseIds.includes(c.id));
-  }, [selectedCourseIds]);
+    return allCourses.filter(c => selectedCourseIds.includes(c.id));
+  }, [selectedCourseIds, allCourses]);
 
   // Flatten sessions for grid rendering
   const scheduledSessions = useMemo((): ScheduledSession[] => {
@@ -91,13 +100,13 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
         // Check week type conflict
         if (weekTypesConflict(newSession.weekType, existingSession.weekType)) {
-          const conflictCourse = availableCourses.find(c => c.id === existingSession.courseId);
+          const conflictCourse = allCourses.find(c => c.id === existingSession.courseId);
           return { hasConflict: true, conflictWith: conflictCourse?.name };
         }
       }
     }
     return { hasConflict: false };
-  }, [scheduledSessions]);
+  }, [scheduledSessions, allCourses]);
 
   // Add course with conflict check
   const addCourse = useCallback((course: Course): boolean => {
@@ -122,7 +131,7 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Remove course
   const removeCourse = useCallback((courseId: string) => {
-    const course = availableCourses.find(c => c.id === courseId);
+    const course = allCourses.find(c => c.id === courseId);
     setSelectedCourseIds(prev => prev.filter(id => id !== courseId));
     if (course) {
       toast.info('درس حذف شد', {
@@ -130,7 +139,7 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         duration: 2000,
       });
     }
-  }, []);
+  }, [allCourses]);
 
   // Clear all courses
   const clearAll = useCallback(() => {
@@ -146,17 +155,25 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [selectedCourseIds, addCourse, removeCourse]);
 
+  // Add a custom course
+  const addCustomCourse = useCallback((course: Course) => {
+    setCustomCourses(prev => [...prev, course]);
+  }, []);
+
   const value: ScheduleContextType = {
     selectedCourseIds,
     hoveredCourseId,
+    customCourses,
     selectedCourses,
     scheduledSessions,
     totalUnits,
+    allCourses,
     addCourse,
     removeCourse,
     clearAll,
     toggleCourse,
     setHoveredCourseId,
+    addCustomCourse,
     isCourseSelected,
     hasConflict,
   };
