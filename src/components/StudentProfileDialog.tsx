@@ -29,11 +29,11 @@ interface StudentProfileDialogProps {
 
 // Mock data for terms
 const termData = [
-  { term: 'نیمسال اول ۱۴۰۲-۱۴۰۳', gpa: 15.77, passedUnits: '16/16' },
-  { term: 'نیمسال دوم ۱۴۰۲-۱۴۰۳', gpa: 16.38, passedUnits: '15/18' },
-  { term: 'تابستان ۱۴۰۲-۱۴۰۳', gpa: 20.00, passedUnits: '3/3' },
-  { term: 'نیمسال اول ۱۴۰۳-۱۴۰۴', gpa: 18.13, passedUnits: '18/18' },
-  { term: 'نیمسال دوم ۱۴۰۳-۱۴۰۴', gpa: 15.47, passedUnits: '22/22' },
+  { id: 1, term: 'نیمسال اول ۱۴۰۲-۱۴۰۳', gpa: 15.77, passedUnits: '16/16' },
+  { id: 2, term: 'نیمسال دوم ۱۴۰۲-۱۴۰۳', gpa: 16.38, passedUnits: '15/18' },
+  { id: 3, term: 'تابستان ۱۴۰۲-۱۴۰۳', gpa: 20.00, passedUnits: '3/3' },
+  { id: 4, term: 'نیمسال اول ۱۴۰۳-۱۴۰۴', gpa: 18.13, passedUnits: '18/18' },
+  { id: 5, term: 'نیمسال دوم ۱۴۰۳-۱۴۰۴', gpa: 15.47, passedUnits: '22/22' },
 ];
 
 const chartData = [
@@ -44,15 +44,44 @@ const chartData = [
   { name: 'ترم ۵', gpa: 17.20 },
 ];
 
-const termCourses = [
-  { name: 'برنامه‌نویسی پیشرفته', units: 3, grade: 18.5, status: 'قبول', term: 'نیمسال دوم ۱۴۰۳-۱۴۰۴' },
-  { name: 'پایگاه داده', units: 3, grade: 17.0, status: 'قبول', term: 'نیمسال دوم ۱۴۰۳-۱۴۰۴' },
-  { name: 'شبکه‌های کامپیوتری', units: 3, grade: 16.25, status: 'قبول', term: 'نیمسال دوم ۱۴۰۳-۱۴۰۴' },
-];
+// Mock courses for each term
+const allTermCourses: Record<number, Array<{ name: string; units: number; grade: number; status: string }>> = {
+  1: [
+    { name: 'ریاضی عمومی ۱', units: 3, grade: 15.0, status: 'قبول' },
+    { name: 'فیزیک ۱', units: 3, grade: 16.5, status: 'قبول' },
+    { name: 'مبانی کامپیوتر', units: 3, grade: 17.0, status: 'قبول' },
+    { name: 'زبان انگلیسی', units: 2, grade: 14.5, status: 'قبول' },
+  ],
+  2: [
+    { name: 'ریاضی عمومی ۲', units: 3, grade: 16.0, status: 'قبول' },
+    { name: 'فیزیک ۲', units: 3, grade: 15.5, status: 'قبول' },
+    { name: 'برنامه‌نویسی مقدماتی', units: 3, grade: 18.0, status: 'قبول' },
+    { name: 'ریاضیات گسسته', units: 3, grade: 17.0, status: 'قبول' },
+  ],
+  3: [
+    { name: 'کارآموزی', units: 3, grade: 20.0, status: 'قبول' },
+  ],
+  4: [
+    { name: 'ساختمان داده', units: 3, grade: 18.5, status: 'قبول' },
+    { name: 'طراحی الگوریتم', units: 3, grade: 17.5, status: 'قبول' },
+    { name: 'معماری کامپیوتر', units: 3, grade: 18.0, status: 'قبول' },
+    { name: 'سیستم عامل', units: 3, grade: 19.0, status: 'قبول' },
+  ],
+  5: [
+    { name: 'برنامه‌نویسی پیشرفته', units: 3, grade: 18.5, status: 'قبول' },
+    { name: 'پایگاه داده', units: 3, grade: 17.0, status: 'قبول' },
+    { name: 'شبکه‌های کامپیوتری', units: 3, grade: 16.25, status: 'قبول' },
+    { name: 'هوش مصنوعی', units: 3, grade: 14.5, status: 'قبول' },
+    { name: 'مهندسی نرم‌افزار', units: 3, grade: 15.0, status: 'قبول' },
+  ],
+};
 
 const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps) => {
   const [predictUnits, setPredictUnits] = useState(17);
   const [predictGrade, setPredictGrade] = useState(17.00);
+  const [selectedTermId, setSelectedTermId] = useState(5); // Default to latest term
+
+  const selectedTermCourses = allTermCourses[selectedTermId] || [];
 
   const averageGPA = chartData.reduce((sum, d) => sum + d.gpa, 0) / chartData.length;
   const totalGPA = 16.83;
@@ -153,6 +182,7 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
             <div className="bg-muted/30 rounded-lg p-4 border border-border">
               <h4 className="font-bold mb-3 flex items-center gap-2">
                 ترم‌های تحصیلی
+                <span className="text-xs text-muted-foreground font-normal">(برای مشاهده دروس کلیک کنید)</span>
               </h4>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -164,9 +194,16 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
                     </tr>
                   </thead>
                   <tbody>
-                    {termData.map((term, idx) => (
-                      <tr key={idx} className={`border-b border-border/50 ${idx === 0 ? 'bg-primary/5' : ''}`}>
-                        <td className="py-2 px-2 text-xs">{term.term}</td>
+                    {termData.map((term) => (
+                      <tr 
+                        key={term.id} 
+                        className={`border-b border-border/50 cursor-pointer transition-colors hover:bg-primary/10 ${selectedTermId === term.id ? 'bg-primary/15 ring-1 ring-primary/30' : ''}`}
+                        onClick={() => setSelectedTermId(term.id)}
+                      >
+                        <td className="py-2 px-2 text-xs">
+                          {selectedTermId === term.id && <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary ml-1.5" />}
+                          {term.term}
+                        </td>
                         <td className={`text-center py-2 px-2 text-xs font-medium ${term.gpa >= 17 ? 'text-emerald-600' : ''}`}>
                           {term.gpa.toFixed(2)}
                         </td>
@@ -182,6 +219,9 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
             <div className="bg-muted/30 rounded-lg p-4 border border-border">
               <h4 className="font-bold mb-3 flex items-center gap-2">
                 دروس ترم
+                <span className="text-xs text-primary font-normal">
+                  ({termData.find(t => t.id === selectedTermId)?.term})
+                </span>
               </h4>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -194,18 +234,26 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
                     </tr>
                   </thead>
                   <tbody>
-                    {termCourses.map((course, idx) => (
-                      <tr key={idx} className="border-b border-border/50">
-                        <td className="py-2 px-2 text-xs">{course.name}</td>
-                        <td className="text-center py-2 px-2 text-xs">{course.units}</td>
-                        <td className="text-center py-2 px-2 text-xs font-medium">{course.grade.toFixed(2)}</td>
-                        <td className="text-center py-2 px-2">
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600">
-                            {course.status}
-                          </span>
+                    {selectedTermCourses.length > 0 ? (
+                      selectedTermCourses.map((course, idx) => (
+                        <tr key={idx} className="border-b border-border/50">
+                          <td className="py-2 px-2 text-xs">{course.name}</td>
+                          <td className="text-center py-2 px-2 text-xs">{course.units}</td>
+                          <td className="text-center py-2 px-2 text-xs font-medium">{course.grade.toFixed(2)}</td>
+                          <td className="text-center py-2 px-2">
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full ${course.grade >= 10 ? 'bg-emerald-500/10 text-emerald-600' : 'bg-destructive/10 text-destructive'}`}>
+                              {course.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={4} className="text-center py-4 text-xs text-muted-foreground">
+                          درسی یافت نشد
                         </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>
