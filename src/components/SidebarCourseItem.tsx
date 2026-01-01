@@ -34,7 +34,7 @@ const SidebarCourseItem = ({ course }: SidebarCourseItemProps) => {
   };
 
   return (
-    <HoverCard openDelay={1000} closeDelay={100}>
+    <HoverCard openDelay={700} closeDelay={100}>
       <HoverCardTrigger asChild>
         <div 
           className={cn(
