@@ -40,38 +40,39 @@ const ScheduleGrid = () => {
     return `${hour.toString().padStart(2, '0')}:۰۰`;
   };
 
-  const ROW_HEIGHT = 60;
-  const HEADER_HEIGHT = 40;
-  const TIME_COL_WIDTH = 60;
+  const ROW_HEIGHT = 72;
+  const HEADER_HEIGHT = 48;
+  const TIME_COL_WIDTH = 72;
 
   return (
-    <div data-tour="schedule-grid" className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden bg-muted/30 p-3">
-      <div className="flex-1 overflow-auto bg-card rounded-xl shadow-sm border border-border/50">
+    <div data-tour="schedule-grid" className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden bg-muted/20 p-4 md:p-6">
+      <div className="flex-1 overflow-auto bg-card rounded-2xl shadow-md border border-border/40">
         <div 
-          className="min-w-[800px]"
+          className="min-w-[900px]"
           style={{
             display: 'grid',
-            gridTemplateColumns: `${TIME_COL_WIDTH}px repeat(6, minmax(0, 1fr))`,
+            gridTemplateColumns: `${TIME_COL_WIDTH}px repeat(6, minmax(120px, 1fr))`,
             gridTemplateRows: `${HEADER_HEIGHT}px repeat(${TIME_SLOTS.length}, ${ROW_HEIGHT}px)`,
+            gap: '1px',
           }}
         >
           {/* Header Row */}
           <div 
             className={cn(
-              "sticky top-0 z-20 bg-muted/80 backdrop-blur-sm flex items-center justify-center",
-              showGridLines ? "border border-border" : ""
+              "sticky top-0 z-20 bg-muted/90 backdrop-blur-md flex items-center justify-center",
+              showGridLines ? "border border-border/50" : ""
             )}
             style={{ gridColumn: 1, gridRow: 1 }}
           >
-            <span className={cn("font-bold text-muted-foreground", getFontSizeClass())}>ساعت</span>
+            <span className={cn("font-bold text-muted-foreground text-sm", getFontSizeClass())}>ساعت</span>
           </div>
 
           {DAYS.map((day, dayIndex) => (
             <div
               key={`header-${day}`}
               className={cn(
-                "sticky top-0 z-20 bg-muted/80 backdrop-blur-sm flex items-center justify-center font-bold text-foreground",
-                showGridLines ? "border-t border-b border-l border-border" : "",
+                "sticky top-0 z-20 bg-muted/90 backdrop-blur-md flex items-center justify-center font-bold text-foreground text-sm",
+                showGridLines ? "border-t border-b border-l border-border/50" : "",
                 getFontSizeClass()
               )}
               style={{ gridColumn: dayIndex + 2, gridRow: 1 }}
@@ -85,8 +86,8 @@ const ScheduleGrid = () => {
             <React.Fragment key={`row-${time}`}>
               <div
                 className={cn(
-                  "bg-muted/50 flex items-center justify-center text-muted-foreground font-mono",
-                  showGridLines ? "border-l border-b border-border" : "",
+                  "bg-muted/40 flex items-center justify-center text-muted-foreground font-mono text-xs",
+                  showGridLines ? "border-l border-b border-border/40" : "",
                   getFontSizeClass()
                 )}
                 style={{ gridColumn: 1, gridRow: rowIndex + 2 }}

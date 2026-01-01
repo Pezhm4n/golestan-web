@@ -1,4 +1,4 @@
-import { Save, Trash2, MoreVertical } from 'lucide-react';
+import { Check, Trash2, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -44,10 +44,10 @@ const SidebarActions = () => {
       <Button 
         variant="default" 
         size="sm" 
-        className="flex-1 h-8 text-xs gap-1.5"
+        className="flex-1 h-9 text-sm gap-2"
         onClick={handleSave}
       >
-        <Save className="h-3.5 w-3.5" />
+        <Check className="h-4 w-4" />
         ذخیره برنامه
       </Button>
       
