@@ -1,4 +1,4 @@
-import { Moon, Sun, Download, Heart, Loader2 } from 'lucide-react';
+import { Moon, Sun, Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import html2canvas from 'html2canvas';
@@ -253,11 +253,6 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
 
           <div className="w-px h-5 bg-border mx-1" />
           
-          {/* Exam Schedule */}
-          <ExamScheduleDialog />
-
-          <div className="w-px h-5 bg-border mx-1" />
-          
           {/* Language Toggle */}
           <LanguageToggle />
           
@@ -275,26 +270,6 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
             <TooltipContent>{isDarkMode ? 'حالت روشن' : 'حالت تاریک'}</TooltipContent>
           </Tooltip>
           
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                data-tour="download-image"
-                variant="outline" 
-                size="sm" 
-                className="h-8 px-3 text-xs gap-1.5"
-                onClick={handleDownloadImage}
-                disabled={isDownloading}
-              >
-                {isDownloading ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Download className="h-3.5 w-3.5" />
-                )}
-                <span className="hidden sm:inline">دانلود تصویر</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent className="sm:hidden">دانلود تصویر</TooltipContent>
-          </Tooltip>
 
           <div className="w-px h-5 bg-border mx-1" />
 

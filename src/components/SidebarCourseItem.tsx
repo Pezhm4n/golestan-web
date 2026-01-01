@@ -64,23 +64,18 @@ const SidebarCourseItem = ({ course }: SidebarCourseItemProps) => {
             )}
           </div>
           
-          {/* Course Info */}
+          {/* Course Info - Single Line */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="font-semibold text-foreground truncate">{course.name}</span>
+            <div className={cn("flex items-center gap-1.5 text-foreground truncate", getFontSizeClass())}>
+              <span className="font-semibold truncate">{course.name}</span>
+              <span className="text-muted-foreground">-</span>
+              <span className="text-muted-foreground truncate">{course.instructor}</span>
+              <span className="text-muted-foreground">-</span>
+              <span className="text-muted-foreground shrink-0">گروه {course.group || 1}</span>
               {course.isGeneral && (
-                <Badge variant="secondary" className="h-4 px-1 text-[8px]">عمومی</Badge>
+                <Badge variant="secondary" className="h-4 px-1 text-[8px] shrink-0">عمومی</Badge>
               )}
             </div>
-            <div className={cn("flex items-center gap-2 text-muted-foreground mt-0.5", getFontSizeClass())}>
-              <span className="truncate">{course.instructor}</span>
-              <span className="shrink-0 font-medium">{course.credits} واحد</span>
-            </div>
-          </div>
-          
-          {/* Sessions indicator */}
-          <div className={cn("text-muted-foreground shrink-0 bg-muted px-1.5 py-0.5 rounded", getFontSizeClass())}>
-            {course.sessions.length} جلسه
           </div>
         </div>
       </HoverCardTrigger>

@@ -61,7 +61,7 @@ const SingleBlock = ({
         <TooltipTrigger asChild>
           <div
             className={cn(
-              "group relative flex flex-col justify-start items-start text-right overflow-hidden cursor-pointer",
+              "group relative flex flex-col justify-center items-center text-center overflow-hidden cursor-pointer",
               "border-r-[3px] border-r-gray-700/50 transition-all duration-200 rounded-lg",
               isHalf ? 'h-1/2' : 'h-full',
               isHalf && position === 'top' ? 'border-b border-dashed border-gray-500/40' : '',
@@ -101,11 +101,11 @@ const SingleBlock = ({
               </span>
             )}
 
-            {/* Content - Hierarchical Layout */}
-            <div className="flex flex-col items-start w-full gap-0.5">
+            {/* Content - Centered Layout */}
+            <div className="flex flex-col items-center justify-center w-full h-full text-center gap-0.5">
               {/* Title - Large and Bold */}
               <h3 className={cn(
-                "font-bold text-gray-900 leading-snug line-clamp-2 w-full",
+                "font-bold text-gray-900 leading-snug line-clamp-2",
                 isHalf ? "text-[9px]" 
                   : fontSize === 'small' ? "text-xs" : fontSize === 'large' ? "text-base" : "text-sm"
               )}>
@@ -122,11 +122,21 @@ const SingleBlock = ({
                 </p>
               )}
               
+              {/* Course Code */}
+              {!isHalf && (
+                <p className={cn(
+                  "text-gray-600 font-mono",
+                  fontSize === 'small' ? "text-[9px]" : fontSize === 'large' ? "text-xs" : "text-[10px]"
+                )}>
+                  {session.courseId}
+                </p>
+              )}
+              
               {/* Metadata Row - Badges */}
-              <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+              <div className="flex items-center justify-center gap-1.5 flex-wrap">
                 {/* Credits Badge */}
                 <span className={cn(
-                  "bg-gray-800/15 text-gray-800 px-2 py-0.5 rounded-md font-semibold",
+                  "bg-gray-800/15 text-gray-800 px-1.5 py-0.5 rounded-md font-semibold",
                   isHalf ? "text-[7px]" : fontSize === 'small' ? "text-[8px]" : fontSize === 'large' ? "text-xs" : "text-[9px]"
                 )}>
                   {session.credits} واحد
@@ -139,16 +149,6 @@ const SingleBlock = ({
                 )}>
                   {GROUP_LABELS[session.group]}
                 </span>
-                
-                {/* Course Code - Small */}
-                {!isHalf && (
-                  <span className={cn(
-                    "text-gray-500",
-                    fontSize === 'small' ? "text-[7px]" : fontSize === 'large' ? "text-[10px]" : "text-[8px]"
-                  )}>
-                    {session.courseId}
-                  </span>
-                )}
               </div>
             </div>
           </div>
