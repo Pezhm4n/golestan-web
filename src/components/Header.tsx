@@ -1,6 +1,5 @@
-import { Moon, Sun, Download, BarChart3, Calendar } from 'lucide-react';
+import { Moon, Sun, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   Tooltip,
   TooltipContent,
@@ -10,6 +9,8 @@ import {
 import ExamScheduleDialog from './ExamScheduleDialog';
 import AutoPlannerDialog from './AutoPlannerDialog';
 import SavedSchedulesSheet from './SavedSchedulesSheet';
+import ProfileDropdown from './ProfileDropdown';
+import LanguageToggle from './LanguageToggle';
 
 interface HeaderProps {
   isDarkMode: boolean;
@@ -36,27 +37,15 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
           {/* Saved Schedules - Icon + Text on desktop */}
           <SavedSchedulesSheet />
 
-          {/* Statistics */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 gap-1.5 px-2 text-xs"
-              >
-                <BarChart3 className="h-4 w-4" />
-                <span className="hidden md:inline">آمار</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent className="md:hidden">آمار</TooltipContent>
-          </Tooltip>
-
           <div className="w-px h-5 bg-border mx-1" />
           
           {/* Exam Schedule */}
           <ExamScheduleDialog />
 
           <div className="w-px h-5 bg-border mx-1" />
+          
+          {/* Language Toggle */}
+          <LanguageToggle />
           
           <Tooltip>
             <TooltipTrigger asChild>
@@ -84,11 +73,8 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
 
           <div className="w-px h-5 bg-border mx-1" />
 
-          <Avatar className="h-8 w-8 cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all">
-            <AvatarFallback className="text-xs bg-primary/10 text-primary">
-              کا
-            </AvatarFallback>
-          </Avatar>
+          {/* Profile Dropdown */}
+          <ProfileDropdown />
         </div>
       </TooltipProvider>
     </header>

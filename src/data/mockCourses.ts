@@ -5,6 +5,7 @@ export const departments = [
   { id: '2', name: 'مهندسی برق' },
   { id: '3', name: 'مهندسی مکانیک' },
   { id: '4', name: 'علوم پایه' },
+  { id: 'custom', name: 'دروس اضافه شده من' },
 ];
 
 export const availableCourses: Course[] = [
@@ -24,6 +25,7 @@ export const availableCourses: Course[] = [
     type: 'theoretical',
     isGeneral: false,
     category: 'available',
+    departmentId: '1',
     sessions: [
       { day: 0, startTime: 8, endTime: 10, location: 'کلاس ۱۰۱', weekType: 'both' },
       { day: 2, startTime: 8, endTime: 10, location: 'کلاس ۱۰۱', weekType: 'both' },
@@ -45,6 +47,7 @@ export const availableCourses: Course[] = [
     type: 'both',
     isGeneral: false,
     category: 'available',
+    departmentId: '2',
     sessions: [
       { day: 1, startTime: 14, endTime: 16, location: 'آزمایشگاه ۳', weekType: 'both' },
     ]
@@ -65,6 +68,7 @@ export const availableCourses: Course[] = [
     type: 'theoretical',
     isGeneral: true,
     category: 'available',
+    departmentId: '4',
     sessions: [
       { day: 3, startTime: 10, endTime: 12, location: 'سالن ۱', weekType: 'odd' },
     ]
@@ -85,6 +89,7 @@ export const availableCourses: Course[] = [
     type: 'both',
     isGeneral: false,
     category: 'available',
+    departmentId: '1',
     sessions: [
       { day: 0, startTime: 10, endTime: 12, location: 'کلاس ۲۰۵', weekType: 'both' },
       { day: 4, startTime: 14, endTime: 16, location: 'لابراتوار ۱', weekType: 'both' },
@@ -106,6 +111,7 @@ export const availableCourses: Course[] = [
     type: 'theoretical',
     isGeneral: true,
     category: 'available',
+    departmentId: '4',
     sessions: [
       { day: 3, startTime: 10, endTime: 12, location: 'کلاس ۳۰۱', weekType: 'even' },
     ]
@@ -126,6 +132,7 @@ export const availableCourses: Course[] = [
     type: 'practical',
     isGeneral: false,
     category: 'other',
+    departmentId: '2',
     sessions: [
       { day: 4, startTime: 10, endTime: 12, location: 'آزمایشگاه ۵', weekType: 'both' },
     ]
@@ -146,6 +153,7 @@ export const availableCourses: Course[] = [
     type: 'theoretical',
     isGeneral: false,
     category: 'other',
+    departmentId: '4',
     sessions: [
       { day: 2, startTime: 10, endTime: 12, location: 'کلاس ۱۰۲', weekType: 'both' },
     ]
@@ -166,6 +174,7 @@ export const availableCourses: Course[] = [
     type: 'practical',
     isGeneral: false,
     category: 'other',
+    departmentId: '3',
     sessions: [
       { day: 5, startTime: 8, endTime: 10, location: 'کارگاه ۲', weekType: 'both' },
     ]
@@ -186,6 +195,7 @@ export const availableCourses: Course[] = [
     type: 'theoretical',
     isGeneral: false,
     category: 'available',
+    departmentId: '1',
     sessions: [
       { day: 1, startTime: 8, endTime: 10, location: 'کلاس ۲۰۱', weekType: 'both' },
       { day: 3, startTime: 8, endTime: 10, location: 'کلاس ۲۰۱', weekType: 'both' },
@@ -207,6 +217,7 @@ export const availableCourses: Course[] = [
     type: 'practical',
     isGeneral: true,
     category: 'other',
+    departmentId: '4',
     sessions: [
       { day: 5, startTime: 10, endTime: 12, location: 'سالن ورزشی', weekType: 'both' },
     ]

@@ -27,6 +27,7 @@ export interface Course {
   type: CourseType;
   isGeneral: boolean;
   category: CourseCategory; // 'available' = allowed to take, 'other' = not allowed
+  departmentId?: string; // Department this course belongs to
   sessions: CourseSession[]; // Multi-session support
 }
 
