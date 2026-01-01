@@ -64,11 +64,12 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return selectedCourses.flatMap(course => 
       course.sessions.map(session => ({
         ...session,
-        courseId: course.id,
+        courseId: course.courseId,
+        parentId: course.id,
         courseName: course.name,
         instructor: course.instructor,
         credits: course.credits,
-        color: course.color,
+        group: course.group,
         examDate: course.examDate,
         examTime: course.examTime,
       }))

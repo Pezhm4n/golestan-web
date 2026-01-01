@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Course, WeekType, Gender, CourseType, DAYS } from '@/types/course';
+import { Course, WeekType, Gender, CourseType, CourseGroup, DAYS } from '@/types/course';
 
 interface AddCourseDialogProps {
   onAddCourse: (course: Course) => void;
@@ -35,8 +35,13 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
   const [startTime, setStartTime] = useState(8);
   const [endTime, setEndTime] = useState(10);
   const [weekType, setWeekType] = useState<WeekType>('both');
+  const [group, setGroup] = useState<CourseGroup>('specialized');
 
-  const colorOptions = ['blue', 'green', 'orange', 'purple', 'pink', 'teal'] as const;
+  const groupOptions: { value: CourseGroup; label: string }[] = [
+    { value: 'specialized', label: 'تخصصی' },
+    { value: 'general', label: 'عمومی' },
+    { value: 'basic', label: 'پایه' },
+  ];
 
   const handleSubmit = () => {
     if (!name.trim()) {
@@ -50,7 +55,6 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
       name: name.trim(),
       instructor: instructor || 'نامشخص',
       credits,
-      color: colorOptions[Math.floor(Math.random() * colorOptions.length)],
       examDate,
       examTime,
       description: '',
@@ -58,9 +62,10 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
       capacity: 30,
       enrolled: 0,
       type: 'theoretical' as CourseType,
-      isGeneral: false,
+      isGeneral: group === 'general',
       category: 'available',
       departmentId: 'custom', // Custom courses
+      group,
       sessions: [
         {
           day: sessionDay,
@@ -87,6 +92,7 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
     setStartTime(8);
     setEndTime(10);
     setWeekType('both');
+    setGroup('specialized');
     setOpen(false);
   };
 
@@ -222,19 +228,34 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
             </div>
           </div>
 
-          {/* Week Type */}
-          <div className="grid gap-2">
-            <Label className="text-xs">هفته</Label>
-            <Select value={weekType} onValueChange={(v) => setWeekType(v as WeekType)}>
-              <SelectTrigger className="text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="both" className="text-xs">هر هفته</SelectItem>
-                <SelectItem value="odd" className="text-xs">هفته فرد</SelectItem>
-                <SelectItem value="even" className="text-xs">هفته زوج</SelectItem>
-              </SelectContent>
-            </Select>
+          {/* Week Type & Course Group */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-2">
+              <Label className="text-xs">هفته</Label>
+              <Select value={weekType} onValueChange={(v) => setWeekType(v as WeekType)}>
+                <SelectTrigger className="text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="both" className="text-xs">هر هفته</SelectItem>
+                  <SelectItem value="odd" className="text-xs">هفته فرد</SelectItem>
+                  <SelectItem value="even" className="text-xs">هفته زوج</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label className="text-xs">نوع درس</Label>
+              <Select value={group} onValueChange={(v) => setGroup(v as CourseGroup)}>
+                <SelectTrigger className="text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {groupOptions.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Exam Date & Time */}

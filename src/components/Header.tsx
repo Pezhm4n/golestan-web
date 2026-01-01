@@ -55,15 +55,7 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
       const timeColBg = hslVar('--muted', 0.5);
       const gridLineColor = hslVar('--border', 0.9);
 
-      // Course colors (CSS vars sometimes export wrong; we apply them explicitly on clone)
-      const courseColors: Record<string, string> = {
-        blue: hslVar('--course-blue', 1),
-        green: hslVar('--course-green', 1),
-        orange: hslVar('--course-orange', 1),
-        purple: hslVar('--course-purple', 1),
-        pink: hslVar('--course-pink', 1),
-        teal: hslVar('--course-teal', 1),
-      };
+      // Note: Course colors are now dynamic via inline styles, no need for static mapping
 
       const canvas = await html2canvas(targetElement, {
         backgroundColor: bgColor,
@@ -97,16 +89,14 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
           });
 
           // Fix course cell colors - apply explicit HSL colors
-          Object.entries(courseColors).forEach(([colorName, colorValue]) => {
-            const cells = element.querySelectorAll(`.bg-course-${colorName}`);
-            cells.forEach((cell) => {
-              const htmlCell = cell as HTMLElement;
-              htmlCell.style.backgroundColor = colorValue;
-              htmlCell.style.padding = '6px 4px';
-              htmlCell.style.borderRadius = '6px';
-              htmlCell.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
-              htmlCell.style.borderRight = `3px solid ${isDarkMode ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.18)'}`;
-            });
+          // Course cells now use inline backgroundColor style, so we just enhance styling
+          const courseCells = element.querySelectorAll('[style*="background-color: hsl"]');
+          courseCells.forEach((cell) => {
+            const htmlCell = cell as HTMLElement;
+            htmlCell.style.padding = '6px 4px';
+            htmlCell.style.borderRadius = '6px';
+            htmlCell.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+            htmlCell.style.borderRight = `3px solid ${isDarkMode ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.18)'}`;
           });
 
           // Fix cell backgrounds (bg-*) that rely on CSS vars/opacity
