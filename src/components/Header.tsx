@@ -1,4 +1,4 @@
-import { Moon, Sun, Download, BarChart3 } from 'lucide-react';
+import { Moon, Sun, Download, BarChart3, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -30,21 +30,11 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
       
       <TooltipProvider delayDuration={200}>
         <div className="flex items-center gap-1">
-          {/* Auto Planner */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span><AutoPlannerDialog /></span>
-            </TooltipTrigger>
-            <TooltipContent>انتخاب خودکار</TooltipContent>
-          </Tooltip>
+          {/* Auto Planner - Icon + Text on desktop */}
+          <AutoPlannerDialog />
 
-          {/* Saved Schedules */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span><SavedSchedulesSheet /></span>
-            </TooltipTrigger>
-            <TooltipContent>ترکیب‌های ذخیره شده</TooltipContent>
-          </Tooltip>
+          {/* Saved Schedules - Icon + Text on desktop */}
+          <SavedSchedulesSheet />
 
           {/* Statistics */}
           <Tooltip>
@@ -52,12 +42,13 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 w-8 p-0"
+                className="h-8 gap-1.5 px-2 text-xs"
               >
                 <BarChart3 className="h-4 w-4" />
+                <span className="hidden md:inline">آمار</span>
               </Button>
             </TooltipTrigger>
-            <TooltipContent>آمار</TooltipContent>
+            <TooltipContent className="md:hidden">آمار</TooltipContent>
           </Tooltip>
 
           <div className="w-px h-5 bg-border mx-1" />
@@ -85,10 +76,10 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
             <TooltipTrigger asChild>
               <Button variant="outline" size="sm" className="h-8 px-3 text-xs gap-1.5">
                 <Download className="h-3.5 w-3.5" />
-                <span>خروجی</span>
+                <span className="hidden sm:inline">خروجی</span>
               </Button>
             </TooltipTrigger>
-            <TooltipContent>دانلود برنامه</TooltipContent>
+            <TooltipContent className="sm:hidden">دانلود برنامه</TooltipContent>
           </Tooltip>
 
           <div className="w-px h-5 bg-border mx-1" />

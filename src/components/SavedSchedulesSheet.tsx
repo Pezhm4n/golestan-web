@@ -56,8 +56,9 @@ const SavedSchedulesSheet = () => {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+        <Button variant="ghost" size="sm" className="h-8 gap-1.5 px-2 text-xs">
           <History className="h-4 w-4" />
+          <span className="hidden md:inline">ترکیب‌ها</span>
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-[320px]" dir="rtl">
