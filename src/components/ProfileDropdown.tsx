@@ -12,21 +12,21 @@ import {
 import { toast } from 'sonner';
 import StudentProfileDialog from './StudentProfileDialog';
 import GuidedTour from './GuidedTour';
+import SettingsDialog from './SettingsDialog';
+import { useSettings } from '@/contexts/SettingsContext';
 
 const ProfileDropdown = () => {
   const [profileOpen, setProfileOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const { t } = useSettings();
 
   const handleLogout = () => {
-    toast.info('از حساب کاربری خارج شدید');
-  };
-
-  const handleSettings = () => {
-    toast.info('تنظیمات در حال توسعه است');
+    toast.info(t('از حساب کاربری خارج شدید', 'Logged out'));
   };
 
   const handleAbout = () => {
-    toast.info('نسخه ۱.۰.۰ - برنامه‌ریز گلستان');
+    toast.info(t('نسخه ۱.۰.۰ - برنامه‌ریز گلستان', 'Version 1.0.0 - Golestan Planner'));
   };
 
   return (
@@ -42,7 +42,7 @@ const ProfileDropdown = () => {
         <DropdownMenuContent align="end" className="w-48 text-right">
           <DropdownMenuLabel className="text-xs font-normal">
             <div className="flex flex-col gap-1">
-              <p className="text-sm font-medium">کاربر مهمان</p>
+              <p className="text-sm font-medium">{t('کاربر مهمان', 'Guest User')}</p>
               <p className="text-xs text-muted-foreground">guest@example.com</p>
             </div>
           </DropdownMenuLabel>
@@ -50,22 +50,22 @@ const ProfileDropdown = () => {
           
           <DropdownMenuItem onClick={() => setProfileOpen(true)} className="text-xs gap-2 cursor-pointer">
             <User className="h-3.5 w-3.5" />
-            پروفایل دانشجو
+            {t('پروفایل دانشجو', 'Student Profile')}
           </DropdownMenuItem>
           
-          <DropdownMenuItem onClick={handleSettings} className="text-xs gap-2 cursor-pointer">
+          <DropdownMenuItem onClick={() => setSettingsOpen(true)} className="text-xs gap-2 cursor-pointer">
             <Settings className="h-3.5 w-3.5" />
-            تنظیمات
+            {t('تنظیمات', 'Settings')}
           </DropdownMenuItem>
           
           <DropdownMenuItem onClick={() => setTourOpen(true)} className="text-xs gap-2 cursor-pointer">
             <HelpCircle className="h-3.5 w-3.5" />
-            راهنما
+            {t('راهنما', 'Guide')}
           </DropdownMenuItem>
           
           <DropdownMenuItem onClick={handleAbout} className="text-xs gap-2 cursor-pointer">
             <Info className="h-3.5 w-3.5" />
-            درباره
+            {t('درباره', 'About')}
           </DropdownMenuItem>
           
           <DropdownMenuSeparator />
@@ -75,13 +75,14 @@ const ProfileDropdown = () => {
             className="text-xs gap-2 cursor-pointer text-destructive focus:text-destructive"
           >
             <LogOut className="h-3.5 w-3.5" />
-            خروج
+            {t('خروج', 'Logout')}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
       <StudentProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
       <GuidedTour isOpen={tourOpen} onClose={() => setTourOpen(false)} />
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </>
   );
 };
