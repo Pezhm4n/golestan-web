@@ -39,43 +39,47 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
       const innerGrid = scheduleGrid.querySelector('.min-w-\\[800px\\]');
       const targetElement = (innerGrid || scheduleGrid) as HTMLElement;
 
-      // Clone the element to avoid modifying the original
-      const clone = targetElement.cloneNode(true) as HTMLElement;
-      clone.style.position = 'absolute';
-      clone.style.left = '-9999px';
-      clone.style.top = '0';
-      clone.style.width = `${targetElement.scrollWidth}px`;
-      clone.style.height = `${targetElement.scrollHeight}px`;
-      clone.style.overflow = 'visible';
-      clone.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--background') 
-        ? `hsl(${getComputedStyle(document.documentElement).getPropertyValue('--card').trim()})` 
-        : '#1a1a2e';
-      clone.style.borderRadius = '12px';
-      clone.style.padding = '8px';
-      
-      document.body.appendChild(clone);
-
-      const canvas = await html2canvas(clone, {
-        backgroundColor: null,
-        scale: 3, // Higher quality for better text clarity
+      const canvas = await html2canvas(targetElement, {
+        backgroundColor: isDarkMode ? '#1a1a2e' : '#ffffff',
+        scale: 2,
         useCORS: true,
         logging: false,
-        width: clone.scrollWidth,
-        height: clone.scrollHeight,
-        onclone: (clonedDoc) => {
-          // Ensure all text is rendered clearly
-          const elements = clonedDoc.querySelectorAll('*');
-          elements.forEach((el) => {
+        width: targetElement.scrollWidth,
+        height: targetElement.scrollHeight,
+        windowWidth: targetElement.scrollWidth + 100,
+        windowHeight: targetElement.scrollHeight + 100,
+        onclone: (clonedDoc, element) => {
+          // Remove truncate class from all elements to show full text
+          const truncatedElements = element.querySelectorAll('.truncate');
+          truncatedElements.forEach((el) => {
+            el.classList.remove('truncate');
+            (el as HTMLElement).style.overflow = 'visible';
+            (el as HTMLElement).style.textOverflow = 'clip';
+            (el as HTMLElement).style.whiteSpace = 'normal';
+            (el as HTMLElement).style.wordBreak = 'break-word';
+          });
+
+          // Make course cells larger to fit text
+          const courseCells = element.querySelectorAll('[class*="bg-course-"]');
+          courseCells.forEach((cell) => {
+            const htmlCell = cell as HTMLElement;
+            htmlCell.style.padding = '8px';
+            htmlCell.style.fontSize = '12px';
+          });
+
+          // Increase font size for better readability
+          const textElements = element.querySelectorAll('p, span');
+          textElements.forEach((el) => {
             const htmlEl = el as HTMLElement;
-            if (htmlEl.style) {
-              htmlEl.style.imageRendering = 'auto';
+            const currentSize = parseFloat(getComputedStyle(htmlEl).fontSize);
+            if (currentSize < 10) {
+              htmlEl.style.fontSize = '10px';
             }
           });
         }
       });
 
-      // Remove the clone
-      document.body.removeChild(clone);
+      // Convert to blob and download
 
       // Convert to blob and download
       canvas.toBlob((blob) => {
