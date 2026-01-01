@@ -1,9 +1,13 @@
+export type WeekType = 'odd' | 'even' | 'both';
+
 export interface Course {
   id: string;
   name: string;
   instructor: string;
   credits: number;
   color: 'blue' | 'green' | 'orange' | 'purple' | 'pink' | 'teal';
+  examDate?: string;
+  description?: string;
 }
 
 export interface ScheduledCourse extends Course {
@@ -11,6 +15,7 @@ export interface ScheduledCourse extends Course {
   startTime: number; // 7-19 (hour)
   endTime: number; // 8-20 (hour)
   location: string;
+  weekType: WeekType; // odd = فرد, even = زوج, both = هر هفته
 }
 
 export const DAYS = [
