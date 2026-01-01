@@ -18,12 +18,12 @@ const ScheduleApp = () => {
   }, [isDarkMode]);
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-background">
+    <div className="h-screen flex flex-col overflow-hidden bg-muted/30">
       <Header isDarkMode={isDarkMode} onToggleDarkMode={() => setIsDarkMode(!isDarkMode)} />
       
       <div className="flex-1 flex overflow-hidden min-h-0">
-        <Sidebar />
         <ScheduleGrid />
+        <Sidebar />
       </div>
       
       <Footer totalUnits={totalUnits} courseCount={selectedCourses.length} />

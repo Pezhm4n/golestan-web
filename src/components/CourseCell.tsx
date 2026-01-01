@@ -50,12 +50,16 @@ const SingleBlock = ({
               group relative flex flex-col justify-between overflow-hidden cursor-pointer
               ${colorClasses[session.color]} 
               border-r-2 border-r-foreground/40
-              transition-all duration-150
+              transition-all duration-200
               ${isHalf ? 'h-1/2' : 'h-full'}
               ${isHalf && position === 'top' ? 'border-b border-dashed border-foreground/30' : ''}
-              ${isHighlighted ? 'ring-2 ring-primary ring-offset-1 scale-[1.02] z-20 shadow-lg brightness-110' : ''}
-              ${isDimmed ? 'opacity-40' : ''}
+              ${isHighlighted 
+                ? 'ring-2 ring-primary scale-[1.02] shadow-lg z-20 border-r-primary' 
+                : ''
+              }
+              ${isDimmed ? 'opacity-85' : ''}
               px-1 py-0.5
+              rounded-sm
             `}
             onMouseEnter={() => setHoveredCourseId(session.courseId)}
             onMouseLeave={() => setHoveredCourseId(null)}
@@ -68,8 +72,9 @@ const SingleBlock = ({
                 w-4 h-4 flex items-center justify-center
                 bg-destructive text-destructive-foreground
                 opacity-0 group-hover:opacity-100
-                transition-opacity duration-100
+                transition-all duration-200
                 hover:bg-destructive/80
+                rounded-br-sm
               `}
             >
               <X className="w-3 h-3" />
@@ -78,7 +83,7 @@ const SingleBlock = ({
             {/* Week Type Badge */}
             {weekLabel && (
               <span className={`
-                absolute top-0 right-0 text-[7px] px-0.5 font-bold
+                absolute top-0 right-0 text-[7px] px-0.5 font-bold rounded-bl-sm
                 ${session.weekType === 'odd' ? 'bg-amber-400/90 text-amber-900' : 'bg-sky-400/90 text-sky-900'}
               `}>
                 {weekLabel}
@@ -134,7 +139,7 @@ const CourseCell = ({ sessions = [] }: CourseCellProps) => {
 
   if (hasConflict) {
     return (
-      <div className="absolute inset-[1px] bg-destructive/30 border-2 border-dashed border-destructive flex items-center justify-center">
+      <div className="absolute inset-[1px] bg-destructive/30 border-2 border-dashed border-destructive flex items-center justify-center rounded-sm">
         <span className="text-[9px] font-bold text-destructive">تداخل!</span>
       </div>
     );
@@ -145,7 +150,7 @@ const CourseCell = ({ sessions = [] }: CourseCellProps) => {
     const evenSession = sessions.find(s => s.weekType === 'even') || sessions[1];
     
     return (
-      <div className="absolute inset-[1px] flex flex-col">
+      <div className="absolute inset-[1px] flex flex-col rounded-sm overflow-hidden">
         <SingleBlock session={oddSession} isHalf={true} position="top" />
         <SingleBlock session={evenSession} isHalf={true} position="bottom" />
       </div>
@@ -153,7 +158,7 @@ const CourseCell = ({ sessions = [] }: CourseCellProps) => {
   }
 
   return (
-    <div className="absolute inset-[1px]">
+    <div className="absolute inset-[1px] rounded-sm overflow-hidden">
       <SingleBlock session={sessions[0]} />
     </div>
   );
