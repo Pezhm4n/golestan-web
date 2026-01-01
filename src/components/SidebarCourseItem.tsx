@@ -1,12 +1,14 @@
 import { Plus, Check, AlertTriangle } from 'lucide-react';
 import { Course } from '@/types/course';
 import { useSchedule } from '@/contexts/ScheduleContext';
+import { useSettings } from '@/contexts/SettingsContext';
 import { Badge } from '@/components/ui/badge';
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from '@/components/ui/hover-card';
+import { cn } from '@/lib/utils';
 
 interface SidebarCourseItemProps {
   course: Course;
@@ -20,6 +22,7 @@ const SidebarCourseItem = ({ course }: SidebarCourseItemProps) => {
     hoveredCourseId, 
     setHoveredCourseId 
   } = useSchedule();
+  const { getFontSizeClass } = useSettings();
   
   const isSelected = isCourseSelected(course.id);
   const conflict = !isSelected ? hasConflict(course) : { hasConflict: false };
@@ -34,22 +37,14 @@ const SidebarCourseItem = ({ course }: SidebarCourseItemProps) => {
     <HoverCard openDelay={200} closeDelay={100}>
       <HoverCardTrigger asChild>
         <div 
-          className={`
-            flex items-center gap-2 px-2 py-2 border-b border-border/30 
-            transition-all duration-200 cursor-pointer text-[11px]
-            hover:bg-accent/50
-            ${isSelected 
-              ? 'bg-primary/10 border-r-2 border-r-primary' 
-              : conflict.hasConflict 
-                ? 'bg-destructive/5 border-r-2 border-r-destructive/50' 
-                : ''
-            }
-            ${isHighlighted 
-              ? 'bg-primary/15 shadow-sm scale-[1.01]' 
-              : ''
-            }
-            ${isDimmed ? 'opacity-80' : ''}
-          `}
+          className={cn(
+            "flex items-center gap-2 px-2 py-2 border-b border-border/30 transition-all duration-200 cursor-pointer hover:bg-accent/50",
+            getFontSizeClass(),
+            isSelected && "bg-primary/10 border-r-2 border-r-primary",
+            !isSelected && conflict.hasConflict && "bg-destructive/5 border-r-2 border-r-destructive/50",
+            isHighlighted && "bg-primary/15 shadow-sm scale-[1.01]",
+            isDimmed && "opacity-80"
+          )}
           onClick={handleClick}
           onMouseEnter={() => setHoveredCourseId(course.id)}
           onMouseLeave={() => setHoveredCourseId(null)}
@@ -77,14 +72,14 @@ const SidebarCourseItem = ({ course }: SidebarCourseItemProps) => {
                 <Badge variant="secondary" className="h-4 px-1 text-[8px]">عمومی</Badge>
               )}
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground text-[10px] mt-0.5">
+            <div className={cn("flex items-center gap-2 text-muted-foreground mt-0.5", getFontSizeClass())}>
               <span className="truncate">{course.instructor}</span>
               <span className="shrink-0 font-medium">{course.credits} واحد</span>
             </div>
           </div>
           
           {/* Sessions indicator */}
-          <div className="text-[9px] text-muted-foreground shrink-0 bg-muted px-1.5 py-0.5 rounded">
+          <div className={cn("text-muted-foreground shrink-0 bg-muted px-1.5 py-0.5 rounded", getFontSizeClass())}>
             {course.sessions.length} جلسه
           </div>
         </div>

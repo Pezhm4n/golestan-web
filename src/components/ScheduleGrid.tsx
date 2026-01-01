@@ -1,12 +1,15 @@
 import React from 'react';
 import { DAYS, ScheduledSession } from '@/types/course';
 import { useSchedule } from '@/contexts/ScheduleContext';
+import { useSettings } from '@/contexts/SettingsContext';
 import CourseCell from './CourseCell';
+import { cn } from '@/lib/utils';
 
 const TIME_SLOTS = Array.from({ length: 14 }, (_, i) => 7 + i);
 
 const ScheduleGrid = () => {
   const { scheduledSessions } = useSchedule();
+  const { showGridLines, getFontSizeClass } = useSettings();
 
   const getSessionsForSlot = (day: number, time: number): ScheduledSession[] => {
     return scheduledSessions.filter(
@@ -41,16 +44,23 @@ const ScheduleGrid = () => {
         >
           {/* Header Row */}
           <div 
-            className="sticky top-0 z-20 bg-muted/80 backdrop-blur-sm border border-border flex items-center justify-center"
+            className={cn(
+              "sticky top-0 z-20 bg-muted/80 backdrop-blur-sm flex items-center justify-center",
+              showGridLines ? "border border-border" : ""
+            )}
             style={{ gridColumn: 1, gridRow: 1 }}
           >
-            <span className="text-[10px] font-bold text-muted-foreground">ساعت</span>
+            <span className={cn("font-bold text-muted-foreground", getFontSizeClass())}>ساعت</span>
           </div>
 
           {DAYS.map((day, dayIndex) => (
             <div
               key={`header-${day}`}
-              className="sticky top-0 z-20 bg-muted/80 backdrop-blur-sm border-t border-b border-l border-border flex items-center justify-center font-bold text-[11px] text-foreground"
+              className={cn(
+                "sticky top-0 z-20 bg-muted/80 backdrop-blur-sm flex items-center justify-center font-bold text-foreground",
+                showGridLines ? "border-t border-b border-l border-border" : "",
+                getFontSizeClass()
+              )}
               style={{ gridColumn: dayIndex + 2, gridRow: 1 }}
             >
               {day}
@@ -61,7 +71,11 @@ const ScheduleGrid = () => {
           {TIME_SLOTS.map((time, rowIndex) => (
             <React.Fragment key={`row-${time}`}>
               <div
-                className="bg-muted/50 border-l border-b border-border flex items-center justify-center text-[10px] text-muted-foreground font-mono"
+                className={cn(
+                  "bg-muted/50 flex items-center justify-center text-muted-foreground font-mono",
+                  showGridLines ? "border-l border-b border-border" : "",
+                  getFontSizeClass()
+                )}
                 style={{ gridColumn: 1, gridRow: rowIndex + 2 }}
               >
                 {formatTime(time)}
@@ -79,11 +93,12 @@ const ScheduleGrid = () => {
                 return (
                   <div
                     key={`cell-${dayIndex}-${time}`}
-                    className={`
-                      relative border-l border-b border-border/60
-                      ${rowIndex % 2 === 0 ? 'bg-background' : 'bg-muted/10'}
-                      hover:bg-accent/30 transition-colors duration-150
-                    `}
+                    className={cn(
+                      "relative transition-colors duration-150",
+                      showGridLines ? "border-l border-b border-border/60" : "",
+                      rowIndex % 2 === 0 ? 'bg-background' : 'bg-muted/10',
+                      "hover:bg-accent/30"
+                    )}
                     style={{ 
                       gridColumn: dayIndex + 2, 
                       gridRow: rowSpan > 1 

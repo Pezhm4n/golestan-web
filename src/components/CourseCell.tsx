@@ -1,12 +1,14 @@
 import { X } from 'lucide-react';
 import { ScheduledSession } from '@/types/course';
 import { useSchedule } from '@/contexts/ScheduleContext';
+import { useSettings } from '@/contexts/SettingsContext';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 interface CourseCellProps {
   sessions?: ScheduledSession[];
@@ -31,6 +33,7 @@ const SingleBlock = ({
   position?: 'top' | 'bottom';
 }) => {
   const { hoveredCourseId, setHoveredCourseId, removeCourse } = useSchedule();
+  const { getFontSizeClass, fontSize } = useSettings();
   
   const isHighlighted = hoveredCourseId === session.courseId;
   const isDimmed = hoveredCourseId !== null && hoveredCourseId !== session.courseId;
@@ -85,23 +88,37 @@ const SingleBlock = ({
             {/* Content - Centered Layout */}
             <div className="flex flex-col items-center w-full px-1">
               {/* Line 1: Course Name */}
-              <p className={`font-bold text-foreground leading-tight truncate w-full ${isHalf ? 'text-[8px]' : 'text-xs'}`}>
+              <p className={cn(
+                "font-bold text-foreground leading-tight truncate w-full",
+                isHalf 
+                  ? "text-[8px]" 
+                  : fontSize === 'small' ? "text-[10px]" : fontSize === 'large' ? "text-sm" : "text-xs"
+              )}>
                 {session.courseName}
               </p>
               
               {/* Line 2: Instructor */}
               {!isHalf && (
-                <p className="text-[10px] text-foreground/70 truncate w-full font-light">
+                <p className={cn(
+                  "text-foreground/70 truncate w-full font-light",
+                  fontSize === 'small' ? "text-[8px]" : fontSize === 'large' ? "text-xs" : "text-[10px]"
+                )}>
                   {session.instructor}
                 </p>
               )}
               
               {/* Line 3: Code + Units */}
               <div className="flex items-center justify-center gap-1 mt-0.5">
-                <span className={`text-foreground/60 ${isHalf ? 'text-[6px]' : 'text-[8px]'}`}>
+                <span className={cn(
+                  "text-foreground/60",
+                  isHalf ? "text-[6px]" : fontSize === 'small' ? "text-[7px]" : fontSize === 'large' ? "text-[10px]" : "text-[8px]"
+                )}>
                   {session.courseId}
                 </span>
-                <span className={`bg-foreground/20 text-foreground/80 px-1 rounded font-medium ${isHalf ? 'text-[6px]' : 'text-[8px]'}`}>
+                <span className={cn(
+                  "bg-foreground/20 text-foreground/80 px-1 rounded font-medium",
+                  isHalf ? "text-[6px]" : fontSize === 'small' ? "text-[7px]" : fontSize === 'large' ? "text-[10px]" : "text-[8px]"
+                )}>
                   {session.credits}و
                 </span>
               </div>
