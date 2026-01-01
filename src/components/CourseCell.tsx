@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+import { X, AlertTriangle } from 'lucide-react';
 import { ScheduledSession } from '@/types/course';
 import { useSchedule } from '@/contexts/ScheduleContext';
 import { useSettings } from '@/contexts/SettingsContext';
@@ -17,11 +17,17 @@ interface CourseCellProps {
 
 const SingleBlock = ({ 
   session, 
-  isHalf = false, 
+  isHalf = false,
+  isStacked = false,
+  stackIndex = 0,
+  totalStacked = 1,
   position 
 }: { 
   session: ScheduledSession; 
   isHalf?: boolean;
+  isStacked?: boolean;
+  stackIndex?: number;
+  totalStacked?: number;
   position?: 'top' | 'bottom';
 }) => {
   const { hoveredCourseId, setHoveredCourseId, removeCourse } = useSchedule();
@@ -40,26 +46,35 @@ const SingleBlock = ({
     removeCourse(session.parentId);
   };
 
+  // Calculate offset for stacked view
+  const stackOffset = isStacked ? stackIndex * 12 : 0;
+  const stackWidth = isStacked ? `calc(100% - ${(totalStacked - 1) * 12}px)` : '100%';
+
   return (
     <TooltipProvider delayDuration={300}>
       <Tooltip>
         <TooltipTrigger asChild>
           <div
-            className={`
-              group relative flex flex-col justify-center items-center text-center overflow-hidden cursor-pointer
-              border-r-2 border-r-foreground/40
-              transition-all duration-200
-              ${isHalf ? 'h-1/2' : 'h-full'}
-              ${isHalf && position === 'top' ? 'border-b border-dashed border-foreground/30' : ''}
-              ${isHighlighted 
-                ? 'ring-2 ring-offset-1 ring-primary shadow-[0_0_15px_hsl(var(--primary)/0.4)] scale-[1.02] z-50' 
-                : ''
-              }
-              ${isDimmed ? 'opacity-80' : ''}
-              px-1 py-0.5
-              rounded-sm
-            `}
-            style={{ backgroundColor }}
+            className={cn(
+              "group relative flex flex-col justify-center items-center text-center overflow-hidden cursor-pointer",
+              "border-r-2 border-r-foreground/40 transition-all duration-200",
+              isHalf ? 'h-1/2' : 'h-full',
+              isHalf && position === 'top' ? 'border-b border-dashed border-foreground/30' : '',
+              isHighlighted && 'ring-2 ring-offset-1 ring-primary shadow-[0_0_15px_hsl(var(--primary)/0.4)] scale-[1.02] z-50',
+              isDimmed && 'opacity-70',
+              'px-1 py-0.5 rounded-sm',
+              isStacked && 'absolute shadow-md border border-foreground/20'
+            )}
+            style={{ 
+              backgroundColor,
+              ...(isStacked && {
+                right: `${stackOffset}px`,
+                top: `${stackOffset}px`,
+                width: stackWidth,
+                height: `calc(100% - ${stackOffset}px)`,
+                zIndex: totalStacked - stackIndex,
+              })
+            }}
             onMouseEnter={() => setHoveredCourseId(session.parentId)}
             onMouseLeave={() => setHoveredCourseId(null)}
           >
@@ -86,7 +101,7 @@ const SingleBlock = ({
               {/* Line 1: Course Name */}
               <p className={cn(
                 "font-bold text-foreground leading-tight truncate w-full",
-                isHalf 
+                isHalf || isStacked
                   ? "text-[8px]" 
                   : fontSize === 'small' ? "text-[10px]" : fontSize === 'large' ? "text-sm" : "text-xs"
               )}>
@@ -94,7 +109,7 @@ const SingleBlock = ({
               </p>
               
               {/* Line 2: Instructor */}
-              {!isHalf && (
+              {!isHalf && !isStacked && (
                 <p className={cn(
                   "text-foreground/70 truncate w-full font-light",
                   fontSize === 'small' ? "text-[8px]" : fontSize === 'large' ? "text-xs" : "text-[10px]"
@@ -106,26 +121,28 @@ const SingleBlock = ({
               {/* Line 3: Course Code */}
               <p className={cn(
                 "text-foreground/60 truncate w-full",
-                isHalf ? "text-[6px]" : fontSize === 'small' ? "text-[7px]" : fontSize === 'large' ? "text-[10px]" : "text-[8px]"
+                isHalf || isStacked ? "text-[6px]" : fontSize === 'small' ? "text-[7px]" : fontSize === 'large' ? "text-[10px]" : "text-[8px]"
               )}>
                 کد: {session.courseId}
               </p>
               
               {/* Line 4: Units + Group */}
-              <div className="flex items-center gap-1 mt-0.5">
-                <span className={cn(
-                  "bg-foreground/20 text-foreground/80 px-1.5 rounded font-medium",
-                  isHalf ? "text-[6px]" : fontSize === 'small' ? "text-[7px]" : fontSize === 'large' ? "text-[10px]" : "text-[8px]"
-                )}>
-                  {session.credits} واحد
-                </span>
-                <span className={cn(
-                  "text-foreground/50",
-                  isHalf ? "text-[5px]" : fontSize === 'small' ? "text-[6px]" : fontSize === 'large' ? "text-[9px]" : "text-[7px]"
-                )}>
-                  ({GROUP_LABELS[session.group]})
-                </span>
-              </div>
+              {!isStacked && (
+                <div className="flex items-center gap-1 mt-0.5">
+                  <span className={cn(
+                    "bg-foreground/20 text-foreground/80 px-1.5 rounded font-medium",
+                    isHalf ? "text-[6px]" : fontSize === 'small' ? "text-[7px]" : fontSize === 'large' ? "text-[10px]" : "text-[8px]"
+                  )}>
+                    {session.credits} واحد
+                  </span>
+                  <span className={cn(
+                    "text-foreground/50",
+                    isHalf ? "text-[5px]" : fontSize === 'small' ? "text-[6px]" : fontSize === 'large' ? "text-[9px]" : "text-[7px]"
+                  )}>
+                    ({GROUP_LABELS[session.group]})
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </TooltipTrigger>
@@ -158,19 +175,43 @@ const SingleBlock = ({
 const CourseCell = ({ sessions = [] }: CourseCellProps) => {
   if (!sessions || sessions.length === 0) return null;
 
-  const hasDual = sessions.length === 2;
-  const hasConflict = sessions.length > 2 || 
-    (hasDual && sessions[0].weekType === sessions[1].weekType);
+  // Check for odd/even week split (2 sessions with different week types)
+  const hasDualWeek = sessions.length === 2 && 
+    sessions[0].weekType !== 'both' && 
+    sessions[1].weekType !== 'both' &&
+    sessions[0].weekType !== sessions[1].weekType;
 
+  // True conflict: more than 2 sessions, or 2+ sessions with same week type
+  const hasConflict = sessions.length > 1 && !hasDualWeek;
+
+  // Stacked conflict view - show all courses layered
   if (hasConflict) {
     return (
-      <div className="absolute inset-[1px] bg-destructive/30 border-2 border-dashed border-destructive flex items-center justify-center rounded-sm">
-        <span className="text-[9px] font-bold text-destructive">تداخل!</span>
+      <div className="absolute inset-[1px] rounded-sm overflow-visible">
+        {/* Conflict indicator badge */}
+        <div className="absolute -top-1 -left-1 z-[100] flex items-center gap-0.5 bg-destructive text-destructive-foreground px-1 py-0.5 rounded text-[8px] font-bold shadow-md">
+          <AlertTriangle className="w-2.5 h-2.5" />
+          تداخل ({sessions.length})
+        </div>
+        
+        {/* Stacked courses */}
+        <div className="relative w-full h-full">
+          {sessions.map((session, index) => (
+            <SingleBlock 
+              key={session.parentId} 
+              session={session} 
+              isStacked={true}
+              stackIndex={index}
+              totalStacked={sessions.length}
+            />
+          ))}
+        </div>
       </div>
     );
   }
 
-  if (hasDual) {
+  // Dual week view (odd/even)
+  if (hasDualWeek) {
     const oddSession = sessions.find(s => s.weekType === 'odd') || sessions[0];
     const evenSession = sessions.find(s => s.weekType === 'even') || sessions[1];
     
@@ -182,6 +223,7 @@ const CourseCell = ({ sessions = [] }: CourseCellProps) => {
     );
   }
 
+  // Single course
   return (
     <div className="absolute inset-[1px] rounded-sm overflow-hidden">
       <SingleBlock session={sessions[0]} />

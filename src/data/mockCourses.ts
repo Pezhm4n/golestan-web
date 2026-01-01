@@ -221,5 +221,69 @@ export const availableCourses: Course[] = [
     sessions: [
       { day: 5, startTime: 10, endTime: 12, location: 'سالن ورزشی', weekType: 'both' },
     ]
+  },
+  // درس‌های با تداخل زمانی برای تست
+  {
+    id: '11',
+    courseId: '۴۰۱۲۱۵۰۸',
+    name: 'ساختمان داده',
+    instructor: 'دکتر موسوی',
+    credits: 3,
+    examDate: '۱۴۰۳/۰۴/۲۳',
+    examTime: '۰۸:۰۰',
+    description: 'آرایه، لیست پیوندی، درخت و گراف',
+    gender: 'mixed',
+    capacity: 35,
+    enrolled: 30,
+    type: 'both',
+    isGeneral: false,
+    category: 'available',
+    departmentId: '1',
+    group: 'specialized',
+    sessions: [
+      { day: 0, startTime: 8, endTime: 10, location: 'کلاس ۳۰۲', weekType: 'both' }, // تداخل با ریاضی عمومی
+    ]
+  },
+  {
+    id: '12',
+    courseId: '۴۰۱۲۱۵۰۹',
+    name: 'الگوریتم',
+    instructor: 'دکتر حسینی',
+    credits: 3,
+    examDate: '۱۴۰۳/۰۴/۲۴',
+    examTime: '۱۰:۰۰',
+    description: 'طراحی و تحلیل الگوریتم‌ها',
+    gender: 'mixed',
+    capacity: 30,
+    enrolled: 28,
+    type: 'theoretical',
+    isGeneral: false,
+    category: 'available',
+    departmentId: '1',
+    group: 'specialized',
+    sessions: [
+      { day: 0, startTime: 8, endTime: 10, location: 'کلاس ۴۰۱', weekType: 'both' }, // تداخل با ریاضی و ساختمان داده
+    ]
+  },
+  {
+    id: '13',
+    courseId: '۴۰۱۲۱۵۱۰',
+    name: 'شبکه‌های کامپیوتری',
+    instructor: 'دکتر کریمی',
+    credits: 3,
+    examDate: '۱۴۰۳/۰۴/۲۶',
+    examTime: '۱۴:۰۰',
+    description: 'مبانی شبکه و پروتکل‌ها',
+    gender: 'mixed',
+    capacity: 35,
+    enrolled: 32,
+    type: 'both',
+    isGeneral: false,
+    category: 'available',
+    departmentId: '1',
+    group: 'specialized',
+    sessions: [
+      { day: 0, startTime: 10, endTime: 12, location: 'کلاس ۲۰۶', weekType: 'both' }, // تداخل با برنامه‌سازی پیشرفته
+    ]
   }
 ];

@@ -109,24 +109,25 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return { hasConflict: false };
   }, [scheduledSessions, allCourses]);
 
-  // Add course with conflict check
+  // Add course - allow conflicts but warn
   const addCourse = useCallback((course: Course): boolean => {
     if (selectedCourseIds.includes(course.id)) return false;
     
     const conflict = hasConflict(course);
-    if (conflict.hasConflict) {
-      toast.error('تداخل زمانی!', {
-        description: `این درس با "${conflict.conflictWith}" تداخل دارد.`,
-        duration: 3000,
-      });
-      return false;
-    }
     
     setSelectedCourseIds(prev => [...prev, course.id]);
-    toast.success('درس اضافه شد', {
-      description: course.name,
-      duration: 2000,
-    });
+    
+    if (conflict.hasConflict) {
+      toast.warning('تداخل زمانی!', {
+        description: `این درس با "${conflict.conflictWith}" تداخل دارد. می‌تونی یکی رو حذف کنی.`,
+        duration: 4000,
+      });
+    } else {
+      toast.success('درس اضافه شد', {
+        description: course.name,
+        duration: 2000,
+      });
+    }
     return true;
   }, [selectedCourseIds, hasConflict]);
 
