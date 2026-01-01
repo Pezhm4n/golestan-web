@@ -12,6 +12,7 @@ interface SettingsContextType {
   setThemeMode: (mode: ThemeMode) => void;
   showGridLines: boolean;
   setShowGridLines: (show: boolean) => void;
+  isDarkMode: boolean; // Computed dark mode state
   
   // Language
   language: Language;
@@ -46,6 +47,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [themeMode, setThemeModeState] = useState<ThemeMode>(defaultSettings.themeMode);
   const [showGridLines, setShowGridLinesState] = useState<boolean>(defaultSettings.showGridLines);
   const [language, setLanguageState] = useState<Language>(defaultSettings.language);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
 
   // Load settings from localStorage
   useEffect(() => {
@@ -75,16 +77,19 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
-  // Apply theme mode
+  // Apply theme mode and track isDarkMode
   useEffect(() => {
     const root = document.documentElement;
+    let dark = false;
     
     if (themeMode === 'system') {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      root.classList.toggle('dark', prefersDark);
+      dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     } else {
-      root.classList.toggle('dark', themeMode === 'dark');
+      dark = themeMode === 'dark';
     }
+    
+    root.classList.toggle('dark', dark);
+    setIsDarkMode(dark);
   }, [themeMode]);
 
   // Setters with persistence
@@ -135,6 +140,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setThemeMode,
     showGridLines,
     setShowGridLines,
+    isDarkMode,
     language,
     setLanguage,
     toggleLanguage,
