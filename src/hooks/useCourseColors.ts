@@ -73,7 +73,7 @@ const usedColorsPerGroup: Record<CourseGroup, Set<number>> = {
 // Map to store course-to-color assignments
 const courseColorMap = new Map<string, { index: number; group: CourseGroup }>();
 
-export function getCourseColor(courseId: string, group: CourseGroup, isDark: boolean): string {
+export function getCourseColor(courseId: string, group: CourseGroup, _isDark?: boolean): string {
   // Check if this course already has a color assigned
   let assignment = courseColorMap.get(courseId);
   
@@ -100,7 +100,8 @@ export function getCourseColor(courseId: string, group: CourseGroup, isDark: boo
     courseColorMap.set(courseId, assignment);
   }
   
-  const colors = isDark ? COLOR_FAMILIES[group].dark : COLOR_FAMILIES[group].light;
+  // Always use light colors for better readability in both themes
+  const colors = COLOR_FAMILIES[group].light;
   const color = colors[assignment.index % colors.length];
   
   return `hsl(${color.h} ${color.s}% ${color.l}%)`;
