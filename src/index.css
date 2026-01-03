@@ -166,6 +166,11 @@
     @apply bg-background text-foreground;
   }
 
+  input::placeholder,
+  textarea::placeholder {
+    color: hsl(var(--muted-foreground) / 0.35);
+  }
+
   /* Ensure Radix ScrollArea viewport does not grow with content width */
   [data-radix-scroll-area-viewport] {
     width: 100%;
