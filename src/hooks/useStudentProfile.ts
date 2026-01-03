@@ -34,11 +34,10 @@ export function useStudentProfile(): UseStudentProfile {
       setError(null);
 
       try {
-        // The actual credentials are currently handled on the backend side.
-        // We still persist them locally for potential future use (e.g. calling
-        // an authenticated backend endpoint), but the fetch itself does not
-        // fallback to any mock data.
-        const profile = await fetchStudentProfile();
+        const profile = await fetchStudentProfile({
+          username: creds.username,
+          password: creds.password,
+        });
         saveCredentials(creds);
         saveStudentData(profile);
         setStudent(profile);

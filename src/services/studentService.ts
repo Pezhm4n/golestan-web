@@ -4,27 +4,39 @@ import type {
   SemesterRecord,
   Student,
 } from '@/types/student';
+import { getCredentials } from '@/lib/studentStorage';
 
 const STUDENT_PROFILE_ENDPOINT = 'http://localhost:8000/api/student/profile';
 
 /**
- * Raw models as they come from the Python/FastAPI backend.
- * These mirror the dataclasses in `_reference_logic/requests_scraper/models.py`
- * plus a few optional convenience fields that may be added on the server side.
+ * Raw models as they come from the backend.
+ *
+ * They support **both**:
+ * - snake_case fields (Python/FastAPI backend)
+ * - camelCase fields (Node/Golestan backend)
  */
 
 type RawCourseEnrollment = {
-  course_code: string;
-  course_name: string;
-  course_units: number | string;
-  course_type: string;
-  grade_state: string;
+  // snake_case (Python)
+  course_code?: string;
+  course_name?: string;
+  course_units?: number | string;
+  course_type?: string;
+  grade_state?: string;
   grade?: number | string | null;
+
+  // camelCase (Node Golestan)
+  courseCode?: string;
+  courseName?: string;
+  courseUnits?: number | string;
+  courseType?: string;
+  gradeState?: string;
 };
 
 type RawSemesterRecord = {
-  semester_id: number | string;
-  semester_description: string;
+  // snake_case (Python)
+  semester_id?: number | string;
+  semester_description?: string;
   semester_gpa?: number | string | null;
   units_taken?: number | string | null;
   units_passed?: number | string | null;
@@ -35,11 +47,27 @@ type RawSemesterRecord = {
   semester_status?: string | null;
   semester_type?: string | null;
   probation_status?: string | null;
+
+  // camelCase (Node Golestan)
+  semesterId?: number | string;
+  semesterDescription?: string;
+  semesterGpa?: number | string | null;
+  unitsTaken?: number | string | null;
+  unitsPassed?: number | string | null;
+  unitsFailed?: number | string | null;
+  unitsDropped?: number | string | null;
+  cumulativeGpa?: number | string | null;
+  cumulativeUnitsPassed?: number | string | null;
+  semesterStatus?: string | null;
+  semesterType?: string | null;
+  probationStatus?: string | null;
+
   courses?: RawCourseEnrollment[];
 };
 
 type RawStudent = {
-  student_id: string;
+  // snake_case (Python)
+  student_id?: string;
   name?: string;
   first_name?: string;
   last_name?: string;
@@ -61,6 +89,23 @@ type RawStudent = {
   semesters?: RawSemesterRecord[];
   updated_at?: string;
   image_b64?: string | null;
+
+  // camelCase (Node Golestan)
+  studentId?: string;
+  fatherName?: string;
+  degreeLevel?: string;
+  studyType?: string;
+  enrollmentStatus?: string;
+  registrationPermission?: boolean;
+  overallGpa?: number | string | null;
+  totalUnitsPassed?: number | string | null;
+  totalProbation?: number;
+  consecutiveProbation?: number;
+  specialProbation?: number;
+  totalUnits?: number | string | null;
+  bestTermGpa?: number | string | null;
+  updatedAt?: string;
+  imageB64?: string | null;
 };
 
 /**
@@ -89,7 +134,8 @@ function toNullableNumber(value: unknown): number | null {
  */
 function mapCourseStatus(raw: RawCourseEnrollment): CourseStatus {
   const grade = toNullableNumber(raw.grade);
-  const state = (raw.grade_state || '').toString().trim();
+  const stateRaw = raw.grade_state ?? raw.gradeState ?? '';
+  const state = stateRaw.toString().trim();
 
   if (/حذف|withdraw/i.test(state)) {
     return 'withdrawn';
@@ -118,26 +164,36 @@ function normalizeCourseEnrollment(
   termId: string,
 ): CourseEnrollment {
   const grade = toNullableNumber(raw.grade);
-  const units = toNumber(raw.course_units, 0);
-  const code = raw.course_code?.toString() ?? '';
-  const baseId = code || raw.course_name || 'course';
+
+  const codeRaw = raw.course_code ?? raw.courseCode;
+  const nameRaw = raw.course_name ?? raw.courseName;
+  const unitsRaw = raw.course_units ?? raw.courseUnits;
+  const typeRaw = raw.course_type ?? raw.courseType;
+  const gradeStateRaw = raw.grade_state ?? raw.gradeState;
+
+  const units = toNumber(unitsRaw, 0);
+  const code = codeRaw != null ? codeRaw.toString() : '';
+  const baseId = code || nameRaw || 'course';
 
   return {
-    // Stable id: termId-code
+    // Stable id: termId-code (or termId-name) to avoid duplicate keys
     id: termId ? `${termId}-${baseId}` : baseId,
     code,
-    name: raw.course_name ?? '',
+    name: nameRaw ?? '',
     units,
     grade,
-    status: mapCourseStatus(raw),
+    status: mapCourseStatus({
+      ...raw,
+      grade_state: gradeStateRaw ?? raw.grade_state,
+    }),
     term_id: termId,
 
     // Raw fields
-    course_code: raw.course_code,
-    course_name: raw.course_name,
+    course_code: codeRaw ?? '',
+    course_name: nameRaw ?? '',
     course_units: units,
-    course_type: raw.course_type,
-    grade_state: raw.grade_state,
+    course_type: typeRaw ?? '',
+    grade_state: gradeStateRaw ?? '',
   };
 }
 
@@ -145,23 +201,37 @@ function normalizeCourseEnrollment(
  * Normalize a backend SemesterRecord into the SemesterRecord model.
  */
 function normalizeSemesterRecord(raw: RawSemesterRecord): SemesterRecord {
-  const termCode = raw.semester_id != null ? String(raw.semester_id) : '';
-  const id = termCode || raw.semester_description || 'semester';
+  const semesterIdRaw = raw.semester_id ?? raw.semesterId;
+  const termCode =
+    semesterIdRaw != null ? String(semesterIdRaw) : '';
 
-  const unitsPassed = toNumber(raw.units_passed, 0);
-  const unitsTaken = toNumber(raw.units_taken, unitsPassed);
+  const description =
+    raw.semester_description ?? raw.semesterDescription ?? termCode;
+
+  const id = termCode || description || 'semester';
+
+  const unitsPassed = toNumber(
+    raw.units_passed ?? raw.unitsPassed,
+    0,
+  );
+  const unitsTaken = toNumber(
+    raw.units_taken ?? raw.unitsTaken,
+    unitsPassed,
+  );
 
   const courses: CourseEnrollment[] = (raw.courses ?? []).map(course =>
     normalizeCourseEnrollment(course, id),
   );
 
-  const termGpa = toNullableNumber(raw.semester_gpa);
+  const termGpa = toNullableNumber(
+    raw.semester_gpa ?? raw.semesterGpa,
+  );
 
   return {
     // Normalized fields
     id,
     term_code: termCode,
-    term_name: raw.semester_description ?? termCode,
+    term_name: description,
     term_gpa: termGpa,
     units_passed: unitsPassed,
     units_total: unitsTaken,
@@ -169,19 +239,25 @@ function normalizeSemesterRecord(raw: RawSemesterRecord): SemesterRecord {
 
     // Raw / passthrough fields
     semester_id:
-      typeof raw.semester_id === 'number'
-        ? raw.semester_id
-        : Number.parseInt(String(raw.semester_id), 10),
-    semester_description: raw.semester_description,
+      typeof semesterIdRaw === 'number'
+        ? semesterIdRaw
+        : Number.parseInt(String(semesterIdRaw ?? 0), 10),
+    semester_description: description,
     semester_gpa: termGpa ?? 0,
     units_taken: unitsTaken,
-    units_failed: toNumber(raw.units_failed, 0),
-    units_dropped: toNumber(raw.units_dropped, 0),
-    cumulative_gpa: toNullableNumber(raw.cumulative_gpa) ?? 0,
-    cumulative_units_passed: toNumber(raw.cumulative_units_passed, unitsPassed),
-    semester_status: raw.semester_status ?? null,
-    semester_type: raw.semester_type ?? null,
-    probation_status: raw.probation_status ?? null,
+    units_failed: toNumber(raw.units_failed ?? raw.unitsFailed, 0),
+    units_dropped: toNumber(raw.units_dropped ?? raw.unitsDropped, 0),
+    cumulative_gpa:
+      toNullableNumber(
+        raw.cumulative_gpa ?? raw.cumulativeGpa,
+      ) ?? 0,
+    cumulative_units_passed: toNumber(
+      raw.cumulative_units_passed ?? raw.cumulativeUnitsPassed,
+      unitsPassed,
+    ),
+    semester_status: raw.semester_status ?? raw.semesterStatus ?? null,
+    semester_type: raw.semester_type ?? raw.semesterType ?? null,
+    probation_status: raw.probation_status ?? raw.probationStatus ?? null,
   };
 }
 
@@ -196,10 +272,17 @@ function normalizeStudentProfile(raw: RawStudent): Student {
     normalizeSemesterRecord,
   );
 
-  const overallGpa = toNullableNumber(raw.overall_gpa);
-  const totalUnitsPassed = toNumber(raw.total_units_passed, 0);
+  const overallGpa = toNullableNumber(
+    raw.overall_gpa ?? raw.overallGpa,
+  );
+  const totalUnitsPassed = toNumber(
+    raw.total_units_passed ?? raw.totalUnitsPassed,
+    0,
+  );
+
+  const totalUnitsRaw = raw.total_units ?? raw.totalUnits;
   const totalUnits =
-    raw.total_units != null ? toNumber(raw.total_units) : null;
+    totalUnitsRaw != null ? toNumber(totalUnitsRaw, 0) : null;
 
   // If backend does not provide best_term_gpa, derive it from semesters.
   const derivedBestTermGpa =
@@ -211,9 +294,12 @@ function normalizeStudentProfile(raw: RawStudent): Student {
           return best;
         }, null);
 
+  const rawBestTerm =
+    raw.best_term_gpa ?? raw.bestTermGpa ?? null;
+
   const bestTermGpa =
-    raw.best_term_gpa != null
-      ? toNullableNumber(raw.best_term_gpa)
+    rawBestTerm != null
+      ? toNullableNumber(rawBestTerm)
       : derivedBestTermGpa;
 
   const nameFromParts = [raw.first_name, raw.last_name]
@@ -226,27 +312,51 @@ function normalizeStudentProfile(raw: RawStudent): Student {
     nameFromParts ||
     'Student';
 
-  const updatedAt = raw.updated_at ?? new Date().toISOString();
+  const updatedAt =
+    raw.updated_at ?? raw.updatedAt ?? new Date().toISOString();
+
+  const studentId = raw.student_id ?? raw.studentId ?? '';
+
+  const fatherName = raw.father_name ?? raw.fatherName ?? '';
+  const degreeLevel = raw.degree_level ?? raw.degreeLevel ?? '';
+  const studyType = raw.study_type ?? raw.studyType ?? '';
+  const enrollmentStatus =
+    raw.enrollment_status ?? raw.enrollmentStatus ?? '';
+  const registrationPermission =
+    raw.registration_permission ??
+    raw.registrationPermission ??
+    false;
+
+  const totalProbation =
+    raw.total_probation ?? raw.totalProbation ?? 0;
+  const consecutiveProbation =
+    raw.consecutive_probation ??
+    raw.consecutiveProbation ??
+    0;
+  const specialProbation =
+    raw.special_probation ?? raw.specialProbation ?? 0;
+
+  const imageB64 = raw.image_b64 ?? raw.imageB64 ?? null;
 
   const student: Student = {
-    student_id: raw.student_id,
+    student_id: studentId,
     name: displayName,
-    father_name: raw.father_name ?? '',
+    father_name: fatherName,
     faculty: raw.faculty ?? '',
     department: raw.department ?? '',
     major: raw.major ?? '',
-    degree_level: raw.degree_level ?? '',
-    study_type: raw.study_type ?? '',
-    enrollment_status: raw.enrollment_status ?? '',
-    registration_permission: Boolean(raw.registration_permission),
+    degree_level: degreeLevel,
+    study_type: studyType,
+    enrollment_status: enrollmentStatus,
+    registration_permission: Boolean(registrationPermission),
     overall_gpa: overallGpa,
     total_units_passed: totalUnitsPassed,
-    total_probation: raw.total_probation ?? 0,
-    consecutive_probation: raw.consecutive_probation ?? 0,
-    special_probation: raw.special_probation ?? 0,
+    total_probation: totalProbation,
+    consecutive_probation: consecutiveProbation,
+    special_probation: specialProbation,
     semesters,
     updated_at: updatedAt,
-    image_b64: raw.image_b64 ?? null,
+    image_b64: imageB64,
 
     // Web-UI convenience / derived fields
     total_gpa: overallGpa,
@@ -265,18 +375,33 @@ function normalizeStudentProfile(raw: RawStudent): Student {
 /**
  * Fetch the student profile from the real backend.
  *
+ * If credentials are provided, they are sent via headers.
+ * Otherwise we try to reuse any stored credentials (if available).
+ *
  * This function deliberately does NOT fall back to any mock data.
  * If the request fails, it throws an Error so the UI can surface
  * the failure state to the user.
  */
-export async function fetchStudentProfile(): Promise<Student> {
+export async function fetchStudentProfile(params?: {
+  username: string;
+  password: string;
+}): Promise<Student> {
   let response: Response;
+
+  const storedCreds = params ?? getCredentials() ?? undefined;
+  const headers: HeadersInit = {};
+
+  if (storedCreds) {
+    headers['x-username'] = storedCreds.username;
+    headers['x-password'] = storedCreds.password;
+  }
 
   try {
     response = await fetch(STUDENT_PROFILE_ENDPOINT, {
       method: 'GET',
       // Include cookies when the backend relies on session auth.
       credentials: 'include',
+      headers,
     });
   } catch (error: unknown) {
     // Network / connection errors (e.g. ECONNREFUSED, DNS issues)

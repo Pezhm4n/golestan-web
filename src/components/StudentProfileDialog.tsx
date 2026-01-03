@@ -16,8 +16,19 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import type { SemesterRecord, CourseEnrollment, Student } from '@/types/student';
 import { fetchStudentProfile } from '@/services/studentService';
+import {
+  getCredentials,
+  getStudentData,
+  saveCredentials,
+  saveStudentData,
+  clearCredentials,
+  clearStudentData,
+} from '@/lib/studentStorage';
 
 interface StudentProfileDialogProps {
   open: boolean;
@@ -30,6 +41,12 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
+  const [showCredentialsForm, setShowCredentialsForm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   // Fetch profile whenever the dialog is opened or the user hits Retry
   useEffect(() => {
     if (!open) return;
@@ -39,21 +56,53 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
     const loadProfile = async () => {
       setIsLoading(true);
       setError(null);
+      setShowCredentialsForm(false);
 
       try {
-        const profile = await fetchStudentProfile();
+        // 1) If we already have cached student data, use it
+        const cachedStudent = getStudentData();
+        if (cachedStudent && !isCancelled) {
+          setStudent(cachedStudent);
+          return;
+        }
+
+        // 2) Try stored credentials (localStorage/sessionStorage)
+        const storedCreds = getCredentials();
+
+        if (!storedCreds) {
+          if (!isCancelled) {
+            setError(
+              'برای دریافت اطلاعات دانشجو، ابتدا باید شماره دانشجویی و رمز عبور گلستان را وارد کنید.',
+            );
+            setShowCredentialsForm(true);
+          }
+          return;
+        }
+
+        if (!isCancelled) {
+          setUsername(storedCreds.username);
+          setRememberMe(storedCreds.rememberMe);
+        }
+
+        const profile = await fetchStudentProfile({
+          username: storedCreds.username,
+          password: storedCreds.password,
+        });
+
         if (!isCancelled) {
           setStudent(profile);
+          saveStudentData(profile);
         }
       } catch (err: unknown) {
         if (isCancelled) return;
-        // Propagate a clear error message for the UI
+
         const message =
           err instanceof Error && err.message
             ? err.message
             : 'Failed to load student profile.';
         setError(message);
         setStudent(null);
+        setShowCredentialsForm(true);
       } finally {
         if (!isCancelled) {
           setIsLoading(false);
@@ -68,8 +117,60 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
     };
   }, [open, reloadKey]);
 
+  const handleSubmitCredentials = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    const trimmedUsername = username.trim();
+    const trimmedPassword = password.trim();
+
+    if (!trimmedUsername || !trimmedPassword) {
+      setError('لطفاً شماره دانشجویی و رمز عبور را وارد کنید.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const profile = await fetchStudentProfile({
+        username: trimmedUsername,
+        password: trimmedPassword,
+      });
+
+      const creds = {
+        username: trimmedUsername,
+        password: trimmedPassword,
+        rememberMe,
+      };
+      saveCredentials(creds);
+      saveStudentData(profile);
+      setStudent(profile);
+      setShowCredentialsForm(false);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error && err.message
+          ? err.message
+          : 'خطا در ورود به گلستان.';
+      setError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleRetry = () => {
     setReloadKey(key => key + 1);
+  };
+
+  const handleResetProfile = () => {
+    clearCredentials();
+    clearStudentData();
+    setStudent(null);
+    setError(
+      'اطلاعات ذخیره‌شده گلستان حذف شد. برای مشاهده پروفایل، دوباره وارد شوید.',
+    );
+    setUsername('');
+    setPassword('');
+    setShowCredentialsForm(true);
   };
 
   const overallGpa = student?.overall_gpa ?? student?.total_gpa ?? null;
@@ -121,14 +222,30 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
     typeof error === 'string' &&
     /fetch|network|connect|ECONNREFUSED/i.test(error);
 
+  const isMissingCredentials =
+    typeof error === 'string' &&
+    /Missing credentials|credentials required|نام کاربری و رمز عبور/i.test(
+      error,
+    );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" dir="rtl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-lg">
-            <User className="h-5 w-5 text-primary" />
-            پروفایل دانشجو
-          </DialogTitle>
+          <div className="flex items-center justify-between gap-2">
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <User className="h-5 w-5 text-primary" />
+              پروفایل دانشجو
+            </DialogTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 text-[11px]"
+              onClick={handleResetProfile}
+            >
+              تغییر حساب گلستان
+            </Button>
+          </div>
           <DialogDescription className="sr-only">
             Student personal information and academic history
           </DialogDescription>
@@ -152,17 +269,87 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
                 <AlertTriangle className="h-5 w-5" />
               </div>
               <p className="text-sm font-medium">
-                Cannot connect to the server. Please ensure the helper app is running.
+                {isMissingCredentials
+                  ? 'برای دریافت اطلاعات دانشجو، ابتدا باید یکبار با شماره دانشجویی و رمز عبور گلستان وارد شوید.'
+                  : isConnectionError
+                  ? 'Cannot connect to the server. Please ensure the helper app is running.'
+                  : 'خطا در دریافت اطلاعات دانشجو.'}
               </p>
               {error && (
                 <p className="text-[11px] text-muted-foreground break-words">
                   {error}
                 </p>
               )}
-              <div className="flex justify-center gap-2 pt-1">
-                <Button variant="outline" size="sm" onClick={handleRetry}>
-                  تلاش مجدد
-                </Button>
+              <div className="flex flex-col gap-3 pt-1 w-full">
+                <div className="flex justify-center gap-2">
+                  <Button variant="outline" size="sm" onClick={handleRetry}>
+                    تلاش مجدد
+                  </Button>
+                  {isMissingCredentials && (
+                    <Button
+                      size="sm"
+                      onClick={() => setShowCredentialsForm(true)}
+                    >
+                      ورود به گلستان
+                    </Button>
+                  )}
+                </div>
+
+                {showCredentialsForm && (
+                  <form
+                    onSubmit={handleSubmitCredentials}
+                    className="w-full max-w-sm mx-auto mt-1 space-y-3 text-right"
+                  >
+                    <div className="space-y-1">
+                      <Label htmlFor="student-id" className="text-xs">
+                        شماره دانشجویی
+                      </Label>
+                      <Input
+                        id="student-id"
+                        dir="ltr"
+                        value={username}
+                        onChange={e => setUsername(e.target.value)}
+                        className="h-8 text-xs"
+                        placeholder="مثلاً 981234567"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="golestan-password" className="text-xs">
+                        رمز عبور گلستان
+                      </Label>
+                      <Input
+                        id="golestan-password"
+                        type="password"
+                        dir="ltr"
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                        className="h-8 text-xs"
+                        placeholder="رمز عبور گلستان"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <label className="flex items-center gap-2 text-[11px] text-muted-foreground cursor-pointer">
+                        <Checkbox
+                          checked={rememberMe}
+                          onCheckedChange={checked =>
+                            setRememberMe(Boolean(checked))
+                          }
+                          className="h-3 w-3"
+                        />
+                        <span>ذخیره برای دفعات بعد (فقط روی این دستگاه)</span>
+                      </label>
+                    </div>
+                    <div className="flex justify-center gap-2 pt-1">
+                      <Button
+                        type="submit"
+                        size="sm"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? 'در حال ورود...' : 'ورود به گلستان'}
+                      </Button>
+                    </div>
+                  </form>
+                )}
               </div>
             </div>
           </div>
