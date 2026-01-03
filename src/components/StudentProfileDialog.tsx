@@ -39,6 +39,7 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
   const [student, setStudent] = useState<Student | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
   const [username, setUsername] = useState('');
@@ -46,6 +47,21 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
   const [rememberMe, setRememberMe] = useState(true);
   const [showCredentialsForm, setShowCredentialsForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const normalizeAuthErrorMessage = (message: string): string => {
+    if (
+      /CAPTCHA_FAILED/i.test(message) ||
+      /Authentication failed/i.test(message) ||
+      /invalid credentials/i.test(message) ||
+      /username and password/i.test(message)
+    ) {
+      return (
+        'لطفاً شماره دانشجویی و رمز عبور خود را بررسی کنید.\n' +
+        'Please check your username and password.'
+      );
+    }
+    return message;
+  };
 
   // Fetch profile whenever the dialog is opened or the user hits Retry
   useEffect(() => {
@@ -56,6 +72,7 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
     const loadProfile = async () => {
       setIsLoading(true);
       setError(null);
+      setInfoMessage(null);
       setShowCredentialsForm(false);
 
       try {
@@ -71,7 +88,7 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
 
         if (!storedCreds) {
           if (!isCancelled) {
-            setError(
+            setInfoMessage(
               'برای دریافت اطلاعات دانشجو، ابتدا باید شماره دانشجویی و رمز عبور گلستان را وارد کنید.',
             );
             setShowCredentialsForm(true);
@@ -96,11 +113,14 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
       } catch (err: unknown) {
         if (isCancelled) return;
 
-        const message =
+        const rawMessage =
           err instanceof Error && err.message
             ? err.message
             : 'Failed to load student profile.';
+        const message = normalizeAuthErrorMessage(rawMessage);
+
         setError(message);
+        setInfoMessage(null);
         setStudent(null);
         setShowCredentialsForm(true);
       } finally {
@@ -130,6 +150,7 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
 
     setIsSubmitting(true);
     setError(null);
+    setInfoMessage(null);
 
     try {
       const profile = await fetchStudentProfile({
@@ -147,10 +168,11 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
       setStudent(profile);
       setShowCredentialsForm(false);
     } catch (err: unknown) {
-      const message =
+      const rawMessage =
         err instanceof Error && err.message
           ? err.message
           : 'خطا در ورود به گلستان.';
+      const message = normalizeAuthErrorMessage(rawMessage);
       setError(message);
     } finally {
       setIsSubmitting(false);
@@ -165,7 +187,8 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
     clearCredentials();
     clearStudentData();
     setStudent(null);
-    setError(
+    setError(null);
+    setInfoMessage(
       'اطلاعات ذخیره‌شده گلستان حذف شد. برای مشاهده پروفایل، دوباره وارد شوید.',
     );
     setUsername('');
@@ -222,11 +245,7 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
     typeof error === 'string' &&
     /fetch|network|connect|ECONNREFUSED/i.test(error);
 
-  const isMissingCredentials =
-    typeof error === 'string' &&
-    /Missing credentials|credentials required|نام کاربری و رمز عبور/i.test(
-      error,
-    );
+  const isBusy = isLoading || isSubmitting;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -251,111 +270,122 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
           </DialogDescription>
         </DialogHeader>
 
-        {isLoading && (
+        {isBusy && (
           <div className="flex min-h-[240px] items-center justify-center">
             <div className="flex flex-col items-center gap-3">
               <span className="h-6 w-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
               <p className="text-sm text-muted-foreground">
-                در حال دریافت اطلاعات دانشجو...
+                {isSubmitting
+                  ? 'در حال ورود به گلستان...'
+                  : 'در حال دریافت اطلاعات دانشجو...'}
               </p>
             </div>
           </div>
         )}
 
-        {!isLoading && error && (
+        {!isBusy && showCredentialsForm && (
+          <div className="flex min-h-[240px] items-center justify-center">
+            <div className="flex flex-col items-center gap-3 text-center max-w-md mx-auto">
+              <div className="flex flex-col gap-1 text-[11px] text-muted-foreground">
+                <p>
+                  {infoMessage ??
+                    'برای دریافت اطلاعات دانشجو، ابتدا با شماره دانشجویی و رمز عبور گلستان وارد شوید.'}
+                </p>
+              </div>
+              {error && (
+                <p className="text-[11px] text-destructive whitespace-pre-line">
+                  {error}
+                </p>
+              )}
+              <form
+                onSubmit={handleSubmitCredentials}
+                className="w-full max-w-sm mx-auto mt-1 space-y-3 text-right"
+              >
+                <div className="space-y-1">
+                  <Label htmlFor="student-id" className="text-xs">
+                    شماره دانشجویی
+                  </Label>
+                  <Input
+                    id="student-id"
+                    dir="ltr"
+                    value={username}
+                    onChange={e => setUsername(e.target.value)}
+                    className="h-8 text-xs"
+                    placeholder="مثلاً 981234567"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="golestan-password" className="text-xs">
+                    رمز عبور گلستان
+                  </Label>
+                  <Input
+                    id="golestan-password"
+                    type="password"
+                    dir="ltr"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    className="h-8 text-xs"
+                    placeholder="رمز عبور گلستان"
+                  />
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <label className="flex items-center gap-2 text-[11px] text-muted-foreground cursor-pointer">
+                    <Checkbox
+                      checked={rememberMe}
+                      onCheckedChange={checked =>
+                        setRememberMe(Boolean(checked))
+                      }
+                      className="h-3 w-3"
+                    />
+                    <span>ذخیره برای دفعات بعد (فقط روی این دستگاه)</span>
+                  </label>
+                </div>
+                <div className="flex justify-center gap-2 pt-1">
+                  <Button
+                    type="submit"
+                    size="sm"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'در حال ورود...' : 'ورود به گلستان'}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {!isBusy && !showCredentialsForm && error && (
           <div className="flex min-h-[240px] items-center justify-center">
             <div className="flex flex-col items-center gap-3 text-center max-w-md mx-auto">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10 text-destructive">
                 <AlertTriangle className="h-5 w-5" />
               </div>
               <p className="text-sm font-medium">
-                {isMissingCredentials
-                  ? 'برای دریافت اطلاعات دانشجو، ابتدا باید یکبار با شماره دانشجویی و رمز عبور گلستان وارد شوید.'
-                  : isConnectionError
+                {isConnectionError
                   ? 'Cannot connect to the server. Please ensure the helper app is running.'
                   : 'خطا در دریافت اطلاعات دانشجو.'}
               </p>
               {error && (
-                <p className="text-[11px] text-muted-foreground break-words">
+                <p className="text-[11px] text-muted-foreground break-words whitespace-pre-line">
                   {error}
                 </p>
               )}
-              <div className="flex flex-col gap-3 pt-1 w-full">
-                <div className="flex justify-center gap-2">
-                  <Button variant="outline" size="sm" onClick={handleRetry}>
-                    تلاش مجدد
-                  </Button>
-                  {isMissingCredentials && (
-                    <Button
-                      size="sm"
-                      onClick={() => setShowCredentialsForm(true)}
-                    >
-                      ورود به گلستان
-                    </Button>
-                  )}
-                </div>
-
-                {showCredentialsForm && (
-                  <form
-                    onSubmit={handleSubmitCredentials}
-                    className="w-full max-w-sm mx-auto mt-1 space-y-3 text-right"
-                  >
-                    <div className="space-y-1">
-                      <Label htmlFor="student-id" className="text-xs">
-                        شماره دانشجویی
-                      </Label>
-                      <Input
-                        id="student-id"
-                        dir="ltr"
-                        value={username}
-                        onChange={e => setUsername(e.target.value)}
-                        className="h-8 text-xs"
-                        placeholder="مثلاً 981234567"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="golestan-password" className="text-xs">
-                        رمز عبور گلستان
-                      </Label>
-                      <Input
-                        id="golestan-password"
-                        type="password"
-                        dir="ltr"
-                        value={password}
-                        onChange={e => setPassword(e.target.value)}
-                        className="h-8 text-xs"
-                        placeholder="رمز عبور گلستان"
-                      />
-                    </div>
-                    <div className="flex items-center justify-between gap-2">
-                      <label className="flex items-center gap-2 text-[11px] text-muted-foreground cursor-pointer">
-                        <Checkbox
-                          checked={rememberMe}
-                          onCheckedChange={checked =>
-                            setRememberMe(Boolean(checked))
-                          }
-                          className="h-3 w-3"
-                        />
-                        <span>ذخیره برای دفعات بعد (فقط روی این دستگاه)</span>
-                      </label>
-                    </div>
-                    <div className="flex justify-center gap-2 pt-1">
-                      <Button
-                        type="submit"
-                        size="sm"
-                        disabled={isSubmitting}
-                      >
-                        {isSubmitting ? 'در حال ورود...' : 'ورود به گلستان'}
-                      </Button>
-                    </div>
-                  </form>
-                )}
+              <div className="flex justify-center gap-2 pt-1 w-full">
+                <Button variant="outline" size="sm" onClick={handleRetry}>
+                  تلاش مجدد
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => setShowCredentialsForm(true)}
+                >
+                  ورود به گلستان
+                </Button>
               </div>
             </div>
           </div>
         )}
 
-        {!isLoading && !error && student && (
+        {!isBusy && !error && student && (
           <div className="space-y-6">
             {/* Top Section - Profile Info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -585,7 +615,7 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
           </div>
         )}
 
-        {!isLoading && !error && !student && (
+        {!isBusy && !error && !student && !showCredentialsForm && (
           <p className="text-sm text-muted-foreground text-center py-8">
             اطلاعاتی برای نمایش وجود ندارد.
           </p>

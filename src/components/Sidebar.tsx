@@ -79,7 +79,7 @@ const VirtualizedCourseList = ({ courses }: VirtualizedCourseListProps) => {
 };
 
 const Sidebar = () => {
-  const { selectedCourses, allCourses, clearAll, addCustomCourse } = useSchedule();
+  const { selectedCourses, allCourses, clearAll, addCustomCourse, saveSchedule } = useSchedule();
   const { isLoading, error, departments } = useGolestanData();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState<string | 'all' | null>(null);
@@ -154,22 +154,32 @@ const Sidebar = () => {
       toast.info('برنامه خالی است');
       return;
     }
-    
-    // Check if this is the first save
-    const hasSeenDonateHint = localStorage.getItem('golestan-donate-hint');
-    
-    toast.success('برنامه ذخیره شد', {
-      description: `${selectedCourses.length} درس ذخیره شد`,
-    });
 
-    // Show donate hint after first save
+    const name = window.prompt('نام برنامه را وارد کنید:');
+    if (!name) {
+      return;
+    }
+
+    const trimmed = name.trim();
+    if (!trimmed) {
+      toast.error('لطفاً نام معتبر برای برنامه وارد کنید');
+      return;
+    }
+
+    // ذخیره از طریق کانتکست (همان مکانیزمی که در صفحه برنامه‌های ذخیره‌شده استفاده می‌شود)
+    saveSchedule(trimmed);
+
+    // Hint حمایت (فقط اولین بار)
+    const hasSeenDonateHint = localStorage.getItem('golestan-donate-hint');
     if (!hasSeenDonateHint) {
       localStorage.setItem('golestan-donate-hint', 'true');
       setTimeout(() => {
         toast('اگه این ابزار بهت کمک کرد، می‌تونی از ما حمایت کنی 💙', {
           action: {
             label: 'حمایت',
-            onClick: () => window.location.href = '/donate',
+            onClick: () => {
+              window.location.href = '/donate';
+            },
           },
           duration: 8000,
         });

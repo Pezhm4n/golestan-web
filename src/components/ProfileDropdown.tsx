@@ -14,19 +14,21 @@ import StudentProfileDialog from './StudentProfileDialog';
 import GuidedTour from './GuidedTour';
 import SettingsDialog from './SettingsDialog';
 import { useSettings } from '@/contexts/SettingsContext';
+import { useNavigate } from 'react-router-dom';
 
 const ProfileDropdown = () => {
   const [profileOpen, setProfileOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { t } = useSettings();
+  const navigate = useNavigate();
 
   const handleLogout = () => {
     toast.info(t('از حساب کاربری خارج شدید', 'Logged out'));
   };
 
   const handleAbout = () => {
-    toast.info(t('نسخه ۱.۰.۰ - برنامه‌ریز گلستان', 'Version 1.0.0 - Golestan Planner'));
+    navigate('/about');
   };
 
   return (
@@ -34,8 +36,8 @@ const ProfileDropdown = () => {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Avatar className="h-8 w-8 cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all">
-            <AvatarFallback className="text-xs bg-primary/10 text-primary">
-              کا
+            <AvatarFallback className="text-xs bg-primary/10 text-primary flex items-center justify-center">
+              <User className="h-4 w-4" />
             </AvatarFallback>
           </Avatar>
         </DropdownMenuTrigger>
