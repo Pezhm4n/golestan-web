@@ -144,6 +144,8 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const removeCourse = useCallback((courseId: string) => {
     const course = allCourses.find(c => c.id === courseId);
     setSelectedCourseIds(prev => prev.filter(id => id !== courseId));
+    // Clear any hover/preview state so ghost previews disappear immediately
+    setHoveredCourseId(null);
     if (course) {
       toast.info('درس حذف شد', {
         description: course.name,
@@ -155,6 +157,7 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Clear all courses
   const clearAll = useCallback(() => {
     setSelectedCourseIds([]);
+    setHoveredCourseId(null);
   }, []);
 
   // Toggle course (add/remove)
@@ -175,6 +178,8 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const removeCustomCourse = useCallback((courseId: string) => {
     setCustomCourses(prev => prev.filter(c => c.id !== courseId));
     setSelectedCourseIds(prev => prev.filter(id => id !== courseId));
+    // Clear hover/preview for this course if it was active
+    setHoveredCourseId(prev => (prev === courseId ? null : prev));
   }, []);
 
   const value: ScheduleContextType = {

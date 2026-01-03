@@ -48,7 +48,8 @@ const SidebarCourseItem = ({ course }: SidebarCourseItemProps) => {
         <div 
           dir="rtl"
           className={cn(
-            "flex items-center gap-2 px-2 py-1.5 border-b border-border/30 transition-all duration-200 cursor-pointer hover:bg-accent/50",
+            "flex w-full items-center gap-2 px-2 py-1.5 border-b border-border/30 transition-all duration-200 cursor-pointer hover:bg-accent/50",
+            "min-w-0",
             getFontSizeClass(),
             isSelected && "bg-primary/10 border-r-2 border-r-primary",
             !isSelected && conflict.hasConflict && "bg-destructive/5 border-r-2 border-r-destructive/50",
@@ -82,14 +83,16 @@ const SidebarCourseItem = ({ course }: SidebarCourseItemProps) => {
               "flex items-center gap-1 overflow-hidden"
             )}
           >
-            <span className="font-semibold truncate min-w-0 shrink">
-              {course.name}
-            </span>
-            <span className="text-muted-foreground shrink-0">-</span>
-            <span className="text-muted-foreground truncate min-w-0 shrink">
-              {course.instructor}
-            </span>
-            <span className="text-muted-foreground shrink-0">-</span>
+            {/* Outer flex item owns the shrinkable width */}
+            <div className="flex-1 min-w-0">
+              {/* Text container that actually carries ellipsis width */}
+              <div
+                dir="ltr"
+                className="truncate text-right block w-full"
+              >
+                {course.name} - {course.instructor}
+              </div>
+            </div>
             <span className="text-muted-foreground whitespace-nowrap shrink-0">
               گروه {groupLabel}
             </span>

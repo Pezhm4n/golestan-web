@@ -8,7 +8,7 @@ import {
   getStudentData,
   clearStudentData,
 } from '@/lib/studentStorage';
-import { mockFetchStudentProfile } from '@/services/api';
+import { fetchStudentProfile } from '@/services/studentService';
 
 interface UseStudentProfileState {
   student: Student | null;
@@ -34,7 +34,11 @@ export function useStudentProfile(): UseStudentProfile {
       setError(null);
 
       try {
-        const profile = await mockFetchStudentProfile(creds.username, creds.password);
+        // The actual credentials are currently handled on the backend side.
+        // We still persist them locally for potential future use (e.g. calling
+        // an authenticated backend endpoint), but the fetch itself does not
+        // fallback to any mock data.
+        const profile = await fetchStudentProfile();
         saveCredentials(creds);
         saveStudentData(profile);
         setStudent(profile);

@@ -165,4 +165,10 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Ensure Radix ScrollArea viewport does not grow with content width */
+  [data-radix-scroll-area-viewport] {
+    width: 100%;
+    max-width: 100%;
+  }
 }

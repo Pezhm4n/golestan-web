@@ -5,6 +5,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,7 +48,7 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
     await login(username.trim(), password, rememberMe);
   };
 
-  const overallGpa = student?.total_gpa ?? null;
+  const overallGpa = student?.overall_gpa ?? student?.total_gpa ?? null;
   const totalPassedUnits = student?.total_units_passed ?? 0;
   const totalRequiredUnits = student?.total_units ?? null;
   const bestTermGpa = student?.best_term_gpa ?? null;
@@ -55,6 +56,10 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
   const fullName = student?.name ?? 'کاربر مهمان';
   const major = student?.major ?? 'نامشخص';
   const faculty = student?.faculty ?? 'نامشخص';
+  const department = student?.department ?? 'نامشخص';
+  const degreeLevel = student?.degree_level ?? '';
+  const studyType = student?.study_type ?? '';
+  const enrollmentStatus = student?.enrollment_status ?? '';
   const studentId = student?.student_id ?? '—';
 
   const progressPercent =
@@ -77,6 +82,9 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
     }
   };
 
+  const formatGrade = (value: number | null | undefined) =>
+    typeof value === 'number' ? value.toFixed(2) : '—';
+
   const sortedSemesters: SemesterRecord[] = student
     ? [...student.semesters].slice().sort((a, b) => {
         const codeA = a.term_code ?? a.id ?? '';
@@ -93,6 +101,9 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
             <User className="h-5 w-5 text-primary" />
             پروفایل دانشجو
           </DialogTitle>
+          <DialogDescription className="hidden">
+            Student Profile Details
+          </DialogDescription>
         </DialogHeader>
 
         {!isAuthenticated && (
@@ -192,8 +203,20 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
                       دانشکده: {faculty}
                     </p>
                     <p className="text-sm text-muted-foreground">
+                      گروه آموزشی: {department}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
                       رشته: {major}
                     </p>
+                    {(degreeLevel || studyType || enrollmentStatus) && (
+                      <p className="text-xs text-muted-foreground flex flex-wrap gap-x-2 gap-y-0.5 justify-end">
+                        {degreeLevel && <span>مقطع: {degreeLevel}</span>}
+                        {studyType && <span>نوع دوره: {studyType}</span>}
+                        {enrollmentStatus && (
+                          <span>وضعیت تحصیل: {enrollmentStatus}</span>
+                        )}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -203,7 +226,7 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">معدل کل:</span>
                   <span className="font-bold text-lg">
-                    {overallGpa !== null ? overallGpa.toFixed(2) : '—'}
+                    {formatGrade(overallGpa)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -224,7 +247,7 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">بهترین میانگین ترم:</span>
                   <span className="font-medium text-emerald-600">
-                    {bestTermGpa !== null ? bestTermGpa.toFixed(2) : '—'}
+                    {formatGrade(bestTermGpa)}
                   </span>
                 </div>
               </div>
@@ -239,7 +262,7 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
                   <span className="text-sm font-medium">معدل کل</span>
                 </div>
                 <div className="text-3xl font-bold text-primary">
-                  {overallGpa !== null ? overallGpa.toFixed(2) : '—'}
+                  {formatGrade(overallGpa)}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">از 20</div>
               </div>
@@ -270,7 +293,7 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
                   <span className="text-sm font-medium">بهترین ترم</span>
                 </div>
                 <div className="text-3xl font-bold text-amber-600">
-                  {bestTermGpa !== null ? bestTermGpa.toFixed(2) : '—'}
+                  {formatGrade(bestTermGpa)}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">میانگین ترم</div>
               </div>
@@ -309,7 +332,7 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
                           <span className="text-muted-foreground">
                             معدل ترم:{' '}
                             <span className="font-semibold text-foreground">
-                              {semester.term_gpa !== null ? semester.term_gpa.toFixed(2) : '—'}
+                              {formatGrade(semester.term_gpa)}
                             </span>
                           </span>
                         </div>
@@ -352,7 +375,7 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
                                       {course.units}
                                     </td>
                                     <td className="text-center py-2 px-2 text-xs font-medium">
-                                      {typeof course.grade === 'number' ? course.grade.toFixed(2) : '—'}
+                                      {formatGrade(course.grade)}
                                     </td>
                                     <td className="text-center py-2 px-2">
                                       <span

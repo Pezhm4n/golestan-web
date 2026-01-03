@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 const TIME_SLOTS = Array.from({ length: 14 }, (_, i) => 7 + i);
 
 const ScheduleGrid = () => {
-  const { scheduledSessions, hoveredCourseId, allCourses } = useSchedule();
+  const { scheduledSessions, hoveredCourseId, allCourses, hasConflict } = useSchedule();
   const { showGridLines, getFontSizeClass } = useSettings();
   const { isMobile, isTablet } = useResponsive();
 
@@ -17,6 +17,9 @@ const ScheduleGrid = () => {
   const hoveredCourse = hoveredCourseId 
     ? allCourses.find(c => c.id === hoveredCourseId) 
     : null;
+
+  const hoveredConflict = hoveredCourse ? hasConflict(hoveredCourse) : null;
+  const hoveredHasConflict = hoveredConflict?.hasConflict ?? false;
 
   // Build synthetic ScheduledSession objects for the hovered course
   const hoveredSessions: ScheduledSession[] = useMemo(() => {
@@ -185,8 +188,8 @@ const ScheduleGrid = () => {
                       !isMobile && "hover:bg-accent/30",
                       // Active state for touch
                       "active:bg-accent/40",
-                      // Highlight cells where hovered course would appear
-                      isPreviewCell && !mainSession && "bg-primary/5"
+                      // Highlight cells where hovered course would appear (non-conflict preview)
+                      isPreviewCell && !mainSession && !hoveredHasConflict && "bg-primary/5"
                     )}
                     style={{ 
                       gridColumn: dayIndex + 2, 
@@ -196,8 +199,12 @@ const ScheduleGrid = () => {
                     }}
                   >
                     <CourseCell sessions={sessions} />
-                    {!mainSession && hoveredStartSessions.length > 0 && (
-                      <CourseCell sessions={hoveredStartSessions} ghost />
+                    {hoveredStartSessions.length > 0 && (
+                      <CourseCell
+                        sessions={hoveredStartSessions}
+                        ghost
+                        conflictPreview={hoveredHasConflict}
+                      />
                     )}
                   </div>
                 );
