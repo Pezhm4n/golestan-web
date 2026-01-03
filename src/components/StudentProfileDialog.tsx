@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { User, GraduationCap, BookOpen, LogOut, Lock, IdCard } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { User, GraduationCap, BookOpen, AlertTriangle } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -8,8 +8,6 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -18,8 +16,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { useStudentProfile } from '@/hooks/useStudentProfile';
-import type { SemesterRecord, CourseEnrollment } from '@/types/student';
+import type { SemesterRecord, CourseEnrollment, Student } from '@/types/student';
+import { fetchStudentProfile } from '@/services/studentService';
 
 interface StudentProfileDialogProps {
   open: boolean;
@@ -27,25 +25,51 @@ interface StudentProfileDialogProps {
 }
 
 const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps) => {
-  const {
-    student,
-    isLoading,
-    error,
-    isAuthenticated,
-    login,
-    logout,
-  } = useStudentProfile();
+  const [student, setStudent] = useState<Student | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(true);
+  // Fetch profile whenever the dialog is opened or the user hits Retry
+  useEffect(() => {
+    if (!open) return;
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!username.trim() || !password.trim()) {
-      return;
-    }
-    await login(username.trim(), password, rememberMe);
+    let isCancelled = false;
+
+    const loadProfile = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const profile = await fetchStudentProfile();
+        if (!isCancelled) {
+          setStudent(profile);
+        }
+      } catch (err: unknown) {
+        if (isCancelled) return;
+        // Propagate a clear error message for the UI
+        const message =
+          err instanceof Error && err.message
+            ? err.message
+            : 'Failed to load student profile.';
+        setError(message);
+        setStudent(null);
+      } finally {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadProfile();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [open, reloadKey]);
+
+  const handleRetry = () => {
+    setReloadKey(key => key + 1);
   };
 
   const overallGpa = student?.overall_gpa ?? student?.total_gpa ?? null;
@@ -93,6 +117,10 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
       })
     : [];
 
+  const isConnectionError =
+    typeof error === 'string' &&
+    /fetch|network|connect|ECONNREFUSED/i.test(error);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" dir="rtl">
@@ -101,81 +129,46 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
             <User className="h-5 w-5 text-primary" />
             پروفایل دانشجو
           </DialogTitle>
-          <DialogDescription className="hidden">
-            Student Profile Details
+          <DialogDescription className="sr-only">
+            Student personal information and academic history
           </DialogDescription>
         </DialogHeader>
 
-        {!isAuthenticated && (
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div className="bg-muted/40 rounded-lg p-4 border border-border space-y-4">
+        {isLoading && (
+          <div className="flex min-h-[240px] items-center justify-center">
+            <div className="flex flex-col items-center gap-3">
+              <span className="h-6 w-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
               <p className="text-sm text-muted-foreground">
-                برای مشاهده پروفایل و کارنامه، با مشخصات گلستان خود وارد شوید.
+                در حال دریافت اطلاعات دانشجو...
               </p>
-              <div className="grid gap-3">
-                <div className="grid gap-2">
-                  <Label htmlFor="username" className="text-xs flex items-center gap-1">
-                    <IdCard className="h-3 w-3" />
-                    شماره دانشجویی
-                  </Label>
-                  <Input
-                    id="username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="مثلاً 400123456"
-                    className="h-9 text-sm"
-                    dir="ltr"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="password" className="text-xs flex items-center gap-1">
-                    <Lock className="h-3 w-3" />
-                    رمز عبور
-                  </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="h-9 text-sm"
-                    dir="ltr"
-                  />
-                </div>
-                <div className="flex items-center justify-between mt-1">
-                  <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      className="rounded border-border"
-                    />
-                    مرا به خاطر بسپار
-                  </label>
-                  {error && (
-                    <span className="text-[11px] text-destructive">
-                      {error}
-                    </span>
-                  )}
-                </div>
-              </div>
             </div>
-
-            <div className="flex justify-end gap-2">
-              <Button
-                type="submit"
-                disabled={isLoading || !username.trim() || !password.trim()}
-                className="h-9 px-4 text-sm gap-2"
-              >
-                {isLoading && (
-                  <span className="h-3 w-3 border-2 border-primary-foreground/40 border-t-primary-foreground rounded-full animate-spin" />
-                )}
-                ورود به پروفایل
-              </Button>
-            </div>
-          </form>
+          </div>
         )}
 
-        {isAuthenticated && student && (
+        {!isLoading && error && (
+          <div className="flex min-h-[240px] items-center justify-center">
+            <div className="flex flex-col items-center gap-3 text-center max-w-md mx-auto">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <p className="text-sm font-medium">
+                Cannot connect to the server. Please ensure the helper app is running.
+              </p>
+              {error && (
+                <p className="text-[11px] text-muted-foreground break-words">
+                  {error}
+                </p>
+              )}
+              <div className="flex justify-center gap-2 pt-1">
+                <Button variant="outline" size="sm" onClick={handleRetry}>
+                  تلاش مجدد
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!isLoading && !error && student && (
           <div className="space-y-6">
             {/* Top Section - Profile Info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -313,7 +306,7 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
                 </p>
               ) : (
                 <Accordion type="single" collapsible className="w-full space-y-2">
-                  {sortedSemesters.map((semester) => (
+                  {sortedSemesters.map(semester => (
                     <AccordionItem
                       key={semester.id}
                       value={semester.id}
@@ -402,20 +395,13 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
                 </Accordion>
               )}
             </div>
-
-            {/* Actions */}
-            <div className="flex justify-end">
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5 text-destructive border-destructive/40 hover:bg-destructive/10"
-                onClick={logout}
-              >
-                <LogOut className="h-4 w-4" />
-                خروج از حساب
-              </Button>
-            </div>
           </div>
+        )}
+
+        {!isLoading && !error && !student && (
+          <p className="text-sm text-muted-foreground text-center py-8">
+            اطلاعاتی برای نمایش وجود ندارد.
+          </p>
         )}
       </DialogContent>
     </Dialog>

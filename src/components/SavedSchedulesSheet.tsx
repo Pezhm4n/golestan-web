@@ -12,29 +12,30 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
+import { useSchedule } from '@/contexts/ScheduleContext';
 
-interface SavedSchedule {
-  id: string;
-  name: string;
-  courseIds: string[];
-  createdAt: string;
-}
+const formatJalaliDate = (timestamp: number): string => {
+  try {
+    return new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date(timestamp));
+  } catch {
+    return new Date(timestamp).toLocaleDateString('fa-IR');
+  }
+};
 
 const SavedSchedulesSheet = () => {
-  const [schedules, setSchedules] = useState<SavedSchedule[]>([
-    { id: '1', name: 'ترکیب 1 - صبح', courseIds: ['1', '4'], createdAt: '1403/09/15' },
-    { id: '2', name: 'ترکیب 2 - عصر', courseIds: ['2', '3', '5'], createdAt: '1403/09/14' },
-    { id: '3', name: 'پشتیبان', courseIds: ['1', '2', '4'], createdAt: '1403/09/12' },
-  ]);
+  const { savedSchedules, loadSchedule, deleteSchedule, saveSchedule, selectedCourses } = useSchedule();
   const [newName, setNewName] = useState('');
 
-  const handleLoad = (schedule: SavedSchedule) => {
-    toast.success('برنامه بارگذاری شد', { description: schedule.name });
+  const handleLoad = (id: string) => {
+    loadSchedule(id);
   };
 
   const handleDelete = (id: string) => {
-    setSchedules(prev => prev.filter(s => s.id !== id));
-    toast.info('برنامه حذف شد');
+    deleteSchedule(id);
   };
 
   const handleSave = () => {
@@ -42,21 +43,23 @@ const SavedSchedulesSheet = () => {
       toast.error('لطفاً نام برنامه را وارد کنید');
       return;
     }
-    const newSchedule: SavedSchedule = {
-      id: Date.now().toString(),
-      name: newName,
-      courseIds: [],
-      createdAt: '1403/09/16',
-    };
-    setSchedules(prev => [newSchedule, ...prev]);
+    if (selectedCourses.length === 0) {
+      toast.info('برنامه خالی است');
+      return;
+    }
+    saveSchedule(newName.trim());
     setNewName('');
-    toast.success('برنامه ذخیره شد');
   };
 
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button data-tour="saved-schedules" variant="ghost" size="sm" className="h-8 gap-1.5 px-2 text-xs">
+        <Button
+          data-tour="saved-schedules"
+          variant="ghost"
+          size="sm"
+          className="h-8 gap-1.5 px-2 text-xs"
+        >
           <History className="h-4 w-4" />
           <span className="hidden md:inline">برنامه‌های ذخیره شده</span>
         </Button>
@@ -77,7 +80,7 @@ const SavedSchedulesSheet = () => {
           <Input
             placeholder="نام برنامه جدید..."
             value={newName}
-            onChange={(e) => setNewName(e.target.value)}
+            onChange={e => setNewName(e.target.value)}
             className="h-9 text-xs"
           />
           <Button size="sm" className="h-9 px-3" onClick={handleSave}>
@@ -88,8 +91,8 @@ const SavedSchedulesSheet = () => {
         {/* List */}
         <ScrollArea className="h-[calc(100vh-200px)] mt-4">
           <div className="space-y-2 pr-2">
-            {schedules.map((schedule) => (
-              <div 
+            {savedSchedules.map(schedule => (
+              <div
                 key={schedule.id}
                 className="p-3 border border-border rounded-lg bg-card hover:bg-accent/50 transition-colors"
               >
@@ -97,21 +100,21 @@ const SavedSchedulesSheet = () => {
                   <div className="flex-1 min-w-0">
                     <h4 className="text-sm font-medium truncate">{schedule.name}</h4>
                     <p className="text-[10px] text-muted-foreground mt-0.5">
-                      {schedule.courseIds.length} درس • {schedule.createdAt}
+                      {schedule.courses.length} درس • {formatJalaliDate(schedule.createdAt)}
                     </p>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       className="h-7 w-7 p-0"
-                      onClick={() => handleLoad(schedule)}
+                      onClick={() => handleLoad(schedule.id)}
                     >
                       <Download className="h-3.5 w-3.5" />
                     </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       className="h-7 w-7 p-0 text-destructive hover:text-destructive"
                       onClick={() => handleDelete(schedule.id)}
                     >
@@ -122,7 +125,7 @@ const SavedSchedulesSheet = () => {
               </div>
             ))}
 
-            {schedules.length === 0 && (
+            {savedSchedules.length === 0 && (
               <div className="text-center py-8 text-muted-foreground text-sm">
                 هیچ برنامه‌ای ذخیره نشده است
               </div>
