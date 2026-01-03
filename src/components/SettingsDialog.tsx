@@ -11,6 +11,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { useSettings, FontSize, ThemeMode, Language } from '@/contexts/SettingsContext';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface SettingsDialogProps {
   open: boolean;
@@ -27,19 +28,19 @@ const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
     setShowGridLines,
     language,
     setLanguage,
-    t,
   } = useSettings();
+  const { t } = useTranslation();
 
-  const fontSizeOptions: { value: FontSize; label: string; labelEn: string }[] = [
-    { value: 'small', label: 'کوچک', labelEn: 'Small' },
-    { value: 'normal', label: 'معمولی', labelEn: 'Normal' },
-    { value: 'large', label: 'بزرگ', labelEn: 'Large' },
+  const fontSizeOptions: { value: FontSize; key: 'small' | 'normal' | 'large' }[] = [
+    { value: 'small', key: 'small' },
+    { value: 'normal', key: 'normal' },
+    { value: 'large', key: 'large' },
   ];
 
-  const themeModeOptions: { value: ThemeMode; label: string; labelEn: string; icon: React.ReactNode }[] = [
-    { value: 'light', label: 'روشن', labelEn: 'Light', icon: <Sun className="h-4 w-4" /> },
-    { value: 'dark', label: 'تیره', labelEn: 'Dark', icon: <Moon className="h-4 w-4" /> },
-    { value: 'system', label: 'خودکار', labelEn: 'System', icon: <Monitor className="h-4 w-4" /> },
+  const themeModeOptions: { value: ThemeMode; key: 'light' | 'dark' | 'system'; icon: React.ReactNode }[] = [
+    { value: 'light', key: 'light', icon: <Sun className="h-4 w-4" /> },
+    { value: 'dark', key: 'dark', icon: <Moon className="h-4 w-4" /> },
+    { value: 'system', key: 'system', icon: <Monitor className="h-4 w-4" /> },
   ];
 
   const languageOptions: { value: Language; label: string; flag: string }[] = [
@@ -53,7 +54,7 @@ const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg">
             <Settings className="h-5 w-5 text-primary" />
-            {t('تنظیمات برنامه', 'App Settings')}
+            {t('settings.title')}
           </DialogTitle>
         </DialogHeader>
 
@@ -62,7 +63,7 @@ const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Sun className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold">{t('حالت نمایش', 'Theme Mode')}</h3>
+              <h3 className="text-sm font-semibold">{t('settings.themeSection')}</h3>
             </div>
             <RadioGroup
               value={themeMode}
@@ -74,15 +75,17 @@ const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
                   key={option.value}
                   htmlFor={`theme-${option.value}`}
                   className={cn(
-                    "flex flex-col items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all",
+                    'flex flex-col items-center gap-2 p-3 rounded-lg border cursor-pointer transition-all',
                     themeMode === option.value
-                      ? "border-primary bg-primary/10"
-                      : "border-border hover:border-primary/50"
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border hover:border-primary/50',
                   )}
                 >
                   <RadioGroupItem value={option.value} id={`theme-${option.value}`} className="sr-only" />
                   {option.icon}
-                  <span className="text-xs">{t(option.label, option.labelEn)}</span>
+                  <span className="text-xs">
+                    {t(`settings.theme.${option.key}`)}
+                  </span>
                 </Label>
               ))}
             </RadioGroup>
@@ -94,7 +97,7 @@ const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Type className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold">{t('اندازه فونت', 'Font Size')}</h3>
+              <h3 className="text-sm font-semibold">{t('settings.fontSizeSection')}</h3>
             </div>
             <RadioGroup
               value={fontSize}
@@ -106,25 +109,27 @@ const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
                   key={option.value}
                   htmlFor={`font-${option.value}`}
                   className={cn(
-                    "flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer transition-all",
+                    'flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer transition-all',
                     fontSize === option.value
-                      ? "border-primary bg-primary/10"
-                      : "border-border hover:border-primary/50"
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border hover:border-primary/50',
                   )}
                 >
                   <RadioGroupItem value={option.value} id={`font-${option.value}`} className="sr-only" />
-                  <span className={cn(
-                    option.value === 'small' && 'text-xs',
-                    option.value === 'normal' && 'text-sm',
-                    option.value === 'large' && 'text-base'
-                  )}>
-                    {t(option.label, option.labelEn)}
+                  <span
+                    className={cn(
+                      option.value === 'small' && 'text-xs',
+                      option.value === 'normal' && 'text-sm',
+                      option.value === 'large' && 'text-base',
+                    )}
+                  >
+                    {t(`settings.fontSize.${option.key}`)}
                   </span>
                 </Label>
               ))}
             </RadioGroup>
             <p className="text-xs text-muted-foreground">
-              {t('روی کارت دروس، لیست دروس و جدول زمان‌بندی اعمال می‌شود.', 'Applies to course cards, course list, and schedule grid.')}
+              {t('settings.fontSizeNote')}
             </p>
           </div>
 
@@ -134,14 +139,11 @@ const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Grid3X3 className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold">{t('نمایش خطوط جدول', 'Grid Lines')}</h3>
+              <h3 className="text-sm font-semibold">{t('settings.gridSection')}</h3>
             </div>
             <div className="flex items-center justify-between p-3 rounded-lg border border-border">
               <Label htmlFor="grid-lines" className="text-sm cursor-pointer flex-1">
-                {showGridLines
-                  ? t('خطوط جدول نمایش داده می‌شوند', 'Grid lines are visible')
-                  : t('ظاهر مینیمال (بدون خطوط)', 'Minimal appearance (no lines)')
-                }
+                {showGridLines ? t('settings.gridOn') : t('settings.gridOff')}
               </Label>
               <Switch
                 id="grid-lines"
@@ -157,7 +159,7 @@ const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Languages className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold">{t('زبان سایت', 'Site Language')}</h3>
+              <h3 className="text-sm font-semibold">{t('settings.languageSection')}</h3>
             </div>
             <RadioGroup
               value={language}
@@ -169,10 +171,10 @@ const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
                   key={option.value}
                   htmlFor={`lang-${option.value}`}
                   className={cn(
-                    "flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer transition-all",
+                    'flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer transition-all',
                     language === option.value
-                      ? "border-primary bg-primary/10"
-                      : "border-border hover:border-primary/50"
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border hover:border-primary/50',
                   )}
                 >
                   <RadioGroupItem value={option.value} id={`lang-${option.value}`} className="sr-only" />

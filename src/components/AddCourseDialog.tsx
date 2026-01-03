@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Plus, Clock, User, MapPin, BookOpen, Calendar } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -12,7 +13,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Course, WeekType, Gender, CourseType, CourseGroup, DAYS } from '@/types/course';
 
@@ -20,7 +27,15 @@ interface AddCourseDialogProps {
   onAddCourse: (course: Course) => void;
 }
 
+type SessionFormRow = {
+  day: number;
+  startTime: number;
+  endTime: number;
+  weekType: WeekType;
+};
+
 const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [courseId, setCourseId] = useState('');
@@ -30,13 +45,6 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
   const [examTime, setExamTime] = useState('');
   const [location, setLocation] = useState('');
 
-  type SessionFormRow = {
-    day: number;
-    startTime: number;
-    endTime: number;
-    weekType: WeekType;
-  };
-  
   // Session info (allow multiple sessions)
   const [sessionRows, setSessionRows] = useState<SessionFormRow[]>([
     { day: 0, startTime: 8, endTime: 10, weekType: 'both' },
@@ -45,9 +53,9 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
   const [group, setGroup] = useState<CourseGroup>('specialized');
 
   const groupOptions: { value: CourseGroup; label: string }[] = [
-    { value: 'specialized', label: 'تخصصی' },
-    { value: 'general', label: 'عمومی' },
-    { value: 'basic', label: 'پایه' },
+    { value: 'specialized', label: t('addCourse.groupSpecialized') },
+    { value: 'general', label: t('addCourse.groupGeneral') },
+    { value: 'basic', label: t('addCourse.groupBasic') },
   ];
 
   const handleSubmit = () => {
@@ -55,17 +63,17 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
     const trimmedInstructor = instructor.trim();
 
     if (!trimmedName) {
-      toast.error('نام درس الزامی است');
+      toast.error(t('addCourse.nameRequired'));
       return;
     }
 
     if (!trimmedInstructor) {
-      toast.error('نام استاد الزامی است');
+      toast.error(t('addCourse.instructorRequired'));
       return;
     }
 
     if (sessionRows.length === 0) {
-      toast.error('حداقل یک جلسه برای درس لازم است');
+      toast.error(t('addCourse.atLeastOneSession'));
       return;
     }
 
@@ -75,14 +83,14 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
 
     sessionRows.forEach((row, index) => {
       if (row.startTime >= row.endTime) {
-        newSessionErrors[index] = 'ساعت شروع باید قبل از ساعت پایان باشد';
+        newSessionErrors[index] = t('addCourse.sessionTimeError');
         hasSessionError = true;
       }
     });
 
     if (hasSessionError) {
       setSessionErrors(newSessionErrors);
-      toast.error('لطفاً خطاهای زمان برگزاری جلسات را اصلاح کنید');
+      toast.error(t('addCourse.sessionErrorsFix'));
       return;
     }
 
@@ -92,7 +100,7 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
       day: row.day,
       startTime: row.startTime,
       endTime: row.endTime,
-      location: location || 'نامشخص',
+      location: location || t('addCourse.unknownLocation'),
       weekType: row.weekType,
     }));
 
@@ -111,14 +119,14 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
       type: 'theoretical' as CourseType,
       isGeneral: group === 'general',
       category: 'available',
-      departmentId: 'custom', // Custom courses
+      departmentId: 'custom',
       group,
       sessions: normalizedSessions,
     };
 
     onAddCourse(newCourse);
-    toast.success('درس اضافه شد', { description: trimmedName });
-    
+    toast.success(t('addCourse.courseAdded'), { description: trimmedName });
+
     // Reset form
     setName('');
     setCourseId('');
@@ -138,18 +146,16 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs flex-1">
           <Plus className="h-3.5 w-3.5" />
-          افزودن درس
+          {t('addCourse.trigger')}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md" dir="rtl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Plus className="h-5 w-5" />
-            افزودن درس جدید
+            {t('addCourse.title')}
           </DialogTitle>
-          <DialogDescription>
-            اطلاعات درس را وارد کنید تا به لیست "دروس اضافه شده من" اضافه شود
-          </DialogDescription>
+          <DialogDescription>{t('addCourse.description')}</DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
@@ -157,13 +163,13 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
           <div className="grid gap-2">
             <Label htmlFor="name" className="text-xs flex items-center gap-1">
               <BookOpen className="h-3 w-3" />
-              نام درس *
+              {t('addCourse.nameLabel')}
             </Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="مثال: ریاضی عمومی ۱"
+              placeholder={t('addCourse.namePlaceholder')}
               className="text-xs"
             />
           </div>
@@ -171,25 +177,27 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
           {/* Course ID & Instructor */}
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
-              <Label htmlFor="courseId" className="text-xs">کد درس</Label>
+              <Label htmlFor="courseId" className="text-xs">
+                {t('addCourse.courseIdLabel')}
+              </Label>
               <Input
                 id="courseId"
                 value={courseId}
                 onChange={(e) => setCourseId(e.target.value)}
-                placeholder="40121501"
+                placeholder={t('addCourse.courseIdPlaceholder')}
                 className="text-xs"
               />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="instructor" className="text-xs flex items-center gap-1">
                 <User className="h-3 w-3" />
-                استاد
+                {t('addCourse.instructorLabel')}
               </Label>
               <Input
                 id="instructor"
                 value={instructor}
                 onChange={(e) => setInstructor(e.target.value)}
-                placeholder="دکتر احمدی"
+                placeholder={t('addCourse.instructorPlaceholder')}
                 className="text-xs"
               />
             </div>
@@ -198,14 +206,18 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
           {/* Credits & Location */}
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
-              <Label htmlFor="credits" className="text-xs">تعداد واحد</Label>
+              <Label htmlFor="credits" className="text-xs">
+                {t('addCourse.creditsLabel')}
+              </Label>
               <Select value={credits.toString()} onValueChange={(v) => setCredits(parseInt(v))}>
                 <SelectTrigger className="text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {[1, 2, 3, 4].map(c => (
-                    <SelectItem key={c} value={c.toString()} className="text-xs">{c} واحد</SelectItem>
+                  {[1, 2, 3, 4].map((c) => (
+                    <SelectItem key={c} value={c.toString()} className="text-xs">
+                      {c} {t('labels.units')}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -213,13 +225,13 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
             <div className="grid gap-2">
               <Label htmlFor="location" className="text-xs flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
-                محل برگزاری
+                {t('addCourse.locationLabel')}
               </Label>
               <Input
                 id="location"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                placeholder="کلاس 101"
+                placeholder={t('addCourse.locationPlaceholder')}
                 className="text-xs"
               />
             </div>
@@ -229,7 +241,7 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
           <div className="grid gap-2">
             <Label className="text-xs flex items-center gap-1">
               <Clock className="h-3 w-3" />
-              زمان برگزاری (می‌توانید چند جلسه اضافه کنید)
+              {t('addCourse.sessionsLabel')}
             </Label>
             <div className="space-y-2">
               {sessionRows.map((row, index) => (
@@ -239,9 +251,7 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
                       value={row.day.toString()}
                       onValueChange={(v) =>
                         setSessionRows((prev) =>
-                          prev.map((r, i) =>
-                            i === index ? { ...r, day: parseInt(v) } : r,
-                          ),
+                          prev.map((r, i) => (i === index ? { ...r, day: parseInt(v) } : r)),
                         )
                       }
                     >
@@ -316,13 +326,13 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="both" className="text-xs">
-                          هر هفته
+                          {t('addCourse.weekTypeAll')}
                         </SelectItem>
                         <SelectItem value="odd" className="text-xs">
-                          هفته فرد
+                          {t('addCourse.weekTypeOdd')}
                         </SelectItem>
                         <SelectItem value="even" className="text-xs">
-                          هفته زوج
+                          {t('addCourse.weekTypeEven')}
                         </SelectItem>
                       </SelectContent>
                     </Select>
@@ -364,7 +374,7 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
                   setSessionErrors((prev) => [...prev, '']);
                 }}
               >
-                + افزودن جلسه
+                {t('addCourse.sessionsAdd')}
               </Button>
             </div>
           </div>
@@ -372,7 +382,7 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
           {/* Week Type & Course Group */}
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
-              <Label className="text-xs">نوع درس</Label>
+              <Label className="text-xs">{t('addCourse.groupLabel')}</Label>
               <Select value={group} onValueChange={(v) => setGroup(v as CourseGroup)}>
                 <SelectTrigger className="text-xs">
                   <SelectValue />
@@ -393,23 +403,25 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
             <div className="grid gap-2">
               <Label htmlFor="examDate" className="text-xs flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
-                تاریخ امتحان
+                {t('addCourse.examDateLabel')}
               </Label>
               <Input
                 id="examDate"
                 value={examDate}
                 onChange={(e) => setExamDate(e.target.value)}
-                placeholder="1403/04/15"
+                placeholder={t('addCourse.examDatePlaceholder')}
                 className="text-xs"
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="examTime" className="text-xs">ساعت امتحان</Label>
+              <Label htmlFor="examTime" className="text-xs">
+                {t('addCourse.examTimeLabel')}
+              </Label>
               <Input
                 id="examTime"
                 value={examTime}
                 onChange={(e) => setExamTime(e.target.value)}
-                placeholder="08:00"
+                placeholder={t('addCourse.examTimePlaceholder')}
                 className="text-xs"
               />
             </div>
@@ -418,11 +430,11 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
 
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => setOpen(false)} className="text-xs">
-            انصراف
+            {t('addCourse.cancel')}
           </Button>
           <Button onClick={handleSubmit} className="text-xs gap-1.5">
             <Plus className="h-3.5 w-3.5" />
-            افزودن درس
+            {t('addCourse.submit')}
           </Button>
         </DialogFooter>
       </DialogContent>

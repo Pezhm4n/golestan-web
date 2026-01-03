@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/tooltip';
 import ExamScheduleDialog from './ExamScheduleDialog';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 interface FooterProps {
   isMobile?: boolean;
@@ -19,24 +20,25 @@ interface FooterProps {
 const Footer = ({ isMobile = false }: FooterProps) => {
   const { totalUnits, selectedCourses, scheduledSessions } = useSchedule();
   const [isDownloading, setIsDownloading] = useState(false);
+  const { t } = useTranslation();
 
   const handleDownloadImage = async () => {
     const scheduleGrid = document.querySelector('[data-tour="schedule-grid"]');
     
     if (!scheduleGrid) {
-      toast.error('جدول برنامه یافت نشد');
+      toast.error(t('header.downloadImageError'));
       return;
     }
 
     setIsDownloading(true);
-    toast.loading('در حال آماده‌سازی تصویر...', { id: 'download' });
+    toast.loading(t('header.downloadImagePreparing'), { id: 'download' });
 
     try {
       const scrollContainer = scheduleGrid.querySelector('.overflow-auto');
       const gridElement = scrollContainer?.firstElementChild as HTMLElement;
       
       if (!gridElement) {
-        toast.error('جدول یافت نشد', { id: 'download' });
+        toast.error(t('header.downloadImageNotFound'), { id: 'download' });
         return;
       }
 
@@ -143,7 +145,7 @@ const Footer = ({ isMobile = false }: FooterProps) => {
 
       canvas.toBlob((blob) => {
         if (!blob) {
-          toast.error('خطا در ایجاد تصویر', { id: 'download' });
+          toast.error(t('header.downloadImageFailed'), { id: 'download' });
           return;
         }
 
@@ -160,11 +162,11 @@ const Footer = ({ isMobile = false }: FooterProps) => {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
 
-        toast.success('تصویر با موفقیت دانلود شد', { id: 'download' });
+        toast.success(t('header.downloadImageSuccess'), { id: 'download' });
       }, 'image/png', 1.0);
     } catch (error) {
       console.error('Error capturing schedule:', error);
-      toast.error('خطا در ذخیره تصویر', { id: 'download' });
+      toast.error(t('header.downloadImageFailed'), { id: 'download' });
     } finally {
       setIsDownloading(false);
     }
@@ -216,7 +218,7 @@ const Footer = ({ isMobile = false }: FooterProps) => {
         <div className="flex items-center gap-1.5 text-destructive">
           <AlertCircle className="w-3.5 h-3.5" />
           <span className="text-[11px] font-medium">
-            {timeConflictCount} تداخل زمانی
+            {t('footer.timeConflicts', { count: timeConflictCount })}
           </span>
         </div>
       );
@@ -225,14 +227,14 @@ const Footer = ({ isMobile = false }: FooterProps) => {
       return (
         <div className="flex items-center gap-1.5 text-amber-600">
           <AlertTriangle className="w-3.5 h-3.5" />
-          <span className="text-[11px] font-medium">تداخل امتحان</span>
+          <span className="text-[11px] font-medium">{t('footer.examConflict')}</span>
         </div>
       );
     }
     return (
       <div className="flex items-center gap-1.5 text-emerald-600">
         <CheckCircle2 className="w-3.5 h-3.5" />
-        <span className="text-[11px] font-medium">بدون تداخل</span>
+        <span className="text-[11px] font-medium">{t('footer.noConflicts')}</span>
       </div>
     );
   };
@@ -247,14 +249,14 @@ const Footer = ({ isMobile = false }: FooterProps) => {
             <span className={`text-base font-bold tabular-nums ${unitStatus === 'low' ? 'text-amber-500' : unitStatus === 'high' ? 'text-destructive' : 'text-primary'}`}>
               {totalUnits}
             </span>
-            <span className="text-[9px] text-muted-foreground">واحد</span>
+            <span className="text-[9px] text-muted-foreground">{t('footer.units')}</span>
           </div>
           
           <div className="w-px h-5 bg-border" />
           
           <div className="flex items-center gap-1">
             <span className="text-xs font-medium text-foreground">{selectedCourses.length}</span>
-            <span className="text-[9px] text-muted-foreground">درس</span>
+            <span className="text-[9px] text-muted-foreground">{t('footer.courses')}</span>
           </div>
           
           {hasAnyConflict && (
@@ -310,7 +312,7 @@ const Footer = ({ isMobile = false }: FooterProps) => {
             `}>
               {totalUnits}
             </span>
-            <span className="text-[10px] text-muted-foreground">واحد</span>
+            <span className="text-[10px] text-muted-foreground">{t('footer.units')}</span>
           </div>
 
           <div className="w-px h-5 bg-border" />
@@ -318,11 +320,11 @@ const Footer = ({ isMobile = false }: FooterProps) => {
           <div className="flex items-center gap-3 text-muted-foreground">
             <div className="flex items-center gap-1">
               <span className="text-xs font-medium text-foreground">{selectedCourses.length}</span>
-              <span className="text-[10px]">درس</span>
+              <span className="text-[10px]">{t('footer.courses')}</span>
             </div>
             <div className="flex items-center gap-1">
               <span className="text-xs font-medium text-foreground">{activeDays}</span>
-              <span className="text-[10px]">روز</span>
+              <span className="text-[10px]">{t('footer.days')}</span>
             </div>
           </div>
 
@@ -346,7 +348,7 @@ const Footer = ({ isMobile = false }: FooterProps) => {
             ) : (
               <Download className="h-4 w-4" />
             )}
-            <span>دانلود تصویر</span>
+            <span>{t('footer.downloadImage')}</span>
           </Button>
           
           <ExamScheduleDialog />
@@ -355,7 +357,7 @@ const Footer = ({ isMobile = false }: FooterProps) => {
         {/* Right Section - Version */}
         <div className="flex items-center">
           <div className="text-[10px] text-muted-foreground">
-            v1.0.0
+            {t('footer.version')}
           </div>
         </div>
       </footer>

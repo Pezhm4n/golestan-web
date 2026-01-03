@@ -13,6 +13,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import type { DepartmentOption } from '@/hooks/useGolestanData';
+import { useTranslation } from 'react-i18next';
 
 interface DepartmentComboboxProps {
   value: string | 'all' | null;
@@ -29,9 +30,10 @@ const DepartmentCombobox = ({
   value,
   onChange,
   departments,
-  placeholder = 'انتخاب دانشکده/رشته',
+  placeholder,
 }: DepartmentComboboxProps) => {
   const [open, setOpen] = useState(false);
+  const { t } = useTranslation();
 
   const groups = useMemo(() => {
     const map = new Map<string, DepartmentOption[]>();
@@ -48,9 +50,11 @@ const DepartmentCombobox = ({
       ? undefined
       : departments.find((d) => d.id === value);
 
+  const effectivePlaceholder = placeholder ?? t('department.placeholder');
+
   const buttonLabel =
     value === 'all' || !selectedDept
-      ? placeholder
+      ? effectivePlaceholder
       : `${selectedDept.faculty} - ${selectedDept.name}`;
 
   return (
@@ -70,9 +74,9 @@ const DepartmentCombobox = ({
       </PopoverTrigger>
       <PopoverContent className="w-[280px] p-0" align="start">
         <Command>
-          <CommandInput placeholder="جستجوی دانشکده یا رشته..." />
+          <CommandInput placeholder={t('department.searchPlaceholder')} />
           <CommandList>
-            <CommandEmpty>موردی یافت نشد</CommandEmpty>
+            <CommandEmpty>{t('department.empty')}</CommandEmpty>
 
             {groups.map(([facultyName, deps]) => (
               <CommandGroup key={facultyName} heading={facultyName}>

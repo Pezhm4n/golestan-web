@@ -5,6 +5,7 @@ import { useSettings } from '@/contexts/SettingsContext';
 import { useResponsive } from '@/hooks/use-responsive';
 import CourseCell from './CourseCell';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 const TIME_SLOTS = Array.from({ length: 14 }, (_, i) => 7 + i);
 
@@ -12,6 +13,7 @@ const ScheduleGrid = () => {
   const { scheduledSessions, hoveredCourseId, allCourses, hasConflict } = useSchedule();
   const { showGridLines, getFontSizeClass } = useSettings();
   const { isMobile, isTablet } = useResponsive();
+  const { t } = useTranslation();
 
   // Get the hovered course for preview
   const hoveredCourse = hoveredCourseId 
@@ -84,7 +86,7 @@ const ScheduleGrid = () => {
       {/* Scroll hint for mobile */}
       {isMobile && (
         <div className="flex items-center justify-center gap-2 py-1.5 text-[10px] text-muted-foreground">
-          <span>← برای مشاهده کامل جدول اسکرول کنید →</span>
+          <span>{t('scheduleGrid.scrollHint')}</span>
         </div>
       )}
       
@@ -122,24 +124,27 @@ const ScheduleGrid = () => {
               isMobile ? "text-[10px]" : "text-sm",
               getFontSizeClass()
             )}>
-              ساعت
+              {t('scheduleGrid.timeHeader')}
             </span>
           </div>
 
-          {DAYS.map((day, dayIndex) => (
-            <div
-              key={`header-${day}`}
-              className={cn(
-                "sticky top-0 z-20 bg-muted/95 backdrop-blur-md flex items-center justify-center font-bold text-foreground",
-                isMobile ? "text-[11px]" : "text-sm",
-                showGridLines ? "border-t border-b border-l border-border/50" : "",
-                getFontSizeClass()
-              )}
-              style={{ gridColumn: dayIndex + 2, gridRow: 1 }}
-            >
-              {isMobile ? day.replace('‌', '') : day}
-            </div>
-          ))}
+          {DAYS.map((_, dayIndex) => {
+            const label = t(`days.${dayIndex}`);
+            return (
+              <div
+                key={`header-${dayIndex}`}
+                className={cn(
+                  "sticky top-0 z-20 bg-muted/95 backdrop-blur-md flex items-center justify-center font-bold text-foreground",
+                  isMobile ? "text-[11px]" : "text-sm",
+                  showGridLines ? "border-t border-b border-l border-border/50" : "",
+                  getFontSizeClass()
+                )}
+                style={{ gridColumn: dayIndex + 2, gridRow: 1 }}
+              >
+                {isMobile ? label.replace('\u200c', '') : label}
+              </div>
+            );
+          })}
 
           {/* Time Rows */}
           {TIME_SLOTS.map((time, rowIndex) => (

@@ -15,6 +15,7 @@ import LanguageToggle from './LanguageToggle';
 import { toast } from 'sonner';
 import { useResponsive } from '@/hooks/use-responsive';
 import MobileHeader from './MobileHeader';
+import { useTranslation } from 'react-i18next';
 
 interface HeaderProps {
   isDarkMode: boolean;
@@ -24,6 +25,7 @@ interface HeaderProps {
 const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const { isMobile, isTablet } = useResponsive();
+  const { t } = useTranslation();
 
   // Use mobile header for mobile and tablet devices
   if (isMobile || isTablet) {
@@ -34,12 +36,12 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
     const scheduleGrid = document.querySelector('[data-tour="schedule-grid"]');
     
     if (!scheduleGrid) {
-      toast.error('جدول برنامه یافت نشد');
+      toast.error(t('header.downloadImageError'));
       return;
     }
 
     setIsDownloading(true);
-    toast.loading('در حال آماده‌سازی تصویر...', { id: 'download' });
+    toast.loading(t('header.downloadImagePreparing'), { id: 'download' });
 
     try {
       // Find the actual grid (the div with display: grid)
@@ -47,7 +49,7 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
       const gridElement = scrollContainer?.firstElementChild as HTMLElement;
       
       if (!gridElement) {
-        toast.error('جدول یافت نشد', { id: 'download' });
+        toast.error(t('header.downloadImageNotFound'), { id: 'download' });
         return;
       }
 
@@ -240,7 +242,7 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
       // Download
       canvas.toBlob((blob) => {
         if (!blob) {
-          toast.error('خطا در ایجاد تصویر', { id: 'download' });
+          toast.error(t('header.downloadImageFailed'), { id: 'download' });
           return;
         }
 
@@ -257,11 +259,11 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
 
-        toast.success('تصویر با موفقیت دانلود شد', { id: 'download' });
+        toast.success(t('header.downloadImageSuccess'), { id: 'download' });
       }, 'image/png', 1.0);
     } catch (error) {
       console.error('Error capturing schedule:', error);
-      toast.error('خطا در ذخیره تصویر', { id: 'download' });
+      toast.error(t('header.downloadImageFailed'), { id: 'download' });
     } finally {
       setIsDownloading(false);
     }
@@ -271,11 +273,8 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
     <header className="h-[50px] border-b border-border bg-card/80 backdrop-blur-sm px-4 flex items-center justify-between shrink-0">
       <div className="flex items-center gap-3">
         <h1 className="text-sm font-bold text-foreground">
-          گلستون
+          {t('header.appName')}
         </h1>
-        <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-          نیمسال 1403-1
-        </span>
       </div>
       
       <TooltipProvider delayDuration={200}>
@@ -290,11 +289,11 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
                   className="h-8 px-2.5 text-xs gap-1.5 text-pink-500 hover:text-pink-600 hover:bg-pink-500/10 group"
                 >
                   <Heart className="h-4 w-4 group-hover:animate-pulse group-hover:fill-pink-500" />
-                  <span className="hidden sm:inline">حمایت</span>
+                  <span className="hidden sm:inline">{t('header.support')}</span>
                 </Button>
               </Link>
             </TooltipTrigger>
-            <TooltipContent>حمایت از ما 💙</TooltipContent>
+            <TooltipContent>{t('header.supportTooltip')}</TooltipContent>
           </Tooltip>
 
           <div className="w-px h-5 bg-border mx-1" />
@@ -318,7 +317,9 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
                 {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>{isDarkMode ? 'حالت روشن' : 'حالت تاریک'}</TooltipContent>
+            <TooltipContent>
+              {isDarkMode ? t('header.lightMode') : t('header.darkMode')}
+            </TooltipContent>
           </Tooltip>
           
 

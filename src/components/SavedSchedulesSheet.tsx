@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { History, Trash2, Download, Plus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
   Sheet,
   SheetContent,
@@ -29,6 +30,7 @@ const formatJalaliDate = (timestamp: number): string => {
 const SavedSchedulesSheet = () => {
   const { savedSchedules, loadSchedule, deleteSchedule, saveSchedule, selectedCourses } = useSchedule();
   const [newName, setNewName] = useState('');
+  const { t } = useTranslation();
 
   const handleLoad = (id: string) => {
     loadSchedule(id);
@@ -40,11 +42,11 @@ const SavedSchedulesSheet = () => {
 
   const handleSave = () => {
     if (!newName.trim()) {
-      toast.error('لطفاً نام برنامه را وارد کنید');
+      toast.error(t('sidebar.saveSchedulePrompt'));
       return;
     }
     if (selectedCourses.length === 0) {
-      toast.info('برنامه خالی است');
+      toast.info(t('sidebar.saveScheduleEmpty'));
       return;
     }
     saveSchedule(newName.trim());
@@ -61,24 +63,24 @@ const SavedSchedulesSheet = () => {
           className="h-8 gap-1.5 px-2 text-xs"
         >
           <History className="h-4 w-4" />
-          <span className="hidden md:inline">برنامه‌های ذخیره شده</span>
+          <span className="hidden md:inline">{t('savedSchedules.sheetTitle')}</span>
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-[320px]" dir="rtl">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <History className="h-5 w-5" />
-            برنامه‌های ذخیره شده
+            {t('savedSchedules.sheetTitle')}
           </SheetTitle>
           <SheetDescription>
-            ترکیب‌های برنامه خود را مدیریت کنید
+            {t('savedSchedules.sheetSubtitle')}
           </SheetDescription>
         </SheetHeader>
 
         {/* Save New */}
         <div className="flex gap-2 mt-4">
           <Input
-            placeholder="نام برنامه جدید..."
+            placeholder={t('savedSchedules.newPlaceholder')}
             value={newName}
             onChange={e => setNewName(e.target.value)}
             className="h-9 text-xs"
@@ -100,7 +102,10 @@ const SavedSchedulesSheet = () => {
                   <div className="flex-1 min-w-0">
                     <h4 className="text-sm font-medium truncate">{schedule.name}</h4>
                     <p className="text-[10px] text-muted-foreground mt-0.5">
-                      {schedule.courses.length} درس • {formatJalaliDate(schedule.createdAt)}
+                      {t('savedSchedules.savedAt', {
+                        count: schedule.courses.length,
+                        date: formatJalaliDate(schedule.createdAt),
+                      })}
                     </p>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
@@ -127,7 +132,7 @@ const SavedSchedulesSheet = () => {
 
             {savedSchedules.length === 0 && (
               <div className="text-center py-8 text-muted-foreground text-sm">
-                هیچ برنامه‌ای ذخیره نشده است
+                {t('savedSchedules.emptyMessage')}
               </div>
             )}
           </div>

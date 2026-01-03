@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Calendar, Download, Printer } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -22,6 +23,7 @@ import { toast } from 'sonner';
 
 const ExamScheduleDialog = () => {
   const { selectedCourses } = useSchedule();
+  const { t } = useTranslation();
 
   // Sort exams by date
   const exams = selectedCourses
@@ -51,7 +53,15 @@ const ExamScheduleDialog = () => {
 
   const handleExport = () => {
     // Create CSV content
-    const headers = ['نام درس', 'کد درس', 'استاد', 'تاریخ امتحان', 'ساعت امتحان', 'محل برگزاری', 'واحد'];
+    const headers = [
+      t('examDialog.headers.courseName'),
+      t('examDialog.headers.courseCode'),
+      t('examDialog.headers.instructor'),
+      t('examDialog.headers.classTime'),
+      t('examDialog.headers.examTime'),
+      t('examDialog.headers.location'),
+      t('examDialog.headers.credits'),
+    ];
     const rows = exams.map(exam => [
       exam.name,
       exam.courseId,
@@ -74,12 +84,12 @@ const ExamScheduleDialog = () => {
     link.click();
     URL.revokeObjectURL(url);
     
-    toast.success('فایل اکسل دانلود شد');
+    toast.success(t('examDialog.exportSuccess'));
   };
 
   const handlePrint = () => {
     window.print();
-    toast.success('آماده چاپ');
+    toast.success(t('examDialog.printReady'));
   };
 
   return (
@@ -87,7 +97,7 @@ const ExamScheduleDialog = () => {
       <DialogTrigger asChild>
         <Button data-tour="exam-schedule" variant="outline" size="sm" className="h-8 px-3 text-xs gap-1.5">
           <Calendar className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">جدول امتحانات</span>
+          <span className="hidden sm:inline">{t('examDialog.trigger')}</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
@@ -95,7 +105,7 @@ const ExamScheduleDialog = () => {
           <DialogTitle className="flex items-center justify-between">
             <span className="flex items-center gap-2 text-lg">
               <Calendar className="h-5 w-5" />
-              برنامه امتحانات
+              {t('examDialog.title')}
             </span>
             <div className="flex items-center gap-2">
               <Button 
@@ -105,7 +115,7 @@ const ExamScheduleDialog = () => {
                 onClick={handlePrint}
               >
                 <Printer className="h-3.5 w-3.5" />
-                چاپ
+                {t('examDialog.print')}
               </Button>
               <Button 
                 variant="secondary" 
@@ -114,12 +124,12 @@ const ExamScheduleDialog = () => {
                 onClick={handleExport}
               >
                 <Download className="h-3.5 w-3.5" />
-                صدور اکسل
+                {t('examDialog.export')}
               </Button>
             </div>
           </DialogTitle>
           <DialogDescription className="text-primary-foreground/80">
-            تنها دروسی که در جدول اصلی قرار داده‌اید نمایش داده می‌شوند.
+            {t('examDialog.subtitle')}
           </DialogDescription>
         </DialogHeader>
 
@@ -127,20 +137,20 @@ const ExamScheduleDialog = () => {
           {exams.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Calendar className="h-12 w-12 mx-auto mb-4 opacity-30" />
-              <p className="text-sm">هیچ درسی انتخاب نشده است</p>
+              <p className="text-sm">{t('examDialog.emptyTitle')}</p>
             </div>
           ) : (
             <div className="border rounded-lg overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-primary/10">
-                    <TableHead className="text-right text-xs font-bold py-3">نام درس</TableHead>
-                    <TableHead className="text-right text-xs font-bold py-3">کد درس</TableHead>
-                    <TableHead className="text-right text-xs font-bold py-3">استاد</TableHead>
-                    <TableHead className="text-right text-xs font-bold py-3">زمان کلاس</TableHead>
-                    <TableHead className="text-right text-xs font-bold py-3">زمان امتحان</TableHead>
-                    <TableHead className="text-right text-xs font-bold py-3">واحد</TableHead>
-                    <TableHead className="text-right text-xs font-bold py-3">محل برگزاری</TableHead>
+                    <TableHead className="text-right text-xs font-bold py-3">{t('examDialog.headers.courseName')}</TableHead>
+                    <TableHead className="text-right text-xs font-bold py-3">{t('examDialog.headers.courseCode')}</TableHead>
+                    <TableHead className="text-right text-xs font-bold py-3">{t('examDialog.headers.instructor')}</TableHead>
+                    <TableHead className="text-right text-xs font-bold py-3">{t('examDialog.headers.classTime')}</TableHead>
+                    <TableHead className="text-right text-xs font-bold py-3">{t('examDialog.headers.examTime')}</TableHead>
+                    <TableHead className="text-right text-xs font-bold py-3">{t('examDialog.headers.credits')}</TableHead>
+                    <TableHead className="text-right text-xs font-bold py-3">{t('examDialog.headers.location')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -188,18 +198,18 @@ const ExamScheduleDialog = () => {
         {exams.length > 0 && (
           <div className="bg-primary/10 -mx-6 -mb-6 px-6 py-3 mt-4 rounded-b-lg">
             <div className="flex items-center justify-center gap-4 text-xs">
-              <span>📚 دروس: {exams.length}</span>
+              <span>{t('examDialog.summary.courses', { count: exams.length })}</span>
               <span>|</span>
-              <span>📦 واحدها: {exams.reduce((sum, e) => sum + e.credits, 0)}</span>
+              <span>{t('examDialog.summary.credits', { credits: exams.reduce((sum, e) => sum + e.credits, 0) })}</span>
               <span>|</span>
-              <span>📆 روزها: {new Set(exams.map(e => e.date)).size}</span>
+              <span>{t('examDialog.summary.days', { days: new Set(exams.map(e => e.date)).size })}</span>
             </div>
           </div>
         )}
 
         {conflictingIds.size > 0 && (
           <div className="text-xs text-destructive flex items-center gap-1 mt-2">
-            ⚠️ ردیف‌های قرمز نشان‌دهنده تداخل امتحان هستند
+            {t('examDialog.conflictNotice')}
           </div>
         )}
       </DialogContent>

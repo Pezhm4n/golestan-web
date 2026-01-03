@@ -1,9 +1,11 @@
 import { BookOpen, Calendar, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { useSchedule } from '@/contexts/ScheduleContext';
 import { DAYS } from '@/types/course';
+import { useTranslation } from 'react-i18next';
 
 const SidebarStats = () => {
   const { totalUnits, selectedCourses, scheduledSessions } = useSchedule();
+  const { t } = useTranslation();
 
   // Calculate active days
   const activeDays = new Set(scheduledSessions.map(s => s.day)).size;
@@ -25,7 +27,9 @@ const SidebarStats = () => {
           `}>
             {totalUnits}
           </div>
-          <div className="text-[8px] text-muted-foreground mt-0.5">واحد</div>
+          <div className="text-[8px] text-muted-foreground mt-0.5">
+            {t('sidebarStats.totalUnits')}
+          </div>
         </div>
 
         {/* Course Count */}
@@ -34,7 +38,9 @@ const SidebarStats = () => {
             <BookOpen className="w-3 h-3 text-muted-foreground" />
             <span className="text-sm font-bold text-foreground">{selectedCourses.length}</span>
           </div>
-          <div className="text-[8px] text-muted-foreground mt-0.5">درس</div>
+          <div className="text-[8px] text-muted-foreground mt-0.5">
+            {t('sidebarStats.courses')}
+          </div>
         </div>
 
         {/* Active Days */}
@@ -43,7 +49,9 @@ const SidebarStats = () => {
             <Calendar className="w-3 h-3 text-muted-foreground" />
             <span className="text-sm font-bold text-foreground">{activeDays}</span>
           </div>
-          <div className="text-[8px] text-muted-foreground mt-0.5">روز</div>
+          <div className="text-[8px] text-muted-foreground mt-0.5">
+            {t('sidebarStats.days')}
+          </div>
         </div>
 
         {/* Status */}
@@ -51,12 +59,16 @@ const SidebarStats = () => {
           {hasAnyConflict ? (
             <>
               <AlertTriangle className="w-4 h-4 text-destructive mx-auto" />
-              <div className="text-[8px] text-destructive mt-0.5">تداخل</div>
+              <div className="text-[8px] text-destructive mt-0.5">
+                {t('sidebarStats.conflict')}
+              </div>
             </>
           ) : (
             <>
               <CheckCircle2 className="w-4 h-4 text-emerald-500 mx-auto" />
-              <div className="text-[8px] text-emerald-600 mt-0.5">معتبر</div>
+              <div className="text-[8px] text-emerald-600 mt-0.5">
+                {t('sidebarStats.valid')}
+              </div>
             </>
           )}
         </div>

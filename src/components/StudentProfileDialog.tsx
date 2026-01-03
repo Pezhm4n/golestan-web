@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { User, GraduationCap, BookOpen, AlertTriangle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -36,6 +37,7 @@ interface StudentProfileDialogProps {
 }
 
 const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps) => {
+  const { t } = useTranslation();
   const [student, setStudent] = useState<Student | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,10 +57,7 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
       /invalid credentials/i.test(message) ||
       /username and password/i.test(message)
     ) {
-      return (
-        'لطفاً شماره دانشجویی و رمز عبور خود را بررسی کنید.\n' +
-        'Please check your username and password.'
-      );
+      return t('studentProfile.loginErrorAuth');
     }
     return message;
   };
@@ -88,9 +87,7 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
 
         if (!storedCreds) {
           if (!isCancelled) {
-            setInfoMessage(
-              'برای دریافت اطلاعات دانشجو، ابتدا باید شماره دانشجویی و رمز عبور گلستان را وارد کنید.',
-            );
+            setInfoMessage(t('studentProfile.loginIntro'));
             setShowCredentialsForm(true);
           }
           return;
@@ -144,7 +141,7 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
     const trimmedPassword = password.trim();
 
     if (!trimmedUsername || !trimmedPassword) {
-      setError('لطفاً شماره دانشجویی و رمز عبور را وارد کنید.');
+      setError(t('studentProfile.loginMissingCredentials'));
       return;
     }
 
@@ -171,7 +168,7 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
       const rawMessage =
         err instanceof Error && err.message
           ? err.message
-          : 'خطا در ورود به گلستان.';
+          : t('studentProfile.genericLoadError');
       const message = normalizeAuthErrorMessage(rawMessage);
       setError(message);
     } finally {
@@ -189,7 +186,7 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
     setStudent(null);
     setError(null);
     setInfoMessage(
-      'اطلاعات ذخیره‌شده گلستان حذف شد. برای مشاهده پروفایل، دوباره وارد شوید.',
+      t('studentProfile.loginAgainAfterReset'),
     );
     setUsername('');
     setPassword('');
@@ -201,10 +198,10 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
   const totalRequiredUnits = student?.total_units ?? null;
   const bestTermGpa = student?.best_term_gpa ?? null;
 
-  const fullName = student?.name ?? 'کاربر مهمان';
-  const major = student?.major ?? 'نامشخص';
-  const faculty = student?.faculty ?? 'نامشخص';
-  const department = student?.department ?? 'نامشخص';
+  const fullName = student?.name ?? t('studentProfile.guestUser');
+  const major = student?.major ?? t('studentProfile.unknown');
+  const faculty = student?.faculty ?? t('studentProfile.unknown');
+  const department = student?.department ?? t('studentProfile.unknown');
   const degreeLevel = student?.degree_level ?? '';
   const studyType = student?.study_type ?? '';
   const enrollmentStatus = student?.enrollment_status ?? '';
@@ -218,15 +215,15 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
   const renderCourseStatus = (course: CourseEnrollment) => {
     switch (course.status) {
       case 'passed':
-        return 'قبول';
+        return t('studentProfile.semesters.statusPassed');
       case 'failed':
-        return 'رد';
+        return t('studentProfile.semesters.statusFailed');
       case 'in_progress':
-        return 'در حال اخذ';
+        return t('studentProfile.semesters.statusInProgress');
       case 'withdrawn':
-        return 'حذف';
+        return t('studentProfile.semesters.statusWithdrawn');
       default:
-        return 'نامشخص';
+        return t('studentProfile.semesters.statusUnknown');
     }
   };
 
@@ -254,7 +251,7 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
           <div className="flex items-center justify-between gap-2">
             <DialogTitle className="flex items-center gap-2 text-lg">
               <User className="h-5 w-5 text-primary" />
-              پروفایل دانشجو
+              {t('studentProfile.dialogTitle')}
             </DialogTitle>
             <Button
               variant="outline"
@@ -262,7 +259,7 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
               className="h-7 px-2 text-[11px]"
               onClick={handleResetProfile}
             >
-              تغییر حساب گلستان
+              {t('studentProfile.changeAccount')}
             </Button>
           </div>
           <DialogDescription className="sr-only">
@@ -276,8 +273,8 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
               <span className="h-6 w-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
               <p className="text-sm text-muted-foreground">
                 {isSubmitting
-                  ? 'در حال ورود به گلستان...'
-                  : 'در حال دریافت اطلاعات دانشجو...'}
+                  ? t('studentProfile.loggingIn')
+                  : t('studentProfile.loadingProfile')}
               </p>
             </div>
           </div>
@@ -288,8 +285,7 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
             <div className="flex flex-col items-center gap-3 text-center max-w-md mx-auto">
               <div className="flex flex-col gap-1 text-[11px] text-muted-foreground">
                 <p>
-                  {infoMessage ??
-                    'برای دریافت اطلاعات دانشجو، ابتدا با شماره دانشجویی و رمز عبور گلستان وارد شوید.'}
+                  {infoMessage ?? t('studentProfile.loginIntro')}
                 </p>
               </div>
               {error && (
@@ -303,7 +299,7 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
               >
                 <div className="space-y-1">
                   <Label htmlFor="student-id" className="text-xs">
-                    شماره دانشجویی
+                    {t('studentProfile.studentId')}
                   </Label>
                   <Input
                     id="student-id"
@@ -311,12 +307,12 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
                     value={username}
                     onChange={e => setUsername(e.target.value)}
                     className="h-8 text-xs"
-                    placeholder="مثلاً 981234567"
+                    placeholder={t('studentProfile.studentIdPlaceholder')}
                   />
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="golestan-password" className="text-xs">
-                    رمز عبور گلستان
+                    {t('studentProfile.password')}
                   </Label>
                   <Input
                     id="golestan-password"
@@ -325,7 +321,7 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     className="h-8 text-xs"
-                    placeholder="رمز عبور گلستان"
+                    placeholder={t('studentProfile.passwordPlaceholder')}
                   />
                 </div>
                 <div className="flex items-center justify-between gap-2">
@@ -337,7 +333,7 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
                       }
                       className="h-3 w-3"
                     />
-                    <span>ذخیره برای دفعات بعد (فقط روی این دستگاه)</span>
+                    <span>{t('studentProfile.rememberMe')}</span>
                   </label>
                 </div>
                 <div className="flex justify-center gap-2 pt-1">
@@ -346,7 +342,7 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
                     size="sm"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? 'در حال ورود...' : 'ورود به گلستان'}
+                    {isSubmitting ? t('studentProfile.loginSubmitting') : t('studentProfile.loginButton')}
                   </Button>
                 </div>
               </form>
@@ -362,8 +358,8 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
               </div>
               <p className="text-sm font-medium">
                 {isConnectionError
-                  ? 'Cannot connect to the server. Please ensure the helper app is running.'
-                  : 'خطا در دریافت اطلاعات دانشجو.'}
+                  ? t('studentProfile.connectionErrorTitle')
+                  : t('studentProfile.genericLoadError')}
               </p>
               {error && (
                 <p className="text-[11px] text-muted-foreground break-words whitespace-pre-line">
@@ -372,13 +368,13 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
               )}
               <div className="flex justify-center gap-2 pt-1 w-full">
                 <Button variant="outline" size="sm" onClick={handleRetry}>
-                  تلاش مجدد
+                  {t('studentProfile.retry')}
                 </Button>
                 <Button
                   size="sm"
                   onClick={() => setShowCredentialsForm(true)}
                 >
-                  ورود به گلستان
+                  {t('studentProfile.loginButton')}
                 </Button>
               </div>
             </div>
@@ -434,28 +430,38 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
               {/* Summary Stats */}
               <div className="bg-muted/30 rounded-lg p-4 border border-border space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">معدل کل:</span>
+                  <span className="text-sm text-muted-foreground">
+                    {t('studentProfile.summary.overallGpa')}
+                  </span>
                   <span className="font-bold text-lg">
                     {formatGrade(overallGpa)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">واحدهای گذرانده:</span>
+                  <span className="text-sm text-muted-foreground">
+                    {t('studentProfile.summary.passedUnits')}
+                  </span>
                   <span className="font-medium">{totalPassedUnits}</span>
                 </div>
                 {totalRequiredUnits && (
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">پیشرفت کل:</span>
+                      <span className="text-sm text-muted-foreground">
+                        {t('studentProfile.summary.progress')}
+                      </span>
                       <span className="text-xs text-muted-foreground">
-                        {totalPassedUnits} از {totalRequiredUnits} واحد
+                        {t('studentProfile.summary.ofTotalUnits', {
+                          total: totalRequiredUnits,
+                        })}
                       </span>
                     </div>
                     <Progress value={progressPercent} className="h-2" />
                   </div>
                 )}
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">بهترین میانگین ترم:</span>
+                  <span className="text-sm text-muted-foreground">
+                    {t('studentProfile.summary.bestTermGpa')}
+                  </span>
                   <span className="font-medium text-emerald-600">
                     {formatGrade(bestTermGpa)}
                   </span>
@@ -469,19 +475,25 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
               <div className="bg-primary/10 rounded-lg p-4 border border-primary/20">
                 <div className="flex items-center justify-between mb-2">
                   <GraduationCap className="h-5 w-5 text-primary" />
-                  <span className="text-sm font-medium">معدل کل</span>
+                  <span className="text-sm font-medium">
+                    {t('studentProfile.cards.gpaTitle')}
+                  </span>
                 </div>
                 <div className="text-3xl font-bold text-primary">
                   {formatGrade(overallGpa)}
                 </div>
-                <div className="text-xs text-muted-foreground mt-1">از 20</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {t('studentProfile.cards.gpaSubtitle')}
+                </div>
               </div>
 
               {/* Passed Units Card */}
               <div className="bg-emerald-500/10 rounded-lg p-4 border border-emerald-500/20">
                 <div className="flex items-center justify-between mb-2">
                   <BookOpen className="h-5 w-5 text-emerald-600" />
-                  <span className="text-sm font-medium">واحد گذرانده</span>
+                  <span className="text-sm font-medium">
+                    {t('studentProfile.cards.unitsTitle')}
+                  </span>
                 </div>
                 <div className="text-3xl font-bold text-emerald-600">
                   {totalPassedUnits}
@@ -490,7 +502,9 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
                   <>
                     <Progress value={progressPercent} className="h-2 mt-2" />
                     <div className="text-xs text-muted-foreground mt-1">
-                      از {totalRequiredUnits} واحد
+                      {t('studentProfile.cards.unitsOf', {
+                        total: totalRequiredUnits,
+                      })}
                     </div>
                   </>
                 )}
@@ -500,26 +514,30 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
               <div className="bg-amber-500/10 rounded-lg p-4 border border-amber-500/20">
                 <div className="flex items-center justify-between mb-2">
                   <GraduationCap className="h-5 w-5 text-amber-600" />
-                  <span className="text-sm font-medium">بهترین ترم</span>
+                  <span className="text-sm font-medium">
+                    {t('studentProfile.cards.bestTermTitle')}
+                  </span>
                 </div>
                 <div className="text-3xl font-bold text-amber-600">
                   {formatGrade(bestTermGpa)}
                 </div>
-                <div className="text-xs text-muted-foreground mt-1">میانگین ترم</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {t('studentProfile.cards.bestTermSubtitle')}
+                </div>
               </div>
             </div>
 
             {/* Semesters Accordion */}
             <div className="bg-muted/30 rounded-lg p-4 border border-border">
               <h4 className="font-bold mb-3 flex items-center gap-2">
-                ترم‌های تحصیلی
+                {t('studentProfile.semesters.title')}
                 <span className="text-xs text-muted-foreground font-normal">
-                  (برای مشاهده دروس، هر ترم را باز کنید)
+                  {t('studentProfile.semesters.subtitle')}
                 </span>
               </h4>
               {sortedSemesters.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
-                  هیچ اطلاعاتی برای ترم‌ها یافت نشد.
+                  {t('studentProfile.semesters.empty')}
                 </p>
               ) : (
                 <Accordion type="single" collapsible className="w-full space-y-2">
@@ -550,7 +568,7 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
                       <AccordionContent className="pb-3">
                         {semester.courses.length === 0 ? (
                           <p className="text-xs text-muted-foreground text-center py-3">
-                            درسی برای این ترم ثبت نشده است.
+                            {t('studentProfile.semesters.noCourses')}
                           </p>
                         ) : (
                           <div className="overflow-x-auto">
@@ -558,19 +576,19 @@ const StudentProfileDialog = ({ open, onOpenChange }: StudentProfileDialogProps)
                               <thead>
                                 <tr className="border-b border-border">
                                   <th className="text-right py-2 px-2 text-[11px] text-muted-foreground">
-                                    نام درس
+                                    {t('studentProfile.semesters.table.courseName')}
                                   </th>
                                   <th className="text-center py-2 px-2 text-[11px] text-muted-foreground">
-                                    کد
+                                    {t('studentProfile.semesters.table.code')}
                                   </th>
                                   <th className="text-center py-2 px-2 text-[11px] text-muted-foreground">
-                                    واحد
+                                    {t('studentProfile.semesters.table.units')}
                                   </th>
                                   <th className="text-center py-2 px-2 text-[11px] text-muted-foreground">
-                                    نمره
+                                    {t('studentProfile.semesters.table.grade')}
                                   </th>
                                   <th className="text-center py-2 px-2 text-[11px] text-muted-foreground">
-                                    وضعیت
+                                    {t('studentProfile.semesters.table.status')}
                                   </th>
                                 </tr>
                               </thead>

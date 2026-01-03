@@ -1,4 +1,5 @@
 import { Wand2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -15,9 +16,10 @@ import { Slider } from '@/components/ui/slider';
 import { useState } from 'react';
 
 const AutoPlannerDialog = () => {
+  const { t } = useTranslation();
   const [minUnits, setMinUnits] = useState([12]);
   const [maxUnits, setMaxUnits] = useState([20]);
-  const [preferMorning, setPreferMorning] = useState(false);
+  const [preferate(false);
   const [avoidFriday, setAvoidFriday] = useState(true);
 
   return (
@@ -25,27 +27,29 @@ const AutoPlannerDialog = () => {
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm" className="h-8 gap-1.5 px-2 text-xs">
           <Wand2 className="h-4 w-4" />
-          <span className="hidden md:inline">انتخاب خودکار</span>
+          <span className="hidden md:inline">{t('autoPlanner.trigger')}</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md" dir="rtl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Wand2 className="h-5 w-5 text-primary" />
-            ایجاد برنامه خودکار
+            {t('autoPlanner.title')}
           </DialogTitle>
           <DialogDescription>
-            تنظیمات خود را انتخاب کنید تا بهترین برنامه برای شما ساخته شود
+            {t('autoPlanner.description')}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
           {/* Units Range */}
           <div className="space-y-3">
-            <Label className="text-sm">محدوده واحد: {minUnits[0]} - {maxUnits[0]}</Label>
+            <Label className="text-sm">
+              {t('autoPlanner.unitsRangeLabel', { min: minUnits[0], max: maxUnits[0] })}
+            </Label>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <span className="text-xs text-muted-foreground">حداقل</span>
+                <span className="text-xs text-muted-foreground">{t('autoPlanner.minLabel')}</span>
                 <Slider
                   value={minUnits}
                   onValueChange={setMinUnits}
@@ -56,7 +60,7 @@ const AutoPlannerDialog = () => {
                 />
               </div>
               <div>
-                <span className="text-xs text-muted-foreground">حداکثر</span>
+                <span className="text-xs text-muted-foreground">{t('autoPlanner.maxLabel')}</span>
                 <Slider
                   value={maxUnits}
                   onValueChange={setMaxUnits}
@@ -71,7 +75,7 @@ const AutoPlannerDialog = () => {
 
           {/* Preferences */}
           <div className="space-y-3">
-            <Label className="text-sm">ترجیحات</Label>
+            <Label className="text-sm">{t('autoPlanner.preferencesLabel')}</Label>
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Checkbox 
@@ -80,7 +84,7 @@ const AutoPlannerDialog = () => {
                   onCheckedChange={(c) => setPreferMorning(!!c)}
                 />
                 <label htmlFor="morning" className="text-xs cursor-pointer">
-                  ترجیح کلاس‌های صبح
+                  {t('autoPlanner.preferMorning')}
                 </label>
               </div>
               <div className="flex items-center gap-2">
@@ -90,7 +94,7 @@ const AutoPlannerDialog = () => {
                   onCheckedChange={(c) => setAvoidFriday(!!c)}
                 />
                 <label htmlFor="friday" className="text-xs cursor-pointer">
-                  اجتناب از کلاس جمعه
+                  {t('autoPlanner.avoidFriday')}
                 </label>
               </div>
             </div>
@@ -98,10 +102,10 @@ const AutoPlannerDialog = () => {
         </div>
 
         <DialogFooter className="gap-2">
-          <Button variant="outline" size="sm">انصراف</Button>
+          <Button variant="outline" size="sm">{t('autoPlanner.cancel')}</Button>
           <Button size="sm" className="gap-1.5">
             <Wand2 className="h-3.5 w-3.5" />
-            ایجاد برنامه
+            {t('autoPlanner.create')}
           </Button>
         </DialogFooter>
       </DialogContent>

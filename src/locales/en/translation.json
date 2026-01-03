@@ -1,0 +1,471 @@
+{
+  "app": {
+    "title": "Golestoon",
+    "tagline": "Plan your semester without the headache"
+  },
+  "header": {
+    "appName": "Golestoon",
+    "semesterTag": "",
+    "support": "Support",
+    "supportTooltip": "Support us 💙",
+    "downloadImageError": "Schedule grid not found",
+    "downloadImagePreparing": "Preparing image...",
+    "downloadImageNotFound": "Grid not found",
+    "downloadImageSuccess": "Image downloaded successfully",
+    "downloadImageFailed": "Failed to save image",
+    "darkMode": "Dark mode",
+    "lightMode": "Light mode"
+  },
+  "sidebar": {
+    "departmentPlaceholder": "Select faculty/department",
+    "searchPlaceholder": "Search course, instructor...",
+    "filters": "Filters",
+    "loadingCourses": "Loading courses...",
+    "loadErrorPrefix": "Error loading courses:",
+    "loadErrorFallback": "Unable to connect to server.",
+    "selectDepartmentHint": "Select a faculty/department above to see available courses.",
+    "customCoursesHeader": "Courses added by you",
+    "availableCoursesHeader": "Available courses",
+    "otherCoursesHeader": "Unavailable courses",
+    "noCoursesFound": "No courses found",
+    "saveSchedule": "Save schedule",
+    "saveScheduleEmpty": "Schedule is empty",
+    "saveSchedulePrompt": "Enter a name for this schedule:",
+    "saveScheduleInvalid": "Please enter a valid schedule name",
+    "saveDialogTitle": "Save schedule",
+    "saveDialogLabel": "Schedule name",
+    "saveDialogPlaceholder": "e.g. Saturday-Monday plan",
+    "saveDialogDescription": "You can store multiple schedules and switch between them later.",
+    "saveDialogCancel": "Cancel",
+    "saveDialogConfirm": "Save",
+    "clear": "Clear",
+    "clearConfirmTitle": "Clear schedule",
+    "clearConfirmDescription": "Are you sure? All selected courses will be removed from the timetable.",
+    "clearConfirmCancel": "Cancel",
+    "clearConfirmOk": "Clear",
+    "cleared": "Schedule cleared",
+    "donateHint": "If this tool helped you, you can support us 💙",
+    "donateLabel": "Support"
+  },
+  "filters": {
+    "title": "Search filters",
+    "timeRange": "Time range",
+    "from": "From",
+    "to": "To",
+    "hour": "Hour",
+    "enableTime": "Enable",
+    "generalCoursesOnly": "General courses only",
+    "generalCoursesTooltip": "Show only general courses like Islamic Thought, PE, etc.",
+    "gender": "Gender",
+    "gender_all": "All",
+    "gender_male": "Male",
+    "gender_female": "Female",
+    "gender_mixed": "Mixed",
+    "apply": "Apply",
+    "clear": "Clear",
+    "cancel": "Cancel",
+    "searchAllCourses": "Search all courses",
+    "searching": "Searching",
+    "searchingAllCourses": "Searching in all courses..."
+  },
+  "footer": {
+    "units": "units",
+    "courses": "courses",
+    "days": "days",
+    "noConflicts": "No conflicts",
+    "timeConflicts": "{{count}} time conflicts",
+    "examConflict": "Exam conflict",
+    "downloadImage": "Download image",
+    "version": "v1.0.0"
+  },
+  "savedSchedules": {
+    "sheetTitle": "Saved schedules",
+    "sheetSubtitle": "Manage your saved combinations",
+    "newPlaceholder": "New schedule name...",
+    "emptyMessage": "No saved schedules",
+    "load": "Load",
+    "delete": "Delete",
+    "savedAt": "{{count}} courses • {{date}}"
+  },
+  "studentProfile": {
+    "dialogTitle": "Student profile",
+    "changeAccount": "Change Golestan account",
+    "loadingProfile": "Loading student information...",
+    "loggingIn": "Signing in to Golestan...",
+    "loginIntro": "To fetch your profile, sign in with your Golestan student number and password.",
+    "loginErrorAuth": "لطفاً شماره دانشجویی و رمز عبور خود را بررسی کنید.\nPlease check your username and password.",
+    "loginMissingCredentials": "Please enter your student number and password.",
+    "loginAgainAfterReset": "Stored Golestan data removed. Sign in again to view your profile.",
+    "studentId": "Student number",
+    "password": "Golestan password",
+    "studentIdPlaceholder": "e.g. 981234567",
+    "passwordPlaceholder": "Golestan password",
+    "rememberMe": "Remember on this device",
+    "loginButton": "Sign in to Golestan",
+    "loginSubmitting": "Signing in...",
+    "retry": "Retry",
+    "connectionErrorTitle": "Cannot connect to the server. Please ensure the helper app is running.",
+    "genericLoadError": "Failed to load student information.",
+    "noData": "Nothing to display.",
+    "guestUser": "Guest user",
+    "unknown": "Unknown",
+    "profileCard": {
+      "faculty": "Faculty",
+      "department": "Department",
+      "major": "Major",
+      "degreeLevel": "Degree",
+      "studyType": "Study type",
+      "enrollmentStatus": "Enrollment status"
+    },
+    "summary": {
+      "overallGpa": "Overall GPA",
+      "passedUnits": "Units passed",
+      "progress": "Overall progress",
+      "bestTermGpa": "Best term GPA",
+      "ofTotalUnits": "{{total}} units total",
+      "of20": "out of 20"
+    },
+    "cards": {
+      "gpaTitle": "Overall GPA",
+      "gpaSubtitle": "out of 20",
+      "unitsTitle": "Units passed",
+      "unitsOf": "of {{total}} units",
+      "bestTermTitle": "Best term",
+      "bestTermSubtitle": "Term GPA"
+    },
+    "semesters": {
+      "title": "Academic semesters",
+      "subtitle": "(open each term to see its courses)",
+      "empty": "No semester information found.",
+      "noCourses": "No courses recorded for this term.",
+      "semesterUnits": "{{passed}} units passed out of {{total}}",
+      "semesterGpa": "Term GPA: {{gpa}}",
+      "table": {
+        "courseName": "Course",
+        "code": "Code",
+        "units": "Units",
+        "grade": "Grade",
+        "status": "Status"
+      },
+      "statusPassed": "Passed",
+      "statusFailed": "Failed",
+      "statusInProgress": "In progress",
+      "statusWithdrawn": "Withdrawn",
+      "statusUnknown": "Unknown"
+    }
+  },
+  "language": {
+    "persian": "Persian",
+    "english": "English"
+  },
+  "courseList": {
+    "userAddedHeader": "Courses added by you",
+    "availableHeader": "Available courses",
+    "unavailableHeader": "Unavailable courses"
+  },
+  "labels": {
+    "units": "units",
+    "courses": "courses",
+    "days": "days"
+  },
+  "days": {
+    "0": "Saturday",
+    "1": "Sunday",
+    "2": "Monday",
+    "3": "Tuesday",
+    "4": "Wednesday",
+    "5": "Thursday"
+  },
+  "addCourse": {
+    "trigger": "Add course",
+    "title": "Add new course",
+    "description": "Enter course details to add it to the \"User added courses\" list",
+    "nameLabel": "Course name *",
+    "namePlaceholder": "e.g. Calculus I",
+    "courseIdLabel": "Course code",
+    "courseIdPlaceholder": "40121501",
+    "instructorLabel": "Instructor",
+    "instructorPlaceholder": "Dr. Ahmadi",
+    "creditsLabel": "Credits",
+    "locationLabel": "Location",
+    "locationPlaceholder": "Room 101",
+    "sessionsLabel": "Class time (you can add multiple sessions)",
+    "sessionsAdd": "+ Add session",
+    "weekTypeAll": "Every week",
+    "weekTypeOdd": "Odd weeks",
+    "weekTypeEven": "Even weeks",
+    "groupLabel": "Course type",
+    "examDateLabel": "Exam date",
+    "examDatePlaceholder": "1403/04/15",
+    "examTimeLabel": "Exam time",
+    "examTimePlaceholder": "08:00",
+    "cancel": "Cancel",
+    "submit": "Add course",
+    "nameRequired": "Course name is required",
+    "instructorRequired": "Instructor name is required",
+    "atLeastOneSession": "At least one session is required",
+    "sessionTimeError": "Start time must be before end time",
+    "sessionErrorsFix": "Please fix session time errors",
+    "courseAdded": "Course added",
+    "unknownLocation": "Unknown",
+    "groupSpecialized": "Specialized",
+    "groupGeneral": "General",
+    "groupBasic": "Basic"
+  },
+  "examDialog": {
+    "trigger": "Exam schedule",
+    "title": "Exam schedule",
+    "subtitle": "Only courses placed in the main timetable are listed here.",
+    "print": "Print",
+    "export": "Export to Excel",
+    "exportSuccess": "Excel file downloaded",
+    "printReady": "Ready to print",
+    "emptyTitle": "No course selected",
+    "headers": {
+      "courseName": "Course",
+      "courseCode": "Course code",
+      "instructor": "Instructor",
+      "classTime": "Class time",
+      "examTime": "Exam time",
+      "credits": "Credits",
+      "location": "Location"
+    },
+    "noExamTime": "Not announced",
+    "noLocation": "Not announced",
+    "summary": {
+      "courses": "📚 Courses: {{count}}",
+      "credits": "📦 Credits: {{credits}}",
+      "days": "📆 Days: {{days}}"
+    },
+    "conflictNotice": "⚠️ Red rows indicate exam conflicts"
+  },
+  "autoPlanner": {
+    "trigger": "Auto planner",
+    "title": "Create automatic schedule",
+    "description": "Choose your preferences and we’ll generate the best schedule for you",
+    "unitsRangeLabel": "Credits range: {{min}} - {{max}}",
+    "minLabel": "Min",
+    "maxLabel": "Max",
+    "preferencesLabel": "Preferences",
+    "preferMorning": "Prefer morning classes",
+    "avoidFriday": "Avoid Friday classes",
+    "cancel": "Cancel",
+    "create": "Generate schedule"
+  },
+  "guidedTour": {
+    "stepLabel": "Step {{current}} of {{total}}",
+    "skip": "Skip",
+    "previous": "Previous",
+    "next": "Next",
+    "finish": "🎉 Finish",
+    "steps": {
+      "0": {
+        "title": "👋 Welcome to Golestoon!",
+        "content": "This is a smart planner for Golestan course selection. Let’s take a quick tour together!"
+      },
+      "1": {
+        "title": "📚 Course list",
+        "content": "Here you can see all courses. Select your major and click on a course to add it."
+      },
+      "2": {
+        "title": "✅ Available courses",
+        "content": "These courses are ready to register. Click on any to add it to your schedule."
+      },
+      "3": {
+        "title": "⚠️ Unavailable courses",
+        "content": "These courses exist in your university’s Golestan but are not currently available to take."
+      },
+      "4": {
+        "title": "🔍 Filters",
+        "content": "Use filters to narrow courses by time, gender, and type."
+      },
+      "5": {
+        "title": "📅 Schedule grid",
+        "content": "Selected courses appear here. Time conflicts are detected automatically!"
+      },
+      "6": {
+        "title": "🎨 Course colors",
+        "content": "Courses are color-coded by type:\n🔵 Specialized\n🟢 General\n🟠 Basic\nEach course has its own color."
+      },
+      "7": {
+        "title": "📷 Download image",
+        "content": "Use this button to export a clean PNG image of your weekly schedule."
+      },
+      "8": {
+        "title": "💾 Save & manage",
+        "content": "Save schedules, add custom courses, or clear everything."
+      },
+      "9": {
+        "title": "📝 Exam schedule",
+        "content": "See exam dates and quickly spot conflicts."
+      },
+      "10": {
+        "title": "📁 Saved schedules",
+        "content": "Save multiple schedules and switch between them."
+      },
+      "11": {
+        "title": "👤 Student profile",
+        "content": "Access your profile, settings, and help from here."
+      },
+      "12": {
+        "title": "📊 Summary bar",
+        "content": "Units, courses, and conflict status are always visible here. Now go build your best schedule! 🎯"
+      }
+    }
+  },
+  "notFound": {
+    "code": "404",
+    "title": "Page not found",
+    "message": "Oops! This page does not exist.",
+    "back": "Return to Home"
+  },
+  "alertBanner": {
+    "timeConflict": "⛔ There is a time conflict in your schedule",
+    "examConflict": "⚠️ There is an exam date conflict",
+    "noConflict": "✅ Schedule has no conflicts"
+  },
+  "settings": {
+    "title": "App Settings",
+    "appearance": "Appearance",
+    "themeSection": "Theme mode",
+    "theme": {
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "fontSizeSection": "Font size",
+    "fontSize": {
+      "small": "Small",
+      "normal": "Normal",
+      "large": "Large"
+    },
+    "fontSizeNote": "Applies to course cards, course list, and schedule grid.",
+    "gridSection": "Grid lines",
+    "gridOn": "Grid lines are visible",
+    "gridOff": "Minimal appearance (no lines)",
+    "languageSection": "Site language",
+    "directionSection": "Layout direction",
+    "directionRtl": "Right to left (RTL)",
+    "directionLtr": "Left to right (LTR)",
+    "dataSection": "Data management",
+    "clearAllData": "Clear all data",
+    "resetApplication": "Reset application",
+    "confirmTitle": "Are you sure?",
+    "confirmDescription": "This action cannot be undone."
+  },
+  "sidebarStats": {
+    "totalUnits": "Units",
+    "gpa": "GPA",
+    "count": "Count",
+    "courses": "Courses",
+    "days": "Days",
+    "conflict": "Conflict",
+    "valid": "Valid"
+  },
+  "course": {
+    "labels": {
+      "instructor": "Instructor:",
+      "code": "Code:",
+      "group": "Group:",
+      "units": "Units:",
+      "type": "Type:",
+      "exam": "Exam:",
+      "time": "Time:",
+      "location": "Location:",
+      "description": "Description:",
+      "sessions": "Sessions:",
+      "conflictWith": "Conflict with:"
+    },
+    "type": {
+      "theoretical": "Theoretical",
+      "practical": "Practical",
+      "theoreticalPractical": "Theoretical/Practical"
+    },
+    "weekType": {
+      "odd": "Odd week",
+      "even": "Even week"
+    },
+    "conflictIndicator": "Conflict ({{count}})"
+  },
+  "department": {
+    "placeholder": "Select department...",
+    "searchPlaceholder": "Search department...",
+    "empty": "No department found."
+  },
+  "mobile": {
+    "menuTitle": "Menu",
+    "donate": "Support us",
+    "language": "Language",
+    "profile": "Profile",
+    "version": "Version {{version}}",
+    "sidebarTitle": "Course list"
+  },
+  "scheduleGrid": {
+    "timeHeader": "Time",
+    "scrollHint": "← Scroll to see the full grid →"
+  },
+  "about": {
+    "backToApp": "Back to planner",
+    "teamTitle": "About the Chopolovski team",
+    "taglineChip": "A small team with one idea: making student life easier",
+    "heroTitlePrefix": "We are the ",
+    "heroTitleSuffix": " team",
+    "teamName": "Chopolovski",
+    "heroSubtitle": "We are a student team focused on designing and building practical tools.",
+    "projectChip": "About this project",
+    "projectName": "“Golestoon” course planner",
+    "projectDescription": "This project is built to make course planning in Golestan simpler. We focus on a fast, clear interface so selecting and managing courses feels simple instead of confusing.",
+    "teamMembersTitle": "Chopolovski team members",
+    "telegramTitle": "Golestoon Telegram channel",
+    "telegramDescription": "Join our Telegram channel to get the latest updates and news about the project.",
+    "telegramCta": "Join Telegram channel",
+    "githubSectionTitle": "Project on GitHub",
+    "githubSectionDescription": "Golestoon is open source on GitHub:",
+    "githubWebRepo": "Web source (golestan-web)",
+    "githubAppRepo": "App version (Golestoon)",
+    "contactSectionTitle": "Contact",
+    "contactSectionDescription": "For suggestions, collaboration, or bug reports, use one of these channels:",
+    "contactEmailCta": "Team email",
+    "contactGithubCta": "Pezhman’s GitHub",
+    "madeWithLove": "Made with ❤️ by the Chopolovski team",
+    "team": {
+      "pezhmanRole": "Project lead, ideation and development",
+      "shayanRole": "API and data-fetching developer",
+      "mahyarRole": "Documentation and data analysis",
+      "aydinRole": "AI model developer"
+    }
+  },
+  "donate": {
+    "backToApp": "Back to planner",
+    "pageTitle": "Support us",
+    "heroTitle": "Support Golestoon 💙",
+    "heroSubtitle": "Golestoon is free and will stay free. If it helped you, you can buy the team a coffee or a pizza to keep us energized!",
+    "selectAmountTitle": "Choose an amount",
+    "customAmountLabel": "Custom amount (Toman)",
+    "customAmountPlaceholder": "e.g. 75,000",
+    "customAmountCurrency": "Toman",
+    "customAmountMin": "Minimum amount: 10,000 Toman",
+    "donorNameLabel": "Your name (optional)",
+    "showInSupportersLabel": "Show my name on supporters page",
+    "donorNamePlaceholder": "e.g. Ali from Tehran",
+    "donateButton": "Donate {{amount}} Toman",
+    "badgeSecureTitle": "Secure payment",
+    "badgeSecureDescription": "Through trusted payment gateways",
+    "badgeOptionalTitle": "Optional, no pressure",
+    "badgeOptionalDescription": "The app is always free",
+    "badgeSupportersTitle": "Supporters page",
+    "badgeSupportersDescription": "Your name will appear on the supporters page",
+    "thanksTitle": "Thank you for your support 💙",
+    "thanksSubtitle": "Chopolovski team",
+    "options": {
+      "coffeeLabel": "A coffee",
+      "coffeeDescription": "To start a productive day",
+      "pizzaLabel": "A pizza",
+      "pizzaDescription": "For a late-night coding session",
+      "loveLabel": "Love & energy",
+      "loveDescription": "A special support for the team",
+      "customLabel": "Custom amount",
+      "customDescription": "Any amount you like"
+    }
+  }
+}

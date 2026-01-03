@@ -5,6 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useTranslation } from 'react-i18next';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,6 +19,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import SidebarCourseItem from './SidebarCourseItem';
 import CompactFilterPanel from './CompactFilterPanel';
 import AddCourseDialog from './AddCourseDialog';
@@ -81,10 +89,14 @@ const VirtualizedCourseList = ({ courses }: VirtualizedCourseListProps) => {
 const Sidebar = () => {
   const { selectedCourses, allCourses, clearAll, addCustomCourse, saveSchedule } = useSchedule();
   const { isLoading, error, departments } = useGolestanData();
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState<string | 'all' | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  
+  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
+  const [scheduleName, setScheduleName] = useState('');
+  const [saveError, setSaveError] = useState<string | null>(null);
+
   // Filter states
   const [timeFrom, setTimeFrom] = useState(7);
   const [timeTo, setTimeTo] = useState(20);
@@ -151,32 +163,34 @@ const Sidebar = () => {
 
   const handleSave = () => {
     if (selectedCourses.length === 0) {
-      toast.info('برنامه خالی است');
+      toast.info(t('sidebar.saveScheduleEmpty'));
       return;
     }
+    setScheduleName('');
+    setSaveError(null);
+    setIsSaveDialogOpen(true);
+  };
 
-    const name = window.prompt('نام برنامه را وارد کنید:');
-    if (!name) {
-      return;
-    }
-
-    const trimmed = name.trim();
+  const handleConfirmSave = () => {
+    const trimmed = scheduleName.trim();
     if (!trimmed) {
-      toast.error('لطفاً نام معتبر برای برنامه وارد کنید');
+      setSaveError(t('sidebar.saveScheduleInvalid'));
       return;
     }
 
-    // ذخیره از طریق کانتکست (همان مکانیزمی که در صفحه برنامه‌های ذخیره‌شده استفاده می‌شود)
     saveSchedule(trimmed);
+    setIsSaveDialogOpen(false);
+    setScheduleName('');
+    setSaveError(null);
 
     // Hint حمایت (فقط اولین بار)
     const hasSeenDonateHint = localStorage.getItem('golestan-donate-hint');
     if (!hasSeenDonateHint) {
       localStorage.setItem('golestan-donate-hint', 'true');
       setTimeout(() => {
-        toast('اگه این ابزار بهت کمک کرد، می‌تونی از ما حمایت کنی 💙', {
+        toast(t('sidebar.donateHint'), {
           action: {
-            label: 'حمایت',
+            label: t('sidebar.donateLabel'),
             onClick: () => {
               window.location.href = '/donate';
             },
@@ -189,7 +203,7 @@ const Sidebar = () => {
 
   const handleClearAll = () => {
     clearAll();
-    toast.info('جدول پاک شد');
+    toast.info(t('sidebar.cleared'));
   };
 
   const handleAddCourse = (course: Course) => {
@@ -204,7 +218,7 @@ const Sidebar = () => {
           value={selectedDepartment}
           onChange={setSelectedDepartment}
           departments={departments}
-          placeholder="انتخاب دانشکده/رشته"
+          placeholder={t('sidebar.departmentPlaceholder')}
         />
       </div>
       
@@ -213,7 +227,7 @@ const Sidebar = () => {
         <div className="relative">
           <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
-            placeholder="جستجوی درس، استاد..."
+            placeholder={t('sidebar.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pr-8 h-8 text-xs bg-background/50"
@@ -230,7 +244,7 @@ const Sidebar = () => {
           >
             <span className="flex items-center gap-1.5">
               <Filter className="h-3 w-3" />
-              فیلترها
+              {t('sidebar.filters')}
             </span>
             <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${filtersOpen ? 'rotate-180' : ''}`} />
           </Button>
@@ -255,19 +269,19 @@ const Sidebar = () => {
       <div className="flex-1 flex flex-col min-h-0">
         {isLoading && (
           <div className="flex-1 flex items-center justify-center text-[11px] text-muted-foreground">
-            در حال بارگذاری دروس...
+            {t('sidebar.loadingCourses')}
           </div>
         )}
 
         {!isLoading && error && (
           <div className="p-2 text-[11px] text-destructive bg-destructive/10 border border-destructive/40 rounded-md">
-            خطا در دریافت دروس: {error.message || 'امکان برقراری ارتباط با سرور وجود ندارد.'}
+            {t('sidebar.loadErrorPrefix')} {error.message || t('sidebar.loadErrorFallback')}
           </div>
         )}
 
         {!isLoading && !error && !selectedDepartment && customCoursesList.length === 0 && (
           <div className="flex-1 flex items-center justify-center text-[11px] text-muted-foreground px-3 text-center">
-            برای مشاهده دروس، ابتدا دانشکده/رشته را از بالای لیست انتخاب کن.
+            {t('sidebar.selectDepartmentHint')}
           </div>
         )}
 
@@ -280,7 +294,7 @@ const Sidebar = () => {
                 <div
                   className="sticky top-0 z-10 bg-emerald-500/10 px-3 py-1.5 text-[10px] font-bold text-emerald-700 border-b border-emerald-500/30"
                 >
-                  دروس اضافه شده توسط شما ({customCoursesList.length})
+                  {t('sidebar.customCoursesHeader')} ({customCoursesList.length})
                 </div>
                 <VirtualizedCourseList courses={customCoursesList} />
               </div>
@@ -293,7 +307,7 @@ const Sidebar = () => {
                   data-tour="available-courses"
                   className="sticky top-0 z-10 bg-primary/10 px-3 py-1.5 text-[10px] font-bold text-primary border-b border-primary/20"
                 >
-                  دروس قابل اخذ ({availableToTake.length})
+                  {t('sidebar.availableCoursesHeader')} ({availableToTake.length})
                 </div>
                 <VirtualizedCourseList courses={availableToTake} />
               </div>
@@ -306,7 +320,7 @@ const Sidebar = () => {
                   data-tour="unavailable-courses"
                   className="sticky top-0 z-10 bg-muted/80 px-3 py-1.5 text-[10px] font-bold text-muted-foreground border-b border-border/30"
                 >
-                  دروس غیر قابل اخذ ({otherCourses.length})
+                  {t('sidebar.otherCoursesHeader')} ({otherCourses.length})
                 </div>
                 <VirtualizedCourseList courses={otherCourses} />
               </div>
@@ -314,7 +328,7 @@ const Sidebar = () => {
 
             {filteredCourses.length === 0 && (
               <p className="text-center text-muted-foreground text-[10px] py-8">
-                درسی یافت نشد
+                {t('sidebar.noCoursesFound')}
               </p>
             )}
           </ScrollArea>
@@ -335,7 +349,7 @@ const Sidebar = () => {
             onClick={handleSave}
           >
             <Save className="h-3.5 w-3.5" />
-            ذخیره برنامه
+            {t('sidebar.saveSchedule')}
           </Button>
           
           <AlertDialog>
@@ -347,30 +361,85 @@ const Sidebar = () => {
                 disabled={selectedCourses.length === 0}
               >
                 <Trash2 className="h-3.5 w-3.5" />
-                پاک‌سازی
+                {t('sidebar.clear')}
               </Button>
             </AlertDialogTrigger>
             
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>پاک‌سازی جدول</AlertDialogTitle>
+                <AlertDialogTitle>{t('sidebar.clearConfirmTitle')}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  آیا مطمئن هستید؟ تمام دروس انتخاب شده از برنامه حذف خواهند شد.
+                  {t('sidebar.clearConfirmDescription')}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter className="gap-2">
-                <AlertDialogCancel>انصراف</AlertDialogCancel>
+                <AlertDialogCancel>{t('sidebar.clearConfirmCancel')}</AlertDialogCancel>
                 <AlertDialogAction 
                   onClick={handleClearAll}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
-                  پاک کردن
+                  {t('sidebar.clearConfirmOk')}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
         </div>
       </div>
+
+      {/* Save schedule dialog */}
+      <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
+        <DialogContent dir="rtl" className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-sm font-semibold">
+              {t('sidebar.saveDialogTitle')}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <label className="text-[11px] text-muted-foreground">
+              {t('sidebar.saveDialogLabel')}
+            </label>
+            <Input
+              autoFocus
+              value={scheduleName}
+              onChange={(e) => {
+                setScheduleName(e.target.value);
+                if (saveError) setSaveError(null);
+              }}
+              placeholder={t('sidebar.saveDialogPlaceholder')}
+              className="h-9 text-xs"
+            />
+            {saveError && (
+              <p className="text-[11px] text-destructive mt-1">
+                {saveError}
+              </p>
+            )}
+            <p className="text-[10px] text-muted-foreground">
+              {t('sidebar.saveDialogDescription')}
+            </p>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs"
+              onClick={() => {
+                setIsSaveDialogOpen(false);
+                setScheduleName('');
+                setSaveError(null);
+              }}
+            >
+              {t('sidebar.saveDialogCancel')}
+            </Button>
+            <Button
+              size="sm"
+              className="h-8 text-xs"
+              onClick={handleConfirmSave}
+            >
+              {t('sidebar.saveDialogConfirm')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </aside>
   );
 };

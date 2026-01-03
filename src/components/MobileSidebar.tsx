@@ -24,6 +24,7 @@ import { useSchedule } from '@/contexts/ScheduleContext';
 import { toast } from 'sonner';
 import { useGolestanData } from '@/hooks/useGolestanData';
 import { normalizeText } from '@/lib/textNormalizer';
+import { useTranslation } from 'react-i18next';
 
 interface MobileSidebarProps {
   isOpen: boolean;
@@ -35,6 +36,7 @@ const MobileSidebar = ({ isOpen, onOpenChange }: MobileSidebarProps) => {
   const { isLoading, error, departments } = useGolestanData();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState<string | 'all' | null>(null);
+  const { t } = useTranslation();
   
   // Filter states
   const [gender, setGender] = useState<Gender | 'all'>('all');
@@ -102,13 +104,13 @@ const MobileSidebar = ({ isOpen, onOpenChange }: MobileSidebarProps) => {
           <div className="flex flex-col items-center pt-2 pb-3 border-b border-border">
             <div className="w-12 h-1.5 bg-muted-foreground/30 rounded-full mb-3" />
             <div className="flex items-center justify-between w-full px-4">
-              <SheetTitle className="text-base font-bold">لیست دروس</SheetTitle>
+              <SheetTitle className="text-base font-bold">{t('mobile.sidebarTitle')}</SheetTitle>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="text-xs">
-                  {totalUnits} واحد
+                  {totalUnits} {t('labels.units')}
                 </Badge>
                 <Badge variant="outline" className="text-xs">
-                  {selectedCourses.length} درس
+                  {selectedCourses.length} {t('labels.courses')}
                 </Badge>
               </div>
             </div>
@@ -120,7 +122,6 @@ const MobileSidebar = ({ isOpen, onOpenChange }: MobileSidebarProps) => {
               value={selectedDepartment}
               onChange={setSelectedDepartment}
               departments={departments}
-              placeholder="انتخاب دانشکده/رشته"
             />
           </div>
 
@@ -129,7 +130,7 @@ const MobileSidebar = ({ isOpen, onOpenChange }: MobileSidebarProps) => {
             <div className="relative">
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="جستجوی درس، استاد..."
+                placeholder={t('sidebar.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pr-10 h-11 text-sm bg-muted/30"

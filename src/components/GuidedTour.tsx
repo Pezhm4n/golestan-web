@@ -3,91 +3,92 @@ import { createPortal } from 'react-dom';
 import { X, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface TourStep {
   target: string;
-  title: string;
-  content: string;
+  titleKey: string;
+  contentKey: string;
   position: 'top' | 'bottom' | 'left' | 'right';
 }
 
 const tourSteps: TourStep[] = [
   {
     target: 'header',
-    title: '👋 خوش آمدید به گلستون!',
-    content: 'این برنامه‌ریز هوشمند انتخاب واحد گلستون هست. بیا با هم یه دوری بزنیم!',
+    titleKey: 'guidedTour.steps.0.title',
+    contentKey: 'guidedTour.steps.0.content',
     position: 'bottom',
   },
   {
     target: '[data-tour="sidebar"]',
-    title: '📚 لیست دروس',
-    content: 'اینجا همه دروس رو می‌بینی. رشته‌ت رو انتخاب کن و روی هر درس کلیک کن تا اضافه بشه.',
+    titleKey: 'guidedTour.steps.1.title',
+    contentKey: 'guidedTour.steps.1.content',
     position: 'right',
   },
   {
     target: '[data-tour="available-courses"]',
-    title: '✅ دروس قابل اخذ',
-    content: 'این دروس آماده اخذ هستند. روی هر کدوم کلیک کن تا به برنامت اضافه بشه.',
+    titleKey: 'guidedTour.steps.2.title',
+    contentKey: 'guidedTour.steps.2.content',
     position: 'right',
   },
   {
     target: '[data-tour="unavailable-courses"]',
-    title: '⚠️ دروس غیر قابل اخذ',
-    content: 'این دروس توی سایت گلستان دانشگاه شما تعریف شدن اما فعلاً نمیشه برداشت. باید مدیر گروه اونارو قابل اخذ کنه یا حذفشون کنه.',
+    titleKey: 'guidedTour.steps.3.title',
+    contentKey: 'guidedTour.steps.3.content',
     position: 'right',
   },
   {
     target: '[data-tour="filters"]',
-    title: '🔍 فیلترها',
-    content: 'با این فیلترها دروس رو بر اساس زمان، جنسیت و نوع فیلتر کن.',
+    titleKey: 'guidedTour.steps.4.title',
+    contentKey: 'guidedTour.steps.4.content',
     position: 'right',
   },
   {
     target: '[data-tour="schedule-grid"]',
-    title: '📅 جدول برنامه',
-    content: 'دروس انتخابی اینجا نمایش داده میشن. تداخل‌ها خودکار تشخیص داده میشن!',
+    titleKey: 'guidedTour.steps.5.title',
+    contentKey: 'guidedTour.steps.5.content',
     position: 'left',
   },
   {
     target: '[data-tour="schedule-grid"]',
-    title: '🎨 رنگ‌بندی دروس',
-    content: 'دروس بر اساس نوع رنگ‌بندی شدن:\n🔵 تخصصی: آبی/بنفش\n🟢 عمومی: سبز/فیروزه‌ای\n🟠 پایه: نارنجی/صورتی\nهر درس رنگ یکتای خودش رو داره!',
+    titleKey: 'guidedTour.steps.6.title',
+    contentKey: 'guidedTour.steps.6.content',
     position: 'left',
   },
   {
     target: '[data-tour="download-image"]',
-    title: '📷 دانلود تصویر',
-    content: 'با این دکمه می‌تونی از جدول برنامت یه عکس PNG خوشگل بگیری و ذخیره کنی.',
+    titleKey: 'guidedTour.steps.7.title',
+    contentKey: 'guidedTour.steps.7.content',
     position: 'bottom',
   },
   {
     target: '[data-tour="actions"]',
-    title: '💾 ذخیره و مدیریت',
-    content: 'برنامه رو ذخیره کن، درس جدید اضافه کن یا همه رو پاک کن.',
+    titleKey: 'guidedTour.steps.8.title',
+    contentKey: 'guidedTour.steps.8.content',
     position: 'top',
   },
   {
     target: '[data-tour="exam-schedule"]',
-    title: '📝 جدول امتحانات',
-    content: 'تاریخ امتحانات رو ببین و از تداخل‌ها مطلع شو!',
+    titleKey: 'guidedTour.steps.9.title',
+    contentKey: 'guidedTour.steps.9.content',
     position: 'bottom',
   },
   {
     target: '[data-tour="saved-schedules"]',
-    title: '📁 برنامه‌های ذخیره شده',
-    content: 'چند برنامه مختلف ذخیره کن و بینشون سوییچ کن.',
+    titleKey: 'guidedTour.steps.10.title',
+    contentKey: 'guidedTour.steps.10.content',
     position: 'bottom',
   },
   {
     target: '[data-tour="profile"]',
-    title: '👤 پروفایل دانشجو',
-    content: 'اینجا می‌تونی پروفایلت، تنظیمات و راهنما رو ببینی.',
+    titleKey: 'guidedTour.steps.11.title',
+    contentKey: 'guidedTour.steps.11.content',
     position: 'bottom',
   },
   {
     target: 'footer',
-    title: '📊 خلاصه وضعیت',
-    content: 'واحدها، دروس و وضعیت تداخل همیشه اینجاست. حالا برو بهترین برنامه رو بچین! 🎯',
+    titleKey: 'guidedTour.steps.12.title',
+    contentKey: 'guidedTour.steps.12.content',
     position: 'top',
   },
 ];
@@ -98,6 +99,7 @@ interface GuidedTourProps {
 }
 
 const GuidedTour = ({ isOpen, onClose }: GuidedTourProps) => {
+  const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -366,7 +368,10 @@ const GuidedTour = ({ isOpen, onClose }: GuidedTourProps) => {
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-primary animate-pulse" />
               <span className="text-xs text-muted-foreground font-medium">
-                مرحله {currentStep + 1} از {tourSteps.length}
+                {t('guidedTour.stepLabel', {
+                  current: currentStep + 1,
+                  total: tourSteps.length,
+                })}
               </span>
             </div>
             <Button
@@ -380,9 +385,11 @@ const GuidedTour = ({ isOpen, onClose }: GuidedTourProps) => {
           </div>
 
           {/* Content */}
-          <h3 className="text-lg font-bold mb-2 text-foreground">{step.title}</h3>
-          <p className="text-sm text-muted-foreground leading-relaxed mb-5">
-            {step.content}
+          <h3 className="text-lg font-bold mb-2 text-foreground">
+            {t(step.titleKey)}
+          </h3>
+          <p className="text-sm text-muted-foreground leading-relaxed mb-5 whitespace-pre-line">
+            {t(step.contentKey)}
           </p>
 
           {/* Navigation */}
@@ -393,7 +400,7 @@ const GuidedTour = ({ isOpen, onClose }: GuidedTourProps) => {
               onClick={onClose}
               className="text-xs text-muted-foreground hover:text-destructive"
             >
-              رد کردن
+              {t('guidedTour.skip')}
             </Button>
 
             <div className="flex items-center gap-2">
@@ -405,7 +412,7 @@ const GuidedTour = ({ isOpen, onClose }: GuidedTourProps) => {
                   className="h-9 gap-1.5 px-3"
                 >
                   <ChevronRight className="h-4 w-4" />
-                  قبلی
+                  {t('guidedTour.previous')}
                 </Button>
               )}
               <Button
@@ -413,7 +420,9 @@ const GuidedTour = ({ isOpen, onClose }: GuidedTourProps) => {
                 onClick={handleNext}
                 className="h-9 gap-1.5 px-4"
               >
-                {currentStep === tourSteps.length - 1 ? '🎉 پایان' : 'بعدی'}
+                {currentStep === tourSteps.length - 1
+                  ? t('guidedTour.finish')
+                  : t('guidedTour.next')}
                 {currentStep < tourSteps.length - 1 && (
                   <ChevronLeft className="h-4 w-4" />
                 )}

@@ -14,12 +14,14 @@ import {
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from 'react-i18next';
 
 interface TeamMember {
   id: string;
-  name: string;
+  nameFa: string;
+  nameEn: string;
   icon: JSX.Element;
-  role: string;
+  roleKey: string;
   github?: string;
   linkedin?: string;
   email?: string;
@@ -28,43 +30,51 @@ interface TeamMember {
 const teamMembers: TeamMember[] = [
   {
     id: 'pezhman',
-    name: 'پژمان',
+    nameFa: 'پژمان',
+    nameEn: 'Pezhman',
     icon: <Brain className="h-4 w-4" />,
-    role: 'مدیر پروژه، ایده‌پرداز و توسعه‌دهنده',
+    roleKey: 'about.team.pezhmanRole',
     github: 'https://github.com/Pezhm4n',
     linkedin: 'https://www.linkedin.com/in/pezhman-sarmadi/',
     email: 'pksarmadi@gmail.com',
   },
   {
     id: 'shayan',
-    name: 'شایان',
+    nameFa: 'شایان',
+    nameEn: 'Shayan',
     icon: <ServerCog className="h-4 w-4" />,
-    role: 'توسعه‌دهنده API و دریافت اطلاعات',
+    roleKey: 'about.team.shayanRole',
     github: 'https://github.com/shayan-shm',
   },
   {
     id: 'mahyar',
-    name: 'مهیار',
+    nameFa: 'مهیار',
+    nameEn: 'Mahyar',
     icon: <BarChart3 className="h-4 w-4" />,
-    role: 'مسئول مستندسازی و تحلیل داده',
+    roleKey: 'about.team.mahyarRole',
     github: 'https://github.com/HTIcodes',
     linkedin: 'https://www.linkedin.com/in/mahyar-hemmati-0a81a1320/',
   },
   {
     id: 'aydin',
-    name: 'آیدین',
+    nameFa: 'آیدین',
+    nameEn: 'Aydin',
     icon: <Bot className="h-4 w-4" />,
-    role: 'توسعه‌دهنده مدل هوش مصنوعی',
+    roleKey: 'about.team.aydinRole',
     github: 'https://github.com/tig-ndi',
     linkedin: 'https://www.linkedin.com/in/aydinthr/',
   },
 ];
 
 const About = () => {
+  const { t, i18n } = useTranslation();
+  const isFa = i18n.language.startsWith('fa');
+  const dir = isFa ? 'rtl' : 'ltr';
+
   return (
     <div
       className="min-h-screen bg-gradient-to-br from-background via-background to-primary/10"
-      dir="rtl"
+      dir={dir}
     >
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border/60">
@@ -74,11 +84,11 @@ const About = () => {
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm"
           >
             <ArrowRight className="h-4 w-4" />
-            <span>بازگشت به برنامه</span>
+            <span>{t('about.backToApp')}</span>
           </Link>
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium">درباره تیم چوپولوفسکی</span>
+            <span className="text-sm font-medium">{t('about.teamTitle')}</span>
           </div>
         </div>
       </header>
@@ -89,15 +99,17 @@ const About = () => {
           <div className="space-y-5">
             <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-[11px] text-primary border border-primary/20 shadow-sm">
               <Sparkles className="h-3 w-3" />
-              <span>یک تیم کوچک؛ یک ایده برای ساده‌تر شدن زندگی دانشجوها</span>
+              <span>{t('about.taglineChip')}</span>
             </div>
 
             <div className="space-y-3">
               <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
-                ما تیم <span className="text-primary">چوپولوفسکی</span> هستیم
+                {t('about.heroTitlePrefix')}
+                <span className="text-primary">{t('about.teamName')}</span>
+                {t('about.heroTitleSuffix')}
               </h1>
               <p className="text-sm md:text-base text-muted-foreground leading-relaxed max-w-xl">
-                ما یک تیم دانشجویی هستیم که روی طراحی و توسعه ابزارهای کاربردی تمرکز داریم.
+                {t('about.heroSubtitle')}
               </p>
             </div>
           </div>
@@ -115,17 +127,15 @@ const About = () => {
                 <div className="space-y-1">
                   <div className="inline-flex items-center gap-2 rounded-full bg-background/80 px-2.5 py-1 text-[11px] text-muted-foreground border border-border/60">
                     <Target className="h-3.5 w-3.5 text-primary" />
-                    <span>درباره این پروژه</span>
+                    <span>{t('about.projectChip')}</span>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    برنامه‌ریز درسی «گلستون»
+                    {t('about.projectName')}
                   </p>
                 </div>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                این پروژه با هدف ساده‌سازی فرآیند برنامه‌ریزی درسی دانشجویان طراحی شده است.
-                تلاش ما این بوده که با یک رابط کاربری شفاف و سریع، انتخاب و مدیریت دروس
-                بدون پیچیدگی و سردرگمی انجام شود.
+                {t('about.projectDescription')}
               </p>
             </div>
           </Card>
@@ -136,7 +146,7 @@ const About = () => {
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-base md:text-lg font-semibold flex items-center gap-2">
               <Users className="h-4 w-4 text-primary" />
-              اعضای تیم چوپولوفسکی
+              {t('about.teamMembersTitle')}
             </h2>
           </div>
 
@@ -149,13 +159,15 @@ const About = () => {
                 <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-gradient-to-br from-primary/5 via-transparent to-primary/15" />
                 <div className="relative mb-4 space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-xl" aria-hidden="true">
-                      {member.emoji}
-                    </span>
-                    <h3 className="text-sm font-semibold">{member.name}</h3>
+                    <div className="h-7 w-7 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                      {member.icon}
+                    </div>
+                    <h3 className="text-sm font-semibold">
+                      {isFa ? member.nameFa : member.nameEn}
+                    </h3>
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    {member.role}
+                    {t(member.roleKey)}
                   </p>
                 </div>
 
@@ -219,9 +231,9 @@ const About = () => {
                   />
                 </div>
                 <div className="space-y-1 text-right">
-                  <h2 className="text-sm font-semibold">کانال تلگرام گلستون</h2>
+                  <h2 className="text-sm font-semibold">{t('about.telegramTitle')}</h2>
                   <p className="text-xs text-primary/90 max-w-sm">
-                    برای اطلاع از آخرین به‌روزرسانی‌ها و خبرهای پروژه، عضو کانال تلگرام ما شوید.
+                    {t('about.telegramDescription')}
                   </p>
                 </div>
               </div>
@@ -231,7 +243,7 @@ const About = () => {
                 className="h-9 px-4 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 <a href="https://t.me/golestoon_ir" target="_blank" rel="noreferrer">
-                  <span className="ml-2">عضویت در کانال تلگرام</span>
+                  <span className="ml-2">{t('about.telegramCta')}</span>
                 </a>
               </Button>
             </div>
@@ -240,9 +252,9 @@ const About = () => {
           {/* GitHub & contact */}
           <Card className="p-5 bg-card/80 border-border/70 backdrop-blur-sm rounded-xl space-y-4">
             <div>
-              <h2 className="text-sm font-semibold mb-2">پروژه در گیت‌هاب</h2>
+              <h2 className="text-sm font-semibold mb-2">{t('about.githubSectionTitle')}</h2>
               <p className="text-sm text-muted-foreground mb-3">
-                سورس‌کد گلستون به‌صورت متن‌باز در گیت‌هاب منتشر شده است:
+                {t('about.githubSectionDescription')}
               </p>
               <div className="flex flex-wrap gap-2">
                 <Button
@@ -257,7 +269,7 @@ const About = () => {
                     rel="noreferrer"
                   >
                     <Github className="h-3.5 w-3.5" />
-                    <span>سورس وب (golestan-web)</span>
+                    <span>{t('about.githubWebRepo')}</span>
                   </a>
                 </Button>
                 <Button
@@ -272,16 +284,16 @@ const About = () => {
                     rel="noreferrer"
                   >
                     <Github className="h-3.5 w-3.5" />
-                    <span>نسخه اپ (Golestoon)</span>
+                    <span>{t('about.githubAppRepo')}</span>
                   </a>
                 </Button>
               </div>
             </div>
 
             <div>
-              <h2 className="text-sm font-semibold mb-2">راه‌های ارتباطی</h2>
+              <h2 className="text-sm font-semibold mb-2">{t('about.contactSectionTitle')}</h2>
               <p className="text-sm text-muted-foreground mb-3">
-                برای پیشنهاد، همکاری یا گزارش مشکل می‌توانید از یکی از راه‌های زیر استفاده کنید:
+                {t('about.contactSectionDescription')}
               </p>
               <div className="flex flex-wrap gap-2">
                 <Button
@@ -292,7 +304,7 @@ const About = () => {
                 >
                   <a href="mailto:pksarmadi@gmail.com">
                     <Mail className="h-3.5 w-3.5" />
-                    <span>ایمیل تیم</span>
+                    <span>{t('about.contactEmailCta')}</span>
                   </a>
                 </Button>
                 <Button
@@ -303,7 +315,7 @@ const About = () => {
                 >
                   <a href="https://github.com/Pezhm4n" target="_blank" rel="noreferrer">
                     <Github className="h-3.5 w-3.5" />
-                    <span>GitHub پژمان</span>
+                    <span>{t('about.contactGithubCta')}</span>
                   </a>
                 </Button>
               </div>
@@ -311,7 +323,7 @@ const About = () => {
           </Card>
 
           <p className="text-center text-xs text-muted-foreground mt-4">
-            ساخته شده با <span className="text-red-500">❤️</span> توسط تیم چوپولوفسکی
+            {t('about.madeWithLove')}
           </p>
         </section>
       </main>

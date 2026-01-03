@@ -9,6 +9,7 @@ import {
   HoverCardTrigger,
 } from '@/components/ui/hover-card';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface SidebarCourseItemProps {
   course: Course;
@@ -24,6 +25,7 @@ const SidebarCourseItem = ({ course }: SidebarCourseItemProps) => {
     removeCustomCourse,
   } = useSchedule();
   const { getFontSizeClass } = useSettings();
+  const { t } = useTranslation();
 
   const isSelected = isCourseSelected(course.id);
   const conflict = !isSelected ? hasConflict(course) : { hasConflict: false };
@@ -111,14 +113,14 @@ const SidebarCourseItem = ({ course }: SidebarCourseItemProps) => {
               {/* shrink-0 باعث میشود این ستون همیشه عرض کاملش را داشته باشد و له نشود */}
               <div className="flex flex-col items-end gap-0.5 shrink-0 text-[11px]">
               <span className="text-muted-foreground whitespace-nowrap leading-none">
-                گروه {groupLabel}
+                {t('course.labels.group')} {groupLabel}
               </span>
                 {course.isGeneral && (
                     <Badge
                         variant="secondary"
                         className="h-3.5 px-1 text-[8px] mr-0 whitespace-nowrap flex items-center"
                     >
-                      عمومی
+                      {t('sidebar.customCoursesHeader')}
                     </Badge>
                 )}
               </div>
@@ -130,31 +132,36 @@ const SidebarCourseItem = ({ course }: SidebarCourseItemProps) => {
                     onClick={handleDeleteCustom}
                     className="shrink-0 ml-1 text-[10px] text-destructive hover:text-destructive/80 px-1 py-0.5 border border-destructive/40 rounded whitespace-nowrap"
                 >
-                  حذف
+                  {t('sidebar.clearConfirmOk')}
                 </button>
             )}
           </div>
         </HoverCardTrigger>
 
-        {/* ... (HoverCardContent بدون تغییر باقی می‌ماند) ... */}
         <HoverCardContent side="left" align="start" className="w-72 p-3 z-[100]" sideOffset={16}>
           <div className="space-y-2">
             <div>
               <h4 className="text-sm font-bold text-foreground">{course.name}</h4>
-              <p className="text-[11px] text-muted-foreground font-mono">({course.courseId})</p>
+              <p className="text-[11px] text-muted-foreground font-mono" dir="ltr">
+                ({course.courseId})
+              </p>
             </div>
             <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[11px]">
-              <span className="text-muted-foreground">استاد:</span>
+              <span className="text-muted-foreground">{t('course.labels.instructor')}</span>
               <span className="text-foreground">{course.instructor}</span>
-              <span className="text-muted-foreground">واحد:</span>
+              <span className="text-muted-foreground">{t('course.labels.units')}</span>
               <span className="text-foreground">{course.credits}</span>
-              <span className="text-muted-foreground">نوع:</span>
+              <span className="text-muted-foreground">{t('course.labels.type')}</span>
               <span className="text-foreground">
-              {course.type === 'theoretical' ? 'نظری' : course.type === 'practical' ? 'عملی' : 'نظری-عملی'}
+              {course.type === 'theoretical'
+                ? t('course.type.theoretical')
+                : course.type === 'practical'
+                ? t('course.type.practical')
+                : t('course.type.theoreticalPractical')}
             </span>
               {course.examDate && (
                   <>
-                    <span className="text-muted-foreground">امتحان:</span>
+                    <span className="text-muted-foreground">{t('course.labels.exam')}</span>
                     <span className="text-foreground font-medium">
                   {course.examDate} {course.examTime && `- ${course.examTime}`}
                 </span>
@@ -162,36 +169,38 @@ const SidebarCourseItem = ({ course }: SidebarCourseItemProps) => {
               )}
               {course.description && (
                   <>
-                    <span className="text-muted-foreground">توضیحات:</span>
+                    <span className="text-muted-foreground">{t('course.labels.description')}</span>
                     <span className="text-foreground/80 text-[10px]">{course.description}</span>
                   </>
               )}
             </div>
             <div className="pt-2 border-t border-border">
-              <p className="text-[10px] text-muted-foreground mb-1">جلسات:</p>
+              <p className="text-[10px] text-muted-foreground mb-1">{t('course.labels.sessions')}</p>
               <div className="space-y-0.5">
                 {course.sessions.map((session, idx) => (
-                    <div key={idx} className="text-[10px] text-foreground/80 flex items-center gap-2">
-                  <span className="bg-muted px-1.5 py-0.5 rounded text-[9px]">
-                    {['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه'][session.day]}
-                  </span>
-                      <span>
-                    {session.startTime.toString().padStart(2, '0')}:00 -{' '}
-                        {session.endTime.toString().padStart(2, '0')}:00
-                  </span>
-                      {session.weekType !== 'both' && (
-                          <Badge variant="outline" className="h-4 text-[8px] px-1">
-                            {session.weekType === 'odd' ? 'فرد' : 'زوج'}
-                          </Badge>
-                      )}
-                    </div>
+                  <div key={idx} className="text-[10px] text-foreground/80 flex items-center gap-2">
+                    <span className="bg-muted px-1.5 py-0.5 rounded text-[9px]">
+                      {t(`days.${session.day}`)}
+                    </span>
+                    <span>
+                      {session.startTime.toString().padStart(2, '0')}:00 -{' '}
+                      {session.endTime.toString().padStart(2, '0')}:00
+                    </span>
+                    {session.weekType !== 'both' && (
+                      <Badge variant="outline" className="h-4 text-[8px] px-1">
+                        {session.weekType === 'odd'
+                          ? t('course.weekType.odd')
+                          : t('course.weekType.even')}
+                      </Badge>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
             {conflict.hasConflict && (
                 <div className="flex items-center gap-1.5 text-destructive text-[10px] pt-1">
                   <AlertTriangle className="w-3 h-3" />
-                  تداخل با: {conflict.conflictWith}
+                  {t('course.labels.conflictWith')} {conflict.conflictWith}
                 </div>
             )}
           </div>

@@ -18,15 +18,15 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { useSettings } from '@/contexts/SettingsContext';
+import { useTranslation } from 'react-i18next';
 
 interface DonationOption {
   id: string;
   amount: number;
-  label: string;
   emoji: string;
   icon: React.ReactNode;
-  description: string;
+  labelKey: string;
+  descriptionKey: string;
   popular?: boolean;
 }
 
@@ -34,35 +34,35 @@ const donationOptions: DonationOption[] = [
   {
     id: 'coffee',
     amount: 50000,
-    label: 'یه قهوه',
     emoji: '☕',
     icon: <Coffee className="h-6 w-6" />,
-    description: 'برای شروع یه روز پرانرژی',
+    labelKey: 'donate.options.coffeeLabel',
+    descriptionKey: 'donate.options.coffeeDescription',
     popular: true,
   },
   {
     id: 'pizza',
     amount: 100000,
-    label: 'یه پیتزا',
     emoji: '🍕',
     icon: <Pizza className="h-6 w-6" />,
-    description: 'برای یه شب کدنویسی',
+    labelKey: 'donate.options.pizzaLabel',
+    descriptionKey: 'donate.options.pizzaDescription',
   },
   {
     id: 'love',
     amount: 200000,
-    label: 'عشق و انرژی',
     emoji: '❤️',
     icon: <Heart className="h-6 w-6" />,
-    description: 'حمایت ویژه از تیم',
+    labelKey: 'donate.options.loveLabel',
+    descriptionKey: 'donate.options.loveDescription',
   },
   {
     id: 'custom',
     amount: 0,
-    label: 'مبلغ دلخواه',
     emoji: '✨',
     icon: <Sparkles className="h-6 w-6" />,
-    description: 'هر مبلغی که دوست داری',
+    labelKey: 'donate.options.customLabel',
+    descriptionKey: 'donate.options.customDescription',
   },
 ];
 
@@ -75,7 +75,8 @@ const Donate = () => {
   const [customAmount, setCustomAmount] = useState<string>('');
   const [donorName, setDonorName] = useState<string>('');
   const [showInSupporters, setShowInSupporters] = useState<boolean>(true);
-  const { t } = useSettings();
+  const { t, i18n } = useTranslation();
+  const isFa = i18n.language.startsWith('fa');
 
   const getSelectedAmount = (): number => {
     if (selectedOption === 'custom') {
@@ -103,18 +104,23 @@ const Donate = () => {
     console.log('Donating:', { amount, donorName, showInSupporters });
   };
 
+  const selectedAmountFormatted = formatNumber(getSelectedAmount());
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5" dir="rtl">
+    <div
+      className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5"
+      dir={isFa ? 'rtl' : 'ltr'}
+    >
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/50">
         <div className="container mx-auto px-4 h-14 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowRight className="h-4 w-4" />
-            <span className="text-sm">بازگشت به برنامه</span>
+            <span className="text-sm">{t('donate.backToApp')}</span>
           </Link>
           <div className="flex items-center gap-2">
             <Heart className="h-4 w-4 text-pink-500 animate-pulse" />
-            <span className="text-sm font-medium">حمایت از ما</span>
+            <span className="text-sm font-medium">{t('donate.pageTitle')}</span>
           </div>
         </div>
       </header>
@@ -126,11 +132,10 @@ const Donate = () => {
             <Heart className="h-10 w-10 text-pink-500 animate-pulse" />
           </div>
           <h1 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
-            از گلستون حمایت کن 💙
+            {t('donate.heroTitle')}
           </h1>
           <p className="text-muted-foreground text-lg max-w-xl mx-auto leading-relaxed">
-            این ابزار رایگانه و همیشه رایگان می‌مونه. اما اگه بهت کمک کرده، 
-            می‌تونی با یه قهوه یا پیتزا انرژی تیم چوپولوفسکی رو شارژ کنی!
+            {t('donate.heroSubtitle')}
           </p>
         </div>
 
@@ -139,7 +144,7 @@ const Donate = () => {
         <div className="mb-8">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Zap className="h-5 w-5 text-primary" />
-            انتخاب مبلغ
+            {t('donate.selectAmountTitle')}
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {donationOptions.map((option, idx) => (
@@ -157,7 +162,7 @@ const Donate = () => {
               >
                 {option.popular && (
                   <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-pink-500 text-white text-[10px] px-2">
-                    محبوب ⭐
+                    ⭐
                   </Badge>
                 )}
                 
@@ -168,15 +173,19 @@ const Donate = () => {
                   )}>
                     {option.emoji}
                   </div>
-                  <div className="text-sm font-medium mb-1">{option.label}</div>
+                  <div className="text-sm font-medium mb-1">
+                    {t(option.labelKey)}
+                  </div>
                   {option.amount > 0 ? (
                     <div className="text-lg font-bold text-primary">
                       {formatNumber(option.amount)}
-                      <span className="text-xs text-muted-foreground mr-1">تومان</span>
+                      <span className="text-xs text-muted-foreground mr-1">
+                        {t('donate.customAmountCurrency')}
+                      </span>
                     </div>
                   ) : (
                     <div className="text-xs text-muted-foreground">
-                      {option.description}
+                      {t(option.descriptionKey)}
                     </div>
                   )}
                 </div>
@@ -194,22 +203,24 @@ const Donate = () => {
         {/* Custom Amount Input */}
         {selectedOption === 'custom' && (
           <Card className="p-6 mb-8 bg-card/50 backdrop-blur-sm border-border/50 animate-scale-in">
-            <label className="block text-sm font-medium mb-3">مبلغ دلخواه (تومان)</label>
+            <label className="block text-sm font-medium mb-3">
+              {t('donate.customAmountLabel')}
+            </label>
             <div className="relative">
               <Input
                 type="text"
                 value={customAmount}
                 onChange={(e) => handleCustomAmountChange(e.target.value)}
-                placeholder="مثلاً 75,000"
+                placeholder={t('donate.customAmountPlaceholder')}
                 className="text-lg h-12 pr-4 pl-16 text-center font-bold"
                 dir="ltr"
               />
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                تومان
+                {t('donate.customAmountCurrency')}
               </span>
             </div>
             <p className="text-xs text-muted-foreground mt-2 text-center">
-              حداقل مبلغ: 10,000 تومان
+              {t('donate.customAmountMin')}
             </p>
           </Card>
         )}
@@ -217,7 +228,9 @@ const Donate = () => {
         {/* Donor Name (Optional) */}
         <Card className="p-6 mb-8 bg-card/50 backdrop-blur-sm border-border/50">
           <div className="flex items-center justify-between mb-3">
-            <label className="text-sm font-medium">نام شما (اختیاری)</label>
+            <label className="text-sm font-medium">
+              {t('donate.donorNameLabel')}
+            </label>
             <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
               <input
                 type="checkbox"
@@ -225,14 +238,14 @@ const Donate = () => {
                 onChange={(e) => setShowInSupporters(e.target.checked)}
                 className="rounded border-border"
               />
-              نمایش در صفحه حامیان
+              {t('donate.showInSupportersLabel')}
             </label>
           </div>
           <Input
             type="text"
             value={donorName}
             onChange={(e) => setDonorName(e.target.value)}
-            placeholder="مثلاً: علی از تهران"
+            placeholder={t('donate.donorNamePlaceholder')}
             className="h-11"
           />
         </Card>
@@ -249,7 +262,7 @@ const Donate = () => {
           )}
         >
           <Heart className="h-5 w-5 ml-2 animate-pulse" />
-          حمایت با {formatNumber(getSelectedAmount())} تومان
+          {t('donate.donateButton', { amount: selectedAmountFormatted })}
         </Button>
 
         {/* Trust Badges */}
@@ -258,18 +271,18 @@ const Donate = () => {
             {[
               {
                 icon: <Shield className="h-5 w-5 text-emerald-500" />,
-                title: 'پرداخت امن',
-                description: 'از درگاه‌های معتبر بانکی',
+                title: t('donate.badgeSecureTitle'),
+                description: t('donate.badgeSecureDescription'),
               },
               {
                 icon: <CheckCircle2 className="h-5 w-5 text-primary" />,
-                title: 'اختیاری و بدون اجبار',
-                description: 'برنامه همیشه رایگانه',
+                title: t('donate.badgeOptionalTitle'),
+                description: t('donate.badgeOptionalDescription'),
               },
               {
                 icon: <Users className="h-5 w-5 text-pink-500" />,
-                title: 'صفحه حامیان',
-                description: 'نام شما در صفحه حامیان',
+                title: t('donate.badgeSupportersTitle'),
+                description: t('donate.badgeSupportersDescription'),
               },
             ].map((badge, idx) => (
               <div key={idx} className="flex items-start gap-3">
@@ -284,8 +297,8 @@ const Donate = () => {
         </Card>
 
         <div className="text-center mt-12 text-muted-foreground">
-          <p className="text-sm mb-2">با تشکر از حمایت شما 💙</p>
-          <p className="text-xs">تیم چوپولوفسکی</p>
+          <p className="text-sm mb-2">{t('donate.thanksTitle')}</p>
+          <p className="text-xs">{t('donate.thanksSubtitle')}</p>
         </div>
       </main>
     </div>

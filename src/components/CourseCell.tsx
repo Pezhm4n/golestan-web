@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, AlertTriangle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { ScheduledSession } from '@/types/course';
 import { useSchedule } from '@/contexts/ScheduleContext';
 import { useSettings } from '@/contexts/SettingsContext';
@@ -41,6 +42,7 @@ const SingleBlock = ({
   const { hoveredCourseId, setHoveredCourseId, removeCourse } = useSchedule();
   const { getFontSizeClass, fontSize } = useSettings();
   const [open, setOpen] = useState(false);
+  const { t } = useTranslation();
 
   const backgroundColor = getCourseColor(session.parentId, session.group);
   const effectiveBackgroundColor = conflictPreview
@@ -50,7 +52,11 @@ const SingleBlock = ({
   const isHighlighted = hoveredCourseId === session.parentId;
   const isDimmed = hoveredCourseId !== null && hoveredCourseId !== session.parentId;
   const weekLabel =
-    session.weekType === 'odd' ? 'فرد' : session.weekType === 'even' ? 'زوج' : null;
+    session.weekType === 'odd'
+      ? t('course.weekType.odd')
+      : session.weekType === 'even'
+      ? t('course.weekType.even')
+      : null;
 
   const groupNumberLabel =
     typeof session.groupNumber === 'number'
@@ -208,7 +214,7 @@ const SingleBlock = ({
                     : 'text-[8px]',
                 )}
               >
-                {session.credits} واحد
+                {session.credits} {t('labels.units')}
               </span>
             </div>
           </div>
@@ -231,17 +237,17 @@ const SingleBlock = ({
             </span>
           </h4>
           <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5">
-            <span className="text-muted-foreground">استاد:</span>
+            <span className="text-muted-foreground">{t('course.labels.instructor')}</span>
             <span>{session.instructor}</span>
-            <span className="text-muted-foreground">مکان:</span>
+            <span className="text-muted-foreground">{t('course.labels.location')}</span>
             <span>{session.location}</span>
-            <span className="text-muted-foreground">واحد:</span>
+            <span className="text-muted-foreground">{t('course.labels.units')}</span>
             <span>{session.credits}</span>
-            <span className="text-muted-foreground">نوع:</span>
+            <span className="text-muted-foreground">{t('course.labels.type')}</span>
             <span>{GROUP_LABELS[session.group]}</span>
             {session.examDate && (
               <>
-                <span className="text-muted-foreground">امتحان:</span>
+                <span className="text-muted-foreground">{t('course.labels.exam')}</span>
                 <span>
                   {session.examDate} - {session.examTime}
                 </span>
@@ -259,6 +265,8 @@ const CourseCell = ({
   ghost = false,
   conflictPreview = false,
 }: CourseCellProps) => {
+  const { t } = useTranslation();
+
   if (!sessions || sessions.length === 0) return null;
 
   // Check for odd/even week split (2 sessions with different week types)
@@ -283,7 +291,7 @@ const CourseCell = ({
         {/* Conflict indicator badge - z-index set to NOT overlap dialogs */}
         <div className="absolute -top-1 -left-1 z-[10] flex items-center gap-0.5 bg-destructive text-destructive-foreground px-1 py-0.5 rounded text-[8px] font-bold shadow-md">
           <AlertTriangle className="w-2.5 h-2.5" />
-          تداخل ({sessions.length})
+          {t('course.conflictIndicator', { count: sessions.length })}
         </div>
 
         {/* Stacked courses */}
