@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 
 interface CourseCellProps {
   sessions?: ScheduledSession[];
+  ghost?: boolean;
 }
 
 const SingleBlock = ({ 
@@ -21,7 +22,8 @@ const SingleBlock = ({
   isStacked = false,
   stackIndex = 0,
   totalStacked = 1,
-  position 
+  position,
+  ghost = false,
 }: { 
   session: ScheduledSession; 
   isHalf?: boolean;
@@ -29,6 +31,7 @@ const SingleBlock = ({
   stackIndex?: number;
   totalStacked?: number;
   position?: 'top' | 'bottom';
+  ghost?: boolean;
 }) => {
   const { hoveredCourseId, setHoveredCourseId, removeCourse } = useSchedule();
   const { getFontSizeClass, fontSize } = useSettings();
@@ -91,16 +94,18 @@ const SingleBlock = ({
             onTouchEnd={() => setHoveredCourseId(null)}
           >
             {/* Delete Button - larger touch target on mobile */}
-            <button
-              onClick={handleRemove}
-              className={cn(
-                "absolute z-30 flex items-center justify-center bg-red-500/90 text-white transition-all duration-200 hover:bg-red-600 rounded-md shadow-sm",
-                // Larger on mobile, visible by default on touch
-                "top-1 right-1 w-6 h-6 opacity-100 sm:top-2 sm:right-2 sm:w-5 sm:h-5 sm:opacity-0 sm:group-hover:opacity-100"
-              )}
-            >
-              <X className="w-3 h-3 sm:w-3 sm:h-3" />
-            </button>
+            {!ghost && (
+              <button
+                onClick={handleRemove}
+                className={cn(
+                  "absolute z-30 flex items-center justify-center bg-red-500/90 text-white transition-all duration-200 hover:bg-red-600 rounded-md shadow-sm",
+                  // Larger on mobile, visible by default on touch
+                  "top-1 right-1 w-6 h-6 opacity-100 sm:top-2 sm:right-2 sm:w-5 sm:h-5 sm:opacity-0 sm:group-hover:opacity-100"
+                )}
+              >
+                <X className="w-3 h-3 sm:w-3 sm:h-3" />
+              </button>
+            )}
 
             {/* Week Type Badge */}
             {weekLabel && (
@@ -182,7 +187,7 @@ const SingleBlock = ({
   );
 };
 
-const CourseCell = ({ sessions = [] }: CourseCellProps) => {
+const CourseCell = ({ sessions = [], ghost = false }: CourseCellProps) => {
   if (!sessions || sessions.length === 0) return null;
 
   // Check for odd/even week split (2 sessions with different week types)
@@ -197,7 +202,7 @@ const CourseCell = ({ sessions = [] }: CourseCellProps) => {
   // Stacked conflict view - show all courses layered
   if (hasConflict) {
     return (
-      <div className="absolute inset-[1px] rounded-sm overflow-visible">
+      <div className={cn("absolute inset-[1px] rounded-sm overflow-visible", ghost && "opacity-60 pointer-events-none")}>
         {/* Conflict indicator badge - z-index set to NOT overlap dialogs */}
         <div className="absolute -top-1 -left-1 z-[10] flex items-center gap-0.5 bg-destructive text-destructive-foreground px-1 py-0.5 rounded text-[8px] font-bold shadow-md">
           <AlertTriangle className="w-2.5 h-2.5" />
@@ -208,11 +213,12 @@ const CourseCell = ({ sessions = [] }: CourseCellProps) => {
         <div className="relative w-full h-full">
           {sessions.map((session, index) => (
             <SingleBlock 
-              key={session.parentId} 
+              key={`${session.parentId}-${session.day}-${session.startTime}-${session.weekType}-${index}`} 
               session={session} 
               isStacked={true}
               stackIndex={index}
               totalStacked={sessions.length}
+              ghost={ghost}
             />
           ))}
         </div>
@@ -226,17 +232,17 @@ const CourseCell = ({ sessions = [] }: CourseCellProps) => {
     const evenSession = sessions.find(s => s.weekType === 'even') || sessions[1];
     
     return (
-      <div className="absolute inset-[1px] flex flex-col rounded-sm overflow-hidden">
-        <SingleBlock session={oddSession} isHalf={true} position="top" />
-        <SingleBlock session={evenSession} isHalf={true} position="bottom" />
+      <div className={cn("absolute inset-[1px] flex flex-col rounded-sm overflow-hidden", ghost && "opacity-60 pointer-events-none")}>
+        <SingleBlock session={oddSession} isHalf={true} position="top" ghost={ghost} />
+        <SingleBlock session={evenSession} isHalf={true} position="bottom" ghost={ghost} />
       </div>
     );
   }
 
   // Single course
   return (
-    <div className="absolute inset-[1px] rounded-sm overflow-hidden">
-      <SingleBlock session={sessions[0]} />
+    <div className={cn("absolute inset-[1px] rounded-sm overflow-hidden", ghost && "opacity-60 pointer-events-none")}>
+      <SingleBlock session={sessions[0]} ghost={ghost} />
     </div>
   );
 };

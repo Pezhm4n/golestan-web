@@ -2,6 +2,7 @@ import type {
   GolestanCoursesResponse,
   FacultiesWithDepartments,
 } from '@/types/golestan';
+import type { Student } from '@/types/student';
 
 const API_BASE_URL = 'https://golestoon-scraper.onrender.com';
 const COURSES_ENDPOINT = `${API_BASE_URL}/api/courses/all`;
@@ -92,4 +93,26 @@ export async function fetchFacultiesWithDepartments(
   }
 
   return result;
+}
+
+/**
+ * Mock student profile API.
+ * In the real app this would call the backend that wraps the legacy
+ * Golestan scraper + SQLite logic. For now we simulate a network
+ * request and return a deterministic dummy profile.
+ */
+export async function mockFetchStudentProfile(
+  username: string,
+  password: string,
+): Promise<Student> {
+  const { mockStudent } = await import('@/services/mockStudent');
+
+  // Simulate network delay
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+
+  // For now we ignore username/password validation and just override student_id
+  return {
+    ...mockStudent,
+    student_id: username || mockStudent.student_id,
+  };
 }

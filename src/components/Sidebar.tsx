@@ -82,7 +82,7 @@ const Sidebar = () => {
   const { selectedCourses, allCourses, clearAll, addCustomCourse } = useSchedule();
   const { isLoading, error, departments } = useGolestanData();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedDepartment, setSelectedDepartment] = useState<'all' | string>('all');
+  const [selectedDepartment, setSelectedDepartment] = useState<string | 'all' | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   
   // Filter states
@@ -96,10 +96,14 @@ const Sidebar = () => {
 
   const filteredCourses = useMemo(() => {
     return allCourses.filter(course => {
-      // Filter by department (no-op until real department mapping is wired)
-      const matchesDepartment =
-        selectedDepartment === 'all' || course.departmentId === selectedDepartment;
-      
+      const isCustom = course.departmentId === 'custom';
+
+      // Department filter: apply only to non-custom courses
+      if (!isCustom) {
+        if (!selectedDepartment) return false;
+        if (course.departmentId !== selectedDepartment) return false;
+      }
+
       const normName = normalizeText(course.name);
       const normInstructor = normalizeText(course.instructor);
       const normCode = normalizeText(course.courseId);
@@ -119,7 +123,6 @@ const Sidebar = () => {
         );
 
       return (
-        matchesDepartment &&
         matchesSearch &&
         matchesGender &&
         matchesGeneral &&
@@ -138,8 +141,13 @@ const Sidebar = () => {
     timeTo,
   ]);
 
-  const availableToTake = filteredCourses.filter(c => c.category === 'available');
-  const otherCourses = filteredCourses.filter(c => c.category === 'other');
+  const customCoursesList = filteredCourses.filter(c => c.departmentId === 'custom');
+  const availableToTake = filteredCourses.filter(
+    c => c.category === 'available' && c.departmentId !== 'custom',
+  );
+  const otherCourses = filteredCourses.filter(
+    c => c.category === 'other' && c.departmentId !== 'custom',
+  );
 
   const handleSave = () => {
     if (selectedCourses.length === 0) {
@@ -247,8 +255,26 @@ const Sidebar = () => {
           </div>
         )}
 
-        {!isLoading && !error && (
+        {!isLoading && !error && !selectedDepartment && customCoursesList.length === 0 && (
+          <div className="flex-1 flex items-center justify-center text-[11px] text-muted-foreground px-3 text-center">
+            برای مشاهده دروس، ابتدا دانشکده/رشته را از بالای لیست انتخاب کن.
+          </div>
+        )}
+
+        {!isLoading && !error && (selectedDepartment || customCoursesList.length > 0) && (
           <ScrollArea className="h-full">
+            {/* Custom/User Courses */}
+            {customCoursesList.length > 0 && (
+              <div>
+                <div
+                  className="sticky top-0 z-10 bg-emerald-500/10 px-3 py-1.5 text-[10px] font-bold text-emerald-700 border-b border-emerald-500/30"
+                >
+                  دروس اضافه شده توسط شما ({customCoursesList.length})
+                </div>
+                <VirtualizedCourseList courses={customCoursesList} />
+              </div>
+            )}
+
             {/* Available/Allowed Courses */}
             {availableToTake.length > 0 && (
               <div>

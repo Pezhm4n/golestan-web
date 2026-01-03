@@ -274,7 +274,7 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
           گلستون
         </h1>
         <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-          نیمسال ۱۴۰۳-۱
+          نیمسال 1403-1
         </span>
       </div>
       

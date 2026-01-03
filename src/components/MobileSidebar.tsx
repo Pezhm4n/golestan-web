@@ -3,7 +3,7 @@ import { Search, Plus, Filter, ChevronDown, Save, Trash2, X } from 'lucide-react
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import DepartmentCombobox from './DepartmentCombobox';
 import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -32,9 +32,9 @@ interface MobileSidebarProps {
 
 const MobileSidebar = ({ isOpen, onOpenChange }: MobileSidebarProps) => {
   const { selectedCourses, allCourses, clearAll, addCustomCourse, totalUnits } = useSchedule();
-  const { isLoading, error } = useGolestanData();
+  const { isLoading, error, departments } = useGolestanData();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedDepartment, setSelectedDepartment] = useState<'all' | string>('all');
+  const [selectedDepartment, setSelectedDepartment] = useState<string | 'all' | null>(null);
   
   // Filter states
   const [gender, setGender] = useState<Gender | 'all'>('all');
@@ -45,8 +45,12 @@ const MobileSidebar = ({ isOpen, onOpenChange }: MobileSidebarProps) => {
 
   const filteredCourses = useMemo(() => {
     return allCourses.filter(course => {
-      const matchesDepartment =
-        selectedDepartment === 'all' || course.departmentId === selectedDepartment;
+      const isCustom = course.departmentId === 'custom';
+
+      if (!isCustom) {
+        if (!selectedDepartment) return false;
+        if (course.departmentId !== selectedDepartment) return false;
+      }
 
       const normName = normalizeText(course.name);
       const normInstructor = normalizeText(course.instructor);
@@ -62,11 +66,14 @@ const MobileSidebar = ({ isOpen, onOpenChange }: MobileSidebarProps) => {
       const matchesGeneral = !showGeneralOnly || course.isGeneral;
       const matchesFull = !hideFull || course.enrolled < course.capacity;
 
-      return matchesDepartment && matchesSearch && matchesGender && matchesGeneral && matchesFull;
+      return matchesSearch && matchesGender && matchesGeneral && matchesFull;
     });
   }, [normalizedQuery, gender, showGeneralOnly, hideFull, selectedDepartment, allCourses]);
 
-  const availableToTake = filteredCourses.filter(c => c.category === 'available');
+  const customCoursesList = filteredCourses.filter(c => c.departmentId === 'custom');
+  const availableToTake = filteredCourses.filter(
+    c => c.category === 'available' && c.departmentId !== 'custom',
+  );
 
   const handleSave = () => {
     if (selectedCourses.length === 0) {
@@ -107,18 +114,14 @@ const MobileSidebar = ({ isOpen, onOpenChange }: MobileSidebarProps) => {
             </div>
           </div>
 
-          {/* Department Selector - placeholder until real faculties/departments wired */}
+          {/* Department Selector - same combobox UX as desktop */}
           <div className="px-4 py-3 border-b border-border/50">
-            <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-              <SelectTrigger className="h-10 text-sm font-medium">
-                <SelectValue placeholder="انتخاب رشته" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all" className="text-sm">
-                  همه رشته‌ها
-                </SelectItem>
-              </SelectContent>
-            </Select>
+            <DepartmentCombobox
+              value={selectedDepartment}
+              onChange={setSelectedDepartment}
+              departments={departments}
+              placeholder="انتخاب دانشکده/رشته"
+            />
           </div>
 
           {/* Search */}
@@ -148,15 +151,33 @@ const MobileSidebar = ({ isOpen, onOpenChange }: MobileSidebarProps) => {
               </p>
             )}
 
-            {!isLoading && !error && (
+            {!isLoading && !error && !selectedDepartment && customCoursesList.length === 0 && (
+              <p className="text-center text-muted-foreground text-sm py-12 px-4">
+                برای مشاهده دروس، ابتدا دانشکده/رشته را از بالای لیست انتخاب کن.
+              </p>
+            )}
+
+            {!isLoading && !error && (selectedDepartment || customCoursesList.length > 0) && (
               <>
+                {customCoursesList.length > 0 && (
+                  <div>
+                    <div className="sticky top-0 z-10 bg-emerald-500/10 px-3 py-2 text-xs font-bold text-emerald-700 border-b border-emerald-500/30 mx-2 rounded-t-lg">
+                      دروس اضافه شده توسط شما ({customCoursesList.length})
+                    </div>
+                    <div className="space-y-1 p-2">
+                      {customCoursesList.map(course => (
+                        <SidebarCourseItem key={course.id} course={course} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {availableToTake.length > 0 && (
                   <div>
                     <div className="sticky top-0 z-10 bg-primary/10 px-3 py-2 text-xs font-bold text-primary border-b border-primary/20 mx-2 rounded-t-lg">
                       دروس قابل اخذ ({availableToTake.length})
                     </div>
                     <div className="space-y-1 p-2">
-                      {/* NOTE: For large datasets, consider virtualizing this list. */}
                       {availableToTake.map(course => (
                         <SidebarCourseItem key={course.id} course={course} />
                       ))}

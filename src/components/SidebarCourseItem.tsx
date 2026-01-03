@@ -20,7 +20,8 @@ const SidebarCourseItem = ({ course }: SidebarCourseItemProps) => {
     toggleCourse, 
     hasConflict, 
     hoveredCourseId, 
-    setHoveredCourseId 
+    setHoveredCourseId,
+    removeCustomCourse,
   } = useSchedule();
   const { getFontSizeClass } = useSettings();
   
@@ -28,9 +29,17 @@ const SidebarCourseItem = ({ course }: SidebarCourseItemProps) => {
   const conflict = !isSelected ? hasConflict(course) : { hasConflict: false };
   const isHighlighted = hoveredCourseId === course.id;
   const isDimmed = hoveredCourseId !== null && hoveredCourseId !== course.id;
+  const isCustom = course.departmentId === 'custom';
+  const groupLabel = (course.groupNumber ?? 1).toString().padStart(2, '0');
   
   const handleClick = () => {
     toggleCourse(course);
+  };
+
+  const handleDeleteCustom = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isCustom) return;
+    removeCustomCourse(course.id);
   };
 
   return (
@@ -65,17 +74,46 @@ const SidebarCourseItem = ({ course }: SidebarCourseItemProps) => {
             )}
           </div>
           
-          {/* Course Info - Single Line RTL with group number */}
-          <p className={cn("flex-1 text-xs text-foreground truncate", getFontSizeClass())}>
-            <span className="font-semibold">{course.name}</span>
-            <span className="text-muted-foreground"> - </span>
-            <span className="text-muted-foreground">{course.instructor}</span>
-            <span className="text-muted-foreground"> - </span>
-            <span className="text-muted-foreground">گروه {course.groupNumber || 1}</span>
-            {course.isGeneral && (
-              <Badge variant="secondary" className="h-4 px-1 text-[8px] mr-1.5">عمومی</Badge>
+          {/* Course Info - single line, compact, with safe truncation */}
+          <div
+            className={cn(
+              "flex-1 min-w-0 text-xs text-foreground",
+              getFontSizeClass(),
+              "flex items-center gap-1 overflow-hidden"
             )}
-          </p>
+          >
+            <span className="font-semibold truncate min-w-0 shrink">
+              {course.name}
+            </span>
+            <span className="text-muted-foreground shrink-0">-</span>
+            <span className="text-muted-foreground truncate min-w-0 shrink">
+              {course.instructor}
+            </span>
+            <span className="text-muted-foreground shrink-0">-</span>
+            <span className="text-muted-foreground whitespace-nowrap shrink-0">
+              گروه {groupLabel}
+            </span>
+            {course.isGeneral && (
+              <span className="shrink-0">
+                <Badge
+                  variant="secondary"
+                  className="h-4 px-1 text-[8px] mr-1.5 whitespace-nowrap"
+                >
+                  عمومی
+                </Badge>
+              </span>
+            )}
+          </div>
+
+          {/* Custom course delete action */}
+          {isCustom && (
+            <button
+              onClick={handleDeleteCustom}
+              className="ml-1 text-[10px] text-destructive hover:text-destructive/80 px-1 py-0.5 border border-destructive/40 rounded whitespace-nowrap"
+            >
+              حذف
+            </button>
+          )}
         </div>
       </HoverCardTrigger>
       
@@ -126,7 +164,10 @@ const SidebarCourseItem = ({ course }: SidebarCourseItemProps) => {
                   <span className="bg-muted px-1.5 py-0.5 rounded text-[9px]">
                     {['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه'][session.day]}
                   </span>
-                  <span>{session.startTime}:۰۰ - {session.endTime}:۰۰</span>
+                  <span>
+                    {session.startTime.toString().padStart(2, '0')}:00 -{' '}
+                    {session.endTime.toString().padStart(2, '0')}:00
+                  </span>
                   {session.weekType !== 'both' && (
                     <Badge variant="outline" className="h-4 text-[8px] px-1">
                       {session.weekType === 'odd' ? 'فرد' : 'زوج'}

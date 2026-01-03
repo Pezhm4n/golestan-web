@@ -15,8 +15,8 @@ import { cn } from '@/lib/utils';
 import type { DepartmentOption } from '@/hooks/useGolestanData';
 
 interface DepartmentComboboxProps {
-  value: string | 'all';
-  onChange: (value: string | 'all') => void;
+  value: string | 'all' | null;
+  onChange: (value: string | 'all' | null) => void;
   departments: DepartmentOption[];
   placeholder?: string;
 }
@@ -44,7 +44,7 @@ const DepartmentCombobox = ({
   }, [departments]);
 
   const selectedDept =
-    value === 'all'
+    value === 'all' || value === null
       ? undefined
       : departments.find((d) => d.id === value);
 
@@ -73,26 +73,6 @@ const DepartmentCombobox = ({
           <CommandInput placeholder="جستجوی دانشکده یا رشته..." />
           <CommandList>
             <CommandEmpty>موردی یافت نشد</CommandEmpty>
-
-            <CommandGroup heading="همه">
-              <CommandItem
-                value="all"
-                onSelect={() => {
-                  onChange('all');
-                  setOpen(false);
-                }}
-              >
-                <Check
-                  className={cn(
-                    'mr-2 h-4 w-4',
-                    value === 'all' ? 'opacity-100' : 'opacity-0',
-                  )}
-                />
-                همه دانشکده‌ها و رشته‌ها
-              </CommandItem>
-            </CommandGroup>
-
-            <CommandSeparator />
 
             {groups.map(([facultyName, deps]) => (
               <CommandGroup key={facultyName} heading={facultyName}>

@@ -193,9 +193,22 @@ export function convertGolestanCourseToAppCourse(
       ? `${facultyName}:::${deptName}`
       : deptName || facultyName || 'unknown';
 
+  // Parse course code and group number from patterns like "1624872_37"
+  const rawCode = gCourse.code || '';
+  const [baseCode, groupPart] = rawCode.split('_');
+  const normalizedCourseId = baseCode || rawCode;
+
+  const parsedGroup =
+    groupPart && groupPart.trim() !== ''
+      ? Number.parseInt(groupPart, 10)
+      : 1;
+  const safeGroupNumber = Number.isFinite(parsedGroup) ? parsedGroup : 1;
+
   return {
-    id: gCourse.code,              // assumes codes are unique enough for UI keys
-    courseId: gCourse.code,
+    // Use full raw code as unique identifier for this specific section/group
+    id: rawCode,
+    // Use base code (before the underscore) as logical courseId
+    courseId: normalizedCourseId,
     name: gCourse.name,
     instructor: gCourse.instructor || '',
     credits: gCourse.credits || 0,
@@ -211,6 +224,6 @@ export function convertGolestanCourseToAppCourse(
     departmentId,
     sessions,
     group,
-    groupNumber: undefined,        // group number not available in API; can be added later
+    groupNumber: safeGroupNumber,
   };
 }

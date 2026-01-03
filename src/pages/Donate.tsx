@@ -200,7 +200,7 @@ const Donate = () => {
                 type="text"
                 value={customAmount}
                 onChange={(e) => handleCustomAmountChange(e.target.value)}
-                placeholder="مثلاً ۷۵,۰۰۰"
+                placeholder="مثلاً 75,000"
                 className="text-lg h-12 pr-4 pl-16 text-center font-bold"
                 dir="ltr"
               />
@@ -209,7 +209,7 @@ const Donate = () => {
               </span>
             </div>
             <p className="text-xs text-muted-foreground mt-2 text-center">
-              حداقل مبلغ: ۱۰,۰۰۰ تومان
+              حداقل مبلغ: 10,000 تومان
             </p>
           </Card>
         )}

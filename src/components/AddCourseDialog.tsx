@@ -29,12 +29,19 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
   const [examDate, setExamDate] = useState('');
   const [examTime, setExamTime] = useState('');
   const [location, setLocation] = useState('');
+
+  type SessionFormRow = {
+    day: number;
+    startTime: number;
+    endTime: number;
+    weekType: WeekType;
+  };
   
-  // Session info
-  const [sessionDay, setSessionDay] = useState(0);
-  const [startTime, setStartTime] = useState(8);
-  const [endTime, setEndTime] = useState(10);
-  const [weekType, setWeekType] = useState<WeekType>('both');
+  // Session info (allow multiple sessions)
+  const [sessionRows, setSessionRows] = useState<SessionFormRow[]>([
+    { day: 0, startTime: 8, endTime: 10, weekType: 'both' },
+  ]);
+  const [sessionErrors, setSessionErrors] = useState<string[]>([]);
   const [group, setGroup] = useState<CourseGroup>('specialized');
 
   const groupOptions: { value: CourseGroup; label: string }[] = [
@@ -44,16 +51,56 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
   ];
 
   const handleSubmit = () => {
-    if (!name.trim()) {
+    const trimmedName = name.trim();
+    const trimmedInstructor = instructor.trim();
+
+    if (!trimmedName) {
       toast.error('نام درس الزامی است');
       return;
     }
 
+    if (!trimmedInstructor) {
+      toast.error('نام استاد الزامی است');
+      return;
+    }
+
+    if (sessionRows.length === 0) {
+      toast.error('حداقل یک جلسه برای درس لازم است');
+      return;
+    }
+
+    // Validate session rows (start time < end time)
+    const newSessionErrors = sessionRows.map(() => '');
+    let hasSessionError = false;
+
+    sessionRows.forEach((row, index) => {
+      if (row.startTime >= row.endTime) {
+        newSessionErrors[index] = 'ساعت شروع باید قبل از ساعت پایان باشد';
+        hasSessionError = true;
+      }
+    });
+
+    if (hasSessionError) {
+      setSessionErrors(newSessionErrors);
+      toast.error('لطفاً خطاهای زمان برگزاری جلسات را اصلاح کنید');
+      return;
+    }
+
+    setSessionErrors([]);
+
+    const normalizedSessions = sessionRows.map((row) => ({
+      day: row.day,
+      startTime: row.startTime,
+      endTime: row.endTime,
+      location: location || 'نامشخص',
+      weekType: row.weekType,
+    }));
+
     const newCourse: Course = {
       id: `custom_${Date.now()}`,
       courseId: courseId || `C${Date.now()}`,
-      name: name.trim(),
-      instructor: instructor || 'نامشخص',
+      name: trimmedName,
+      instructor: trimmedInstructor,
       credits,
       examDate,
       examTime,
@@ -66,19 +113,11 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
       category: 'available',
       departmentId: 'custom', // Custom courses
       group,
-      sessions: [
-        {
-          day: sessionDay,
-          startTime,
-          endTime,
-          location: location || 'نامشخص',
-          weekType,
-        }
-      ]
+      sessions: normalizedSessions,
     };
 
     onAddCourse(newCourse);
-    toast.success('درس اضافه شد', { description: name });
+    toast.success('درس اضافه شد', { description: trimmedName });
     
     // Reset form
     setName('');
@@ -88,10 +127,8 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
     setExamDate('');
     setExamTime('');
     setLocation('');
-    setSessionDay(0);
-    setStartTime(8);
-    setEndTime(10);
-    setWeekType('both');
+    setSessionRows([{ day: 0, startTime: 8, endTime: 10, weekType: 'both' }]);
+    setSessionErrors([]);
     setGroup('specialized');
     setOpen(false);
   };
@@ -139,7 +176,7 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
                 id="courseId"
                 value={courseId}
                 onChange={(e) => setCourseId(e.target.value)}
-                placeholder="۴۰۱۲۱۵۰۱"
+                placeholder="40121501"
                 className="text-xs"
               />
             </div>
@@ -182,67 +219,158 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
                 id="location"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                placeholder="کلاس ۱۰۱"
+                placeholder="کلاس 101"
                 className="text-xs"
               />
             </div>
           </div>
 
-          {/* Session Day & Time */}
+          {/* Session Day & Time - multiple sessions */}
           <div className="grid gap-2">
             <Label className="text-xs flex items-center gap-1">
               <Clock className="h-3 w-3" />
-              زمان برگزاری
+              زمان برگزاری (می‌توانید چند جلسه اضافه کنید)
             </Label>
-            <div className="grid grid-cols-3 gap-2">
-              <Select value={sessionDay.toString()} onValueChange={(v) => setSessionDay(parseInt(v))}>
-                <SelectTrigger className="text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {DAYS.map((day, i) => (
-                    <SelectItem key={i} value={i.toString()} className="text-xs">{day}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={startTime.toString()} onValueChange={(v) => setStartTime(parseInt(v))}>
-                <SelectTrigger className="text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 13 }, (_, i) => 7 + i).map(h => (
-                    <SelectItem key={h} value={h.toString()} className="text-xs">{h}:00</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={endTime.toString()} onValueChange={(v) => setEndTime(parseInt(v))}>
-                <SelectTrigger className="text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 13 }, (_, i) => 8 + i).map(h => (
-                    <SelectItem key={h} value={h.toString()} className="text-xs">{h}:00</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="space-y-2">
+              {sessionRows.map((row, index) => (
+                <div key={index} className="space-y-1">
+                  <div className="grid grid-cols-[1.4fr_1fr_1fr_auto] gap-2 items-center">
+                    <Select
+                      value={row.day.toString()}
+                      onValueChange={(v) =>
+                        setSessionRows((prev) =>
+                          prev.map((r, i) =>
+                            i === index ? { ...r, day: parseInt(v) } : r,
+                          ),
+                        )
+                      }
+                    >
+                      <SelectTrigger className="text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {DAYS.map((day, i) => (
+                          <SelectItem key={i} value={i.toString()} className="text-xs">
+                            {day}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    <Select
+                      value={row.startTime.toString()}
+                      onValueChange={(v) =>
+                        setSessionRows((prev) =>
+                          prev.map((r, i) =>
+                            i === index ? { ...r, startTime: parseInt(v) } : r,
+                          ),
+                        )
+                      }
+                    >
+                      <SelectTrigger className="text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 13 }, (_, i) => 7 + i).map((h) => (
+                          <SelectItem key={h} value={h.toString()} className="text-xs">
+                            {h}:00
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    <Select
+                      value={row.endTime.toString()}
+                      onValueChange={(v) =>
+                        setSessionRows((prev) =>
+                          prev.map((r, i) =>
+                            i === index ? { ...r, endTime: parseInt(v) } : r,
+                          ),
+                        )
+                      }
+                    >
+                      <SelectTrigger className="text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 13 }, (_, i) => 8 + i).map((h) => (
+                          <SelectItem key={h} value={h.toString()} className="text-xs">
+                            {h}:00
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    <Select
+                      value={row.weekType}
+                      onValueChange={(v) =>
+                        setSessionRows((prev) =>
+                          prev.map((r, i) =>
+                            i === index ? { ...r, weekType: v as WeekType } : r,
+                          ),
+                        )
+                      }
+                    >
+                      <SelectTrigger className="text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="both" className="text-xs">
+                          هر هفته
+                        </SelectItem>
+                        <SelectItem value="odd" className="text-xs">
+                          هفته فرد
+                        </SelectItem>
+                        <SelectItem value="even" className="text-xs">
+                          هفته زوج
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    {sessionRows.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive"
+                        onClick={() => {
+                          setSessionRows((prev) => prev.filter((_, i) => i !== index));
+                          setSessionErrors((prev) => prev.filter((_, i) => i !== index));
+                        }}
+                      >
+                        ×
+                      </Button>
+                    )}
+                  </div>
+
+                  {sessionErrors[index] && (
+                    <p className="text-[10px] text-destructive pr-1">
+                      {sessionErrors[index]}
+                    </p>
+                  )}
+                </div>
+              ))}
+
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="self-start h-8 text-[11px] px-2"
+                onClick={() => {
+                  setSessionRows((prev) => [
+                    ...prev,
+                    { day: 0, startTime: 8, endTime: 10, weekType: 'both' },
+                  ]);
+                  setSessionErrors((prev) => [...prev, '']);
+                }}
+              >
+                + افزودن جلسه
+              </Button>
             </div>
           </div>
 
           {/* Week Type & Course Group */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-2">
-              <Label className="text-xs">هفته</Label>
-              <Select value={weekType} onValueChange={(v) => setWeekType(v as WeekType)}>
-                <SelectTrigger className="text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="both" className="text-xs">هر هفته</SelectItem>
-                  <SelectItem value="odd" className="text-xs">هفته فرد</SelectItem>
-                  <SelectItem value="even" className="text-xs">هفته زوج</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
             <div className="grid gap-2">
               <Label className="text-xs">نوع درس</Label>
               <Select value={group} onValueChange={(v) => setGroup(v as CourseGroup)}>
@@ -250,8 +378,10 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {groupOptions.map(opt => (
-                    <SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>
+                  {groupOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                      {opt.label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -269,7 +399,7 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
                 id="examDate"
                 value={examDate}
                 onChange={(e) => setExamDate(e.target.value)}
-                placeholder="۱۴۰۳/۰۴/۱۵"
+                placeholder="1403/04/15"
                 className="text-xs"
               />
             </div>
@@ -279,7 +409,7 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
                 id="examTime"
                 value={examTime}
                 onChange={(e) => setExamTime(e.target.value)}
-                placeholder="۰۸:۰۰"
+                placeholder="08:00"
                 className="text-xs"
               />
             </div>

@@ -48,7 +48,7 @@ const CompactFilterPanel = ({
             <SelectContent>
               {timeOptions.map(t => (
                 <SelectItem key={t} value={t.toString()} className="text-[11px]">
-                  {t.toString().padStart(2, '0')}:۰۰
+                  {t.toString().padStart(2, '0')}:00
                 </SelectItem>
               ))}
             </SelectContent>
@@ -61,7 +61,7 @@ const CompactFilterPanel = ({
             <SelectContent>
               {timeOptions.map(t => (
                 <SelectItem key={t} value={t.toString()} className="text-[11px]">
-                  {t.toString().padStart(2, '0')}:۰۰
+                  {t.toString().padStart(2, '0')}:00
                 </SelectItem>
               ))}
             </SelectContent>

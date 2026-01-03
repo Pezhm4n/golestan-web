@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
 import { Course, ScheduledSession } from '@/types/course';
 import { toast } from 'sonner';
 import { hasConflict as schedulerHasConflict } from '@/lib/scheduler';
@@ -24,6 +24,7 @@ interface ScheduleContextType {
   toggleCourse: (course: Course) => void;
   setHoveredCourseId: (id: string | null) => void;
   addCustomCourse: (course: Course) => void;
+  removeCustomCourse: (courseId: string) => void;
   
   // Helpers
   isCourseSelected: (courseId: string) => boolean;
@@ -35,8 +36,29 @@ const ScheduleContext = createContext<ScheduleContextType | undefined>(undefined
 export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [selectedCourseIds, setSelectedCourseIds] = useState<string[]>([]);
   const [hoveredCourseId, setHoveredCourseId] = useState<string | null>(null);
-  const [customCourses, setCustomCourses] = useState<Course[]>([]);
+  const [customCourses, setCustomCourses] = useState<Course[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const raw = window.localStorage.getItem('golestan-custom-courses');
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed as Course[];
+    } catch {
+      return [];
+    }
+  });
   const { flattenedCourses } = useGolestanData();
+
+  // Persist custom courses to localStorage
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem('golestan-custom-courses', JSON.stringify(customCourses));
+    } catch {
+      // ignore storage errors
+    }
+  }, [customCourses]);
 
   // Convert raw Golestan courses to app Course model
   const apiCourses: Course[] = useMemo(() => {
@@ -47,9 +69,9 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     );
   }, [flattenedCourses]);
 
-  // All available courses (API + custom)
+  // All available courses (custom first, then API)
   const allCourses = useMemo(() => {
-    return [...apiCourses, ...customCourses];
+    return [...customCourses, ...apiCourses];
   }, [apiCourses, customCourses]);
 
   // Get selected courses
@@ -149,6 +171,12 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setCustomCourses(prev => [...prev, course]);
   }, []);
 
+  // Permanently remove a custom course (and unselect it if needed)
+  const removeCustomCourse = useCallback((courseId: string) => {
+    setCustomCourses(prev => prev.filter(c => c.id !== courseId));
+    setSelectedCourseIds(prev => prev.filter(id => id !== courseId));
+  }, []);
+
   const value: ScheduleContextType = {
     selectedCourseIds,
     hoveredCourseId,
@@ -163,6 +191,7 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     toggleCourse,
     setHoveredCourseId,
     addCustomCourse,
+    removeCustomCourse,
     isCourseSelected,
     hasConflict,
   };

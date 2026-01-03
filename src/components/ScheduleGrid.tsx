@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { DAYS, ScheduledSession } from '@/types/course';
 import { useSchedule } from '@/contexts/ScheduleContext';
 import { useSettings } from '@/contexts/SettingsContext';
@@ -13,10 +13,27 @@ const ScheduleGrid = () => {
   const { showGridLines, getFontSizeClass } = useSettings();
   const { isMobile, isTablet } = useResponsive();
 
-  // Get the hovered course's sessions for preview highlighting
+  // Get the hovered course for preview
   const hoveredCourse = hoveredCourseId 
     ? allCourses.find(c => c.id === hoveredCourseId) 
     : null;
+
+  // Build synthetic ScheduledSession objects for the hovered course
+  const hoveredSessions: ScheduledSession[] = useMemo(() => {
+    if (!hoveredCourse) return [];
+    return hoveredCourse.sessions.map((session) => ({
+      ...session,
+      courseId: hoveredCourse.courseId,
+      parentId: hoveredCourse.id,
+      courseName: hoveredCourse.name,
+      instructor: hoveredCourse.instructor,
+      credits: hoveredCourse.credits,
+      group: hoveredCourse.group,
+      groupNumber: hoveredCourse.groupNumber,
+      examDate: hoveredCourse.examDate,
+      examTime: hoveredCourse.examTime,
+    }));
+  }, [hoveredCourse]);
 
   const getSessionsForSlot = (day: number, time: number): ScheduledSession[] => {
     return scheduledSessions.filter(
@@ -30,16 +47,21 @@ const ScheduleGrid = () => {
     );
   };
 
-  // Check if this cell would be occupied by the hovered course
+  const getHoveredStartSessionsForSlot = (day: number, time: number): ScheduledSession[] => {
+    return hoveredSessions.filter(
+      session => session.day === day && session.startTime === time,
+    );
+  };
+
+  // Check if this cell would be occupied by the hovered course (any part of its duration)
   const isHoveredCourseCell = (day: number, time: number): boolean => {
-    if (!hoveredCourse) return false;
-    return hoveredCourse.sessions.some(
-      session => session.day === day && time >= session.startTime && time < session.endTime
+    return hoveredSessions.some(
+      session => session.day === day && time >= session.startTime && time < session.endTime,
     );
   };
 
   const formatTime = (hour: number): string => {
-    return `${hour.toString().padStart(2, '0')}:۰۰`;
+    return `${hour.toString().padStart(2, '0')}:00`;
   };
 
   // Responsive sizing
@@ -135,11 +157,18 @@ const ScheduleGrid = () => {
                 const sessions = getSessionsForSlot(dayIndex, time);
                 const isOccupied = isCellOccupiedByPrevious(dayIndex, time);
                 const isPreviewCell = isHoveredCourseCell(dayIndex, time);
+                const hoveredStartSessions = getHoveredStartSessionsForSlot(dayIndex, time);
 
                 if (isOccupied) return null;
 
                 const mainSession = sessions[0];
-                const rowSpan = mainSession ? mainSession.endTime - mainSession.startTime : 1;
+                const ghostMain = hoveredStartSessions[0];
+
+                const rowSpan = mainSession
+                  ? mainSession.endTime - mainSession.startTime
+                  : ghostMain
+                    ? ghostMain.endTime - ghostMain.startTime
+                    : 1;
 
                 return (
                   <div
@@ -157,7 +186,7 @@ const ScheduleGrid = () => {
                       // Active state for touch
                       "active:bg-accent/40",
                       // Highlight cells where hovered course would appear
-                      isPreviewCell && !mainSession && "bg-primary/15 ring-1 ring-inset ring-primary/40"
+                      isPreviewCell && !mainSession && "bg-primary/5"
                     )}
                     style={{ 
                       gridColumn: dayIndex + 2, 
@@ -167,6 +196,9 @@ const ScheduleGrid = () => {
                     }}
                   >
                     <CourseCell sessions={sessions} />
+                    {!mainSession && hoveredStartSessions.length > 0 && (
+                      <CourseCell sessions={hoveredStartSessions} ghost />
+                    )}
                   </div>
                 );
               })}

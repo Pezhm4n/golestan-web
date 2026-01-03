@@ -22,7 +22,7 @@ const MobileHeader = ({ isDarkMode, onToggleDarkMode, isTablet = false }: Mobile
       <div className="flex items-center gap-2">
         <h1 className="text-sm font-bold text-foreground">گلستون</h1>
         <span className="text-[9px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
-          ۱۴۰۳-۱
+          1403-1
         </span>
       </div>
 

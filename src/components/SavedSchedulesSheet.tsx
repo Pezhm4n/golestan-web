@@ -22,9 +22,9 @@ interface SavedSchedule {
 
 const SavedSchedulesSheet = () => {
   const [schedules, setSchedules] = useState<SavedSchedule[]>([
-    { id: '1', name: 'ترکیب ۱ - صبح', courseIds: ['1', '4'], createdAt: '۱۴۰۳/۰۹/۱۵' },
-    { id: '2', name: 'ترکیب ۲ - عصر', courseIds: ['2', '3', '5'], createdAt: '۱۴۰۳/۰۹/۱۴' },
-    { id: '3', name: 'پشتیبان', courseIds: ['1', '2', '4'], createdAt: '۱۴۰۳/۰۹/۱۲' },
+    { id: '1', name: 'ترکیب 1 - صبح', courseIds: ['1', '4'], createdAt: '1403/09/15' },
+    { id: '2', name: 'ترکیب 2 - عصر', courseIds: ['2', '3', '5'], createdAt: '1403/09/14' },
+    { id: '3', name: 'پشتیبان', courseIds: ['1', '2', '4'], createdAt: '1403/09/12' },
   ]);
   const [newName, setNewName] = useState('');
 
@@ -46,7 +46,7 @@ const SavedSchedulesSheet = () => {
       id: Date.now().toString(),
       name: newName,
       courseIds: [],
-      createdAt: '۱۴۰۳/۰۹/۱۶',
+      createdAt: '1403/09/16',
     };
     setSchedules(prev => [newSchedule, ...prev]);
     setNewName('');
