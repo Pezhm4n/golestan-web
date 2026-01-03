@@ -262,7 +262,8 @@ const Sidebar = () => {
         )}
 
         {!isLoading && !error && (selectedDepartment || customCoursesList.length > 0) && (
-          <ScrollArea className="h-full">
+          <ScrollArea className="h-full overflow-x-auto">
+            {/* اجازه‌ی اسکرول افقی در صورت وجود درس با نام بسیار بلند */}
             {/* Custom/User Courses */}
             {customCoursesList.length > 0 && (
               <div>

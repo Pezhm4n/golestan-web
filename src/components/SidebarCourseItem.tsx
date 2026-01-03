@@ -48,7 +48,7 @@ const SidebarCourseItem = ({ course }: SidebarCourseItemProps) => {
         <div 
           dir="rtl"
           className={cn(
-            "flex w-full items-center gap-2 px-2 py-1.5 border-b border-border/30 transition-all duration-200 cursor-pointer hover:bg-accent/50",
+            "flex w-full items-start gap-2 px-2 py-2 border-b border-border/30 transition-all duration-200 cursor-pointer hover:bg-accent/50",
             "min-w-0",
             getFontSizeClass(),
             isSelected && "bg-primary/10 border-r-2 border-r-primary",
@@ -75,37 +75,49 @@ const SidebarCourseItem = ({ course }: SidebarCourseItemProps) => {
             )}
           </div>
           
-          {/* Course Info - single line, compact, with safe truncation */}
+          {/* Course Info - تک‌خطه با ... برای متن‌های بلند */}
           <div
             className={cn(
-              "flex-1 min-w-0 text-xs text-foreground",
+              "flex-1 min-w-0 max-w-full text-xs text-foreground",
               getFontSizeClass(),
-              "flex items-center gap-1 overflow-hidden"
+              "flex items-center gap-2 overflow-hidden"
             )}
           >
-            {/* Outer flex item owns the shrinkable width */}
-            <div className="flex-1 min-w-0">
-              {/* Text container that actually carries ellipsis width */}
+            {/* متن اصلی (نام درس + استاد) */}
+            <div className="flex-1 min-w-0 basis-0 flex flex-col gap-0.5 leading-snug">
+              {/* نام درس - همیشه یک خط با ellipsis */}
               <div
-                dir="ltr"
-                className="truncate text-right block w-full"
+                dir="rtl"
+                className="w-full min-w-0 max-w-full truncate text-right font-normal"
               >
-                {course.name} - {course.instructor}
+                {course.name}
               </div>
+
+              {/* نام استاد - یک خط، کمی کوچک‌تر */}
+              {course.instructor && (
+                <div
+                  dir="rtl"
+                  className="w-full min-w-0 max-w-full truncate text-right text-[11px] text-muted-foreground"
+                >
+                  {course.instructor}
+                </div>
+              )}
             </div>
-            <span className="text-muted-foreground whitespace-nowrap shrink-0">
-              گروه {groupLabel}
-            </span>
-            {course.isGeneral && (
-              <span className="shrink-0">
+
+            {/* ستون وضعیت (گروه + برچسب‌ها) */}
+            <div className="flex flex-col items-end gap-1 shrink-0 text-[11px]">
+              <span className="text-muted-foreground whitespace-nowrap">
+                گروه {groupLabel}
+              </span>
+              {course.isGeneral && (
                 <Badge
                   variant="secondary"
-                  className="h-4 px-1 text-[8px] mr-1.5 whitespace-nowrap"
+                  className="h-4 px-1 text-[8px] mr-0 whitespace-nowrap"
                 >
                   عمومی
                 </Badge>
-              </span>
-            )}
+              )}
+            </div>
           </div>
 
           {/* Custom course delete action */}
