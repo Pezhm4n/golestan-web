@@ -20,9 +20,10 @@ import {
 import SidebarCourseItem from './SidebarCourseItem';
 import AddCourseDialog from './AddCourseDialog';
 import { Gender, Course } from '@/types/course';
-import { departments } from '@/data/mockCourses';
 import { useSchedule } from '@/contexts/ScheduleContext';
 import { toast } from 'sonner';
+import { useGolestanData } from '@/hooks/useGolestanData';
+import { normalizeText } from '@/lib/textNormalizer';
 
 interface MobileSidebarProps {
   isOpen: boolean;
@@ -31,26 +32,39 @@ interface MobileSidebarProps {
 
 const MobileSidebar = ({ isOpen, onOpenChange }: MobileSidebarProps) => {
   const { selectedCourses, allCourses, clearAll, addCustomCourse, totalUnits } = useSchedule();
+  const { isLoading, error } = useGolestanData();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedDepartment, setSelectedDepartment] = useState('1');
+  const [selectedDepartment, setSelectedDepartment] = useState<'all' | string>('all');
   
   // Filter states
   const [gender, setGender] = useState<Gender | 'all'>('all');
   const [showGeneralOnly, setShowGeneralOnly] = useState(false);
   const [hideFull, setHideFull] = useState(false);
 
+  const normalizedQuery = useMemo(() => normalizeText(searchQuery), [searchQuery]);
+
   const filteredCourses = useMemo(() => {
     return allCourses.filter(course => {
-      const matchesDepartment = selectedDepartment === 'all' || course.departmentId === selectedDepartment;
-      const matchesSearch = course.name.includes(searchQuery) ||
-        course.instructor.includes(searchQuery) ||
-        course.courseId.includes(searchQuery);
+      const matchesDepartment =
+        selectedDepartment === 'all' || course.departmentId === selectedDepartment;
+
+      const normName = normalizeText(course.name);
+      const normInstructor = normalizeText(course.instructor);
+      const normCode = normalizeText(course.courseId);
+
+      const matchesSearch =
+        !normalizedQuery ||
+        normName.includes(normalizedQuery) ||
+        normInstructor.includes(normalizedQuery) ||
+        normCode.includes(normalizedQuery);
+
       const matchesGender = gender === 'all' || course.gender === gender;
       const matchesGeneral = !showGeneralOnly || course.isGeneral;
       const matchesFull = !hideFull || course.enrolled < course.capacity;
+
       return matchesDepartment && matchesSearch && matchesGender && matchesGeneral && matchesFull;
     });
-  }, [searchQuery, gender, showGeneralOnly, hideFull, selectedDepartment, allCourses]);
+  }, [normalizedQuery, gender, showGeneralOnly, hideFull, selectedDepartment, allCourses]);
 
   const availableToTake = filteredCourses.filter(c => c.category === 'available');
 
@@ -93,18 +107,16 @@ const MobileSidebar = ({ isOpen, onOpenChange }: MobileSidebarProps) => {
             </div>
           </div>
 
-          {/* Department Selector */}
+          {/* Department Selector - placeholder until real faculties/departments wired */}
           <div className="px-4 py-3 border-b border-border/50">
             <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
               <SelectTrigger className="h-10 text-sm font-medium">
                 <SelectValue placeholder="انتخاب رشته" />
               </SelectTrigger>
               <SelectContent>
-                {departments.map(dept => (
-                  <SelectItem key={dept.id} value={dept.id} className="text-sm">
-                    {dept.name}
-                  </SelectItem>
-                ))}
+                <SelectItem value="all" className="text-sm">
+                  همه رشته‌ها
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -124,23 +136,40 @@ const MobileSidebar = ({ isOpen, onOpenChange }: MobileSidebarProps) => {
 
           {/* Course List */}
           <ScrollArea className="flex-1 px-2">
-            {availableToTake.length > 0 && (
-              <div>
-                <div className="sticky top-0 z-10 bg-primary/10 px-3 py-2 text-xs font-bold text-primary border-b border-primary/20 mx-2 rounded-t-lg">
-                  دروس قابل اخذ ({availableToTake.length})
-                </div>
-                <div className="space-y-1 p-2">
-                  {availableToTake.map(course => (
-                    <SidebarCourseItem key={course.id} course={course} />
-                  ))}
-                </div>
-              </div>
+            {isLoading && (
+              <p className="text-center text-muted-foreground text-sm py-12">
+                در حال بارگذاری دروس...
+              </p>
             )}
 
-            {filteredCourses.length === 0 && (
-              <p className="text-center text-muted-foreground text-sm py-12">
-                درسی یافت نشد
+            {!isLoading && error && (
+              <p className="text-center text-destructive text-sm py-12">
+                خطا در دریافت دروس
               </p>
+            )}
+
+            {!isLoading && !error && (
+              <>
+                {availableToTake.length > 0 && (
+                  <div>
+                    <div className="sticky top-0 z-10 bg-primary/10 px-3 py-2 text-xs font-bold text-primary border-b border-primary/20 mx-2 rounded-t-lg">
+                      دروس قابل اخذ ({availableToTake.length})
+                    </div>
+                    <div className="space-y-1 p-2">
+                      {/* NOTE: For large datasets, consider virtualizing this list. */}
+                      {availableToTake.map(course => (
+                        <SidebarCourseItem key={course.id} course={course} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {filteredCourses.length === 0 && (
+                  <p className="text-center text-muted-foreground text-sm py-12">
+                    درسی یافت نشد
+                  </p>
+                )}
+              </>
             )}
           </ScrollArea>
 

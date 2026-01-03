@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
-import { Course, ScheduledSession, WeekType } from '@/types/course';
-import { availableCourses as mockCourses } from '@/data/mockCourses';
+import { Course, ScheduledSession } from '@/types/course';
 import { toast } from 'sonner';
+import { hasConflict as schedulerHasConflict } from '@/lib/scheduler';
+import { useGolestanData } from '@/hooks/useGolestanData';
+import { convertGolestanCourseToAppCourse } from '@/lib/converters';
 
 interface ScheduleContextType {
   // State
@@ -25,34 +27,30 @@ interface ScheduleContextType {
   
   // Helpers
   isCourseSelected: (courseId: string) => boolean;
-  hasConflict: (course: Course) => { hasConflict: boolean; conflictWith?: string };
+  hasConflict: (course: Course) => { hasConflict: boolean; conflictWith?: string; reason?: string };
 }
 
 const ScheduleContext = createContext<ScheduleContextType | undefined>(undefined);
 
-// Check if two time ranges overlap
-const timeRangesOverlap = (
-  start1: number, end1: number, 
-  start2: number, end2: number
-): boolean => {
-  return start1 < end2 && start2 < end1;
-};
-
-// Check if two week types can coexist
-const weekTypesConflict = (type1: WeekType, type2: WeekType): boolean => {
-  if (type1 === 'both' || type2 === 'both') return true;
-  return type1 === type2;
-};
-
 export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [selectedCourseIds, setSelectedCourseIds] = useState<string[]>(['1', '4']); // Pre-select some
+  const [selectedCourseIds, setSelectedCourseIds] = useState<string[]>([]);
   const [hoveredCourseId, setHoveredCourseId] = useState<string | null>(null);
   const [customCourses, setCustomCourses] = useState<Course[]>([]);
+  const { flattenedCourses } = useGolestanData();
 
-  // All available courses (mock + custom)
+  // Convert raw Golestan courses to app Course model
+  const apiCourses: Course[] = useMemo(() => {
+    if (!flattenedCourses || flattenedCourses.length === 0) return [];
+    // NOTE: For ~3000+ courses this conversion runs once per data load thanks to useMemo.
+    return flattenedCourses.map(({ course, faculty, department }) =>
+      convertGolestanCourseToAppCourse(course, faculty, department),
+    );
+  }, [flattenedCourses]);
+
+  // All available courses (API + custom)
   const allCourses = useMemo(() => {
-    return [...mockCourses, ...customCourses];
-  }, [customCourses]);
+    return [...apiCourses, ...customCourses];
+  }, [apiCourses, customCourses]);
 
   // Get selected courses
   const selectedCourses = useMemo(() => {
@@ -87,28 +85,10 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return selectedCourseIds.includes(courseId);
   }, [selectedCourseIds]);
 
-  // Check for conflicts with a new course
-  const hasConflict = useCallback((course: Course): { hasConflict: boolean; conflictWith?: string } => {
-    for (const newSession of course.sessions) {
-      for (const existingSession of scheduledSessions) {
-        // Skip if different day
-        if (newSession.day !== existingSession.day) continue;
-        
-        // Check time overlap
-        if (!timeRangesOverlap(
-          newSession.startTime, newSession.endTime,
-          existingSession.startTime, existingSession.endTime
-        )) continue;
-
-        // Check week type conflict
-        if (weekTypesConflict(newSession.weekType, existingSession.weekType)) {
-          const conflictCourse = allCourses.find(c => c.id === existingSession.courseId);
-          return { hasConflict: true, conflictWith: conflictCourse?.name };
-        }
-      }
-    }
-    return { hasConflict: false };
-  }, [scheduledSessions, allCourses]);
+  // Check for conflicts with a new course using core scheduler logic
+  const hasConflict = useCallback((course: Course): { hasConflict: boolean; conflictWith?: string; reason?: string } => {
+    return schedulerHasConflict(selectedCourses, course);
+  }, [selectedCourses]);
 
   // Add course - allow conflicts but warn
   const addCourse = useCallback((course: Course): boolean => {
@@ -119,8 +99,14 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setSelectedCourseIds(prev => [...prev, course.id]);
     
     if (conflict.hasConflict) {
-      toast.warning('تداخل زمانی!', {
-        description: `این درس با "${conflict.conflictWith}" تداخل دارد. می‌تونی یکی رو حذف کنی.`,
+      const reasonLabel =
+        conflict.reason === 'exam'
+          ? 'تداخل امتحان'
+          : 'تداخل زمانی';
+      toast.warning(reasonLabel + '!', {
+        description: conflict.conflictWith
+          ? `این درس با «${conflict.conflictWith}» ${reasonLabel.toLowerCase()} دارد. می‌تونی یکی رو حذف کنی.`
+          : 'این درس با یکی از درس‌های انتخاب‌شده تداخل دارد.',
         duration: 4000,
       });
     } else {

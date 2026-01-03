@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { Search, ChevronDown, Filter, Save, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -21,14 +22,67 @@ import SidebarCourseItem from './SidebarCourseItem';
 import CompactFilterPanel from './CompactFilterPanel';
 import AddCourseDialog from './AddCourseDialog';
 import { Gender, Course } from '@/types/course';
-import { departments } from '@/data/mockCourses';
 import { useSchedule } from '@/contexts/ScheduleContext';
 import { toast } from 'sonner';
+import { useGolestanData } from '@/hooks/useGolestanData';
+import { normalizeText } from '@/lib/textNormalizer';
+import DepartmentCombobox from './DepartmentCombobox';
+
+interface VirtualizedCourseListProps {
+  courses: Course[];
+}
+
+const VirtualizedCourseList = ({ courses }: VirtualizedCourseListProps) => {
+  const parentRef = useRef<HTMLDivElement | null>(null);
+
+  const rowVirtualizer = useVirtualizer({
+    count: courses.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 56, // approximate item height
+    overscan: 10,
+  });
+
+  // For small lists, render directly (still call hooks above to satisfy rules of hooks)
+  if (courses.length < 100) {
+    return (
+      <div>
+        {courses.map((course) => (
+          <SidebarCourseItem key={course.id} course={course} />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div ref={parentRef} className="max-h-[600px] overflow-auto">
+      <div
+        style={{
+          height: `${rowVirtualizer.getTotalSize()}px`,
+          position: 'relative',
+        }}
+      >
+        {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+          const course = courses[virtualRow.index];
+          return (
+            <div
+              key={course.id}
+              className="absolute top-0 left-0 right-0"
+              style={{ transform: `translateY(${virtualRow.start}px)` }}
+            >
+              <SidebarCourseItem course={course} />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 
 const Sidebar = () => {
   const { selectedCourses, allCourses, clearAll, addCustomCourse } = useSchedule();
+  const { isLoading, error, departments } = useGolestanData();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedDepartment, setSelectedDepartment] = useState('1');
+  const [selectedDepartment, setSelectedDepartment] = useState<'all' | string>('all');
   const [filtersOpen, setFiltersOpen] = useState(false);
   
   // Filter states
@@ -38,20 +92,51 @@ const Sidebar = () => {
   const [showGeneralOnly, setShowGeneralOnly] = useState(false);
   const [hideFull, setHideFull] = useState(false);
 
+  const normalizedQuery = useMemo(() => normalizeText(searchQuery), [searchQuery]);
+
   const filteredCourses = useMemo(() => {
     return allCourses.filter(course => {
-      // Filter by department
-      const matchesDepartment = selectedDepartment === 'all' || course.departmentId === selectedDepartment;
+      // Filter by department (no-op until real department mapping is wired)
+      const matchesDepartment =
+        selectedDepartment === 'all' || course.departmentId === selectedDepartment;
       
-      const matchesSearch = course.name.includes(searchQuery) ||
-        course.instructor.includes(searchQuery) ||
-        course.courseId.includes(searchQuery);
+      const normName = normalizeText(course.name);
+      const normInstructor = normalizeText(course.instructor);
+      const normCode = normalizeText(course.courseId);
+
+      const matchesSearch =
+        !normalizedQuery ||
+        normName.includes(normalizedQuery) ||
+        normInstructor.includes(normalizedQuery) ||
+        normCode.includes(normalizedQuery);
+
       const matchesGender = gender === 'all' || course.gender === gender;
       const matchesGeneral = !showGeneralOnly || course.isGeneral;
       const matchesFull = !hideFull || course.enrolled < course.capacity;
-      return matchesDepartment && matchesSearch && matchesGender && matchesGeneral && matchesFull;
+      const matchesTime =
+        course.sessions.every(
+          s => s.startTime >= timeFrom && s.endTime <= timeTo,
+        );
+
+      return (
+        matchesDepartment &&
+        matchesSearch &&
+        matchesGender &&
+        matchesGeneral &&
+        matchesFull &&
+        matchesTime
+      );
     });
-  }, [searchQuery, gender, showGeneralOnly, hideFull, selectedDepartment, allCourses]);
+  }, [
+    allCourses,
+    selectedDepartment,
+    normalizedQuery,
+    gender,
+    showGeneralOnly,
+    hideFull,
+    timeFrom,
+    timeTo,
+  ]);
 
   const availableToTake = filteredCourses.filter(c => c.category === 'available');
   const otherCourses = filteredCourses.filter(c => c.category === 'other');
@@ -95,20 +180,14 @@ const Sidebar = () => {
 
   return (
     <aside data-tour="sidebar" dir="rtl" className="w-[320px] border-l border-border bg-card/50 backdrop-blur-sm flex flex-col shrink-0 rounded-l-xl overflow-hidden">
-      {/* Department Selector - Integrated with course list */}
+      {/* Department Selector - searchable combobox grouped by faculty */}
       <div className="px-2 pt-2 pb-1">
-        <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-          <SelectTrigger className="h-9 text-xs font-medium border-b-0 rounded-b-none">
-            <SelectValue placeholder="انتخاب دانشکده/رشته" />
-          </SelectTrigger>
-          <SelectContent>
-            {departments.map(dept => (
-              <SelectItem key={dept.id} value={dept.id} className="text-xs">
-                {dept.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <DepartmentCombobox
+          value={selectedDepartment}
+          onChange={setSelectedDepartment}
+          departments={departments}
+          placeholder="انتخاب دانشکده/رشته"
+        />
       </div>
       
       {/* Search - connected to department selector */}
@@ -156,38 +235,53 @@ const Sidebar = () => {
       
       {/* Course List - Only Available */}
       <div className="flex-1 flex flex-col min-h-0">
+        {isLoading && (
+          <div className="flex-1 flex items-center justify-center text-[11px] text-muted-foreground">
+            در حال بارگذاری دروس...
+          </div>
+        )}
 
-        <ScrollArea className="h-full">
-          {/* Available/Allowed Courses */}
-          {availableToTake.length > 0 && (
-            <div>
-              <div data-tour="available-courses" className="sticky top-0 z-10 bg-primary/10 px-3 py-1.5 text-[10px] font-bold text-primary border-b border-primary/20">
-                دروس قابل اخذ ({availableToTake.length})
+        {!isLoading && error && (
+          <div className="p-2 text-[11px] text-destructive bg-destructive/10 border border-destructive/40 rounded-md">
+            خطا در دریافت دروس: {error.message || 'امکان برقراری ارتباط با سرور وجود ندارد.'}
+          </div>
+        )}
+
+        {!isLoading && !error && (
+          <ScrollArea className="h-full">
+            {/* Available/Allowed Courses */}
+            {availableToTake.length > 0 && (
+              <div>
+                <div
+                  data-tour="available-courses"
+                  className="sticky top-0 z-10 bg-primary/10 px-3 py-1.5 text-[10px] font-bold text-primary border-b border-primary/20"
+                >
+                  دروس قابل اخذ ({availableToTake.length})
+                </div>
+                <VirtualizedCourseList courses={availableToTake} />
               </div>
-              {availableToTake.map(course => (
-                <SidebarCourseItem key={course.id} course={course} />
-              ))}
-            </div>
-          )}
+            )}
 
-          {/* Other Courses */}
-          {otherCourses.length > 0 && (
-            <div>
-              <div data-tour="unavailable-courses" className="sticky top-0 z-10 bg-muted/80 px-3 py-1.5 text-[10px] font-bold text-muted-foreground border-b border-border/30">
-                دروس غیر قابل اخذ ({otherCourses.length})
+            {/* Other Courses */}
+            {otherCourses.length > 0 && (
+              <div>
+                <div
+                  data-tour="unavailable-courses"
+                  className="sticky top-0 z-10 bg-muted/80 px-3 py-1.5 text-[10px] font-bold text-muted-foreground border-b border-border/30"
+                >
+                  دروس غیر قابل اخذ ({otherCourses.length})
+                </div>
+                <VirtualizedCourseList courses={otherCourses} />
               </div>
-              {otherCourses.map(course => (
-                <SidebarCourseItem key={course.id} course={course} />
-              ))}
-            </div>
-          )}
+            )}
 
-          {filteredCourses.length === 0 && (
-            <p className="text-center text-muted-foreground text-[10px] py-8">
-              درسی یافت نشد
-            </p>
-          )}
-        </ScrollArea>
+            {filteredCourses.length === 0 && (
+              <p className="text-center text-muted-foreground text-[10px] py-8">
+                درسی یافت نشد
+              </p>
+            )}
+          </ScrollArea>
+        )}
       </div>
 
       {/* Bottom Actions */}
