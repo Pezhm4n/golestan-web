@@ -38,6 +38,26 @@ interface SingleBlockProps {
   onEdit?: (session: ScheduledSession) => void;
 }
 
+const adjustCourseColorForHover = (color: string, amount = 0.2): string => {
+  // Expecting colors in the form: hsl(h s% l%)
+  const match = color.match(/hsl\(\s*([\d.]+)\s+([\d.]+)%\s+([\d.]+)%\s*\)/);
+  if (!match) return color;
+
+  const h = parseFloat(match[1]);
+  const s = parseFloat(match[2]);
+  const l = parseFloat(match[3]);
+
+  const clamp = (value: number, min: number, max: number) =>
+    Math.min(max, Math.max(min, value));
+
+  // Slightly increase saturation and reduce lightness to make the color
+  // feel bolder without drifting too far from the original tone.
+  const newS = clamp(s * (1 + amount * 0.5), 0, 100);
+  const newL = clamp(l * (1 - amount), 0, 100);
+
+  return `hsl(${h} ${newS}% ${newL}%)`;
+};
+
 const SingleBlock = ({
   session,
   isHalf = false,
@@ -56,13 +76,24 @@ const SingleBlock = ({
   } = useSchedule();
   const { getFontSizeClass, fontSize } = useSettings();
   const [open, setOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const { t } = useTranslation();
 
   const baseColor = generateCourseColor(session.group, session.parentId);
   // Always use the course color as the base background to preserve identity.
   const effectiveBackgroundColor = baseColor;
 
-  const isHighlighted = hoveredCourseId === session.parentId;
+  // Globally highlighted: هر جایی از جدول که این درس حضور دارد باید مشخص شود
+  const isGloballyHighlighted = hoveredCourseId === session.parentId;
+  // Popout: فقط همان بلوکی که ماوس روی آن است
+  const isPopout = isHovered;
+  const isHighlighted = isGloballyHighlighted || isPopout;
+
+  // وقتی یک درس هاور می‌شود، همه جلساتش پس‌زمینه کمی پررنگ‌تر می‌گیرند
+  const backgroundColor = isHighlighted
+    ? adjustCourseColorForHover(effectiveBackgroundColor, 0.2)
+    : effectiveBackgroundColor;
+
   const weekLabel =
     session.weekType === 'odd'
       ? t('course.weekType.odd')
@@ -117,24 +148,48 @@ const SingleBlock = ({
   const STACK_OFFSET_PX = 10;
 
   const baseStackOffset = isStacked ? stackIndex * STACK_OFFSET_PX : 0;
-  const stackWidth = isStacked ? 'calc(100% - 16px)' : '100%';
 
+  // Base visual style for the card. We keep the HSL background fully opaque
+  // so underlying content never bleeds through.
   const baseStyle: React.CSSProperties = {
-    backgroundColor: effectiveBackgroundColor,
+    backgroundColor,
     zIndex: isStacked ? 10 + stackIndex : 1,
   };
 
   if (isStacked) {
+    // Default stacked positioning: slightly offset so all conflicts are visible.
     baseStyle.left = `${baseStackOffset}px`;
     baseStyle.top = `${baseStackOffset}px`;
-    baseStyle.width = stackWidth;
-    baseStyle.height = `calc(100% - ${baseStackOffset}px)`;
+
+    const inactiveWidth = 'calc(100% - 16px)';
+    const inactiveHeight = `calc(100% - ${baseStackOffset}px)`;
+
+    // When we are actually hovered over this specific block, expand it
+    // to cover the whole cell so it becomes dominant.
+    if (isPopout) {
+      baseStyle.left = '0px';
+      baseStyle.top = '0px';
+      baseStyle.width = '100%';
+      baseStyle.height = '100%';
+    } else {
+      baseStyle.width = inactiveWidth;
+      baseStyle.height = inactiveHeight;
+    }
+  } else {
+    baseStyle.width = '100%';
+    baseStyle.height = '100%';
   }
 
-  if (isHighlighted) {
-    baseStyle.zIndex = 30;
+  // Pop‑out: the locally hovered card should dominate the z‑axis.
+  if (isPopout) {
+    baseStyle.zIndex = 9999;
+  } else if (isGloballyHighlighted) {
+    // When highlighted from elsewhere (e.g. sidebar), lift slightly without full pop‑out.
+    baseStyle.zIndex = Math.max(baseStyle.zIndex ?? 0, isStacked ? 15 : 5);
   }
 
+  // Conflict preview overlay should still float above normal cards,
+  // but below things like dialogs/tooltips.
   if (conflictPreview) {
     baseStyle.zIndex = Math.max(baseStyle.zIndex ?? 0, 20);
   }
@@ -144,31 +199,60 @@ const SingleBlock = ({
       <PopoverTrigger asChild>
         <div
           className={cn(
-            'group relative flex flex-col justify-center items-center text-center overflow-hidden cursor-pointer',
-            'border-r-[3px] border-r-gray-700/50 rounded-lg',
-            // Ensure content never exceeds cell bounds
-            'max-w-full min-w-0',
-            // Conflict preview styling: keep course color, add red border/ring
-            conflictPreview && 'border-red-600 ring-2 ring-red-500/80',
-            // Unified, subtle hover
-            'transition-all duration-200 ease-out',
-            'hover:shadow-lg hover:brightness-[1.05]',
+            'group relative flex flex-col items-center justify-center text-center cursor-pointer',
+            'rounded-lg border border-gray-900/20',
+            // Ensure the card can visually pop outside the slot when zoomed,
+            // while the parent cell controls clipping.
+            'max-w-full min-w-0 w-full h-full overflow-visible',
+            // Smooth, spring‑like transition for all interactive states.
+            'transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
+            // Base shadow so the card feels tactile.
+            'shadow-sm',
+            // Vertical split support (kept for future use).
             isHalf ? 'h-1/2' : 'h-full',
-            isHalf && position === 'top' ? 'border-b border-dashed border-gray-500/40' : '',
-            // Hover / highlight effect: slight ring/shadow without layout shift
-            isHighlighted && 'shadow-lg ring-2 ring-white/60',
+            isHalf && position === 'top' && 'border-b border-dashed border-gray-500/40',
+            // Stacked conflict cards are absolutely positioned inside the cell.
+            isStacked && 'absolute',
+            // Conflict preview styling: keep the course color but add a red emphasis frame.
+            conflictPreview && 'border-red-600 ring-2 ring-red-500/80',
+            // Premium hover interaction:
+            // - on hover: قوی‌ترین افکت برای همان بلوک
+            // - روی کل جلسات درس: هایلایت هماهنگ
+            !ghost && [
+              'hover:scale-[1.05] hover:shadow-2xl',
+              'hover:ring-4 hover:ring-white/95',
+            ],
+            // همه جلسات هایلایت‌شدهٔ این درس
+            isHighlighted && 'shadow-md ring-2 ring-white/70',
+            // بلوک دقیقی که زیر ماوس است (پاپ‌اوت اصلی)
+            isPopout && [
+              'scale-[1.05]',
+              'shadow-2xl',
+              'ring-4',
+              'ring-white/95',
+            ],
+            // Subtle press feedback, بدون دیم کردن بقیه کارت‌ها.
+            'active:scale-[1.02]',
             // Responsive padding
             'p-1.5 sm:p-2 md:p-2.5',
-            // Stacked cards get absolute positioning and subtle border/shadow
-            isStacked && 'absolute shadow-sm border border-gray-600/40',
-            // Touch feedback
-            'active:scale-[0.98]',
           )}
           style={baseStyle}
-          onMouseEnter={() => setHoveredCourseId(session.parentId)}
-          onMouseLeave={() => setHoveredCourseId(null)}
-          onTouchStart={() => setHoveredCourseId(session.parentId)}
-          onTouchEnd={() => setHoveredCourseId(null)}
+          onMouseEnter={() => {
+            setHoveredCourseId(session.parentId);
+            setIsHovered(true);
+          }}
+          onMouseLeave={() => {
+            setHoveredCourseId(null);
+            setIsHovered(false);
+          }}
+          onTouchStart={() => {
+            setHoveredCourseId(session.parentId);
+            setIsHovered(true);
+          }}
+          onTouchEnd={() => {
+            setHoveredCourseId(null);
+            setIsHovered(false);
+          }}
         >
           {/* Edit / Delete Buttons - larger touch target on mobile */}
           {!ghost && (
@@ -290,7 +374,7 @@ const SingleBlock = ({
       <PopoverContent
         side="top"
         align="center"
-        className="max-w-xs p-2 z-[999]"
+        className="max-w-xs p-2 z-[10000]"
         sideOffset={8}
       >
         <div className="space-y-1 text-[11px]">
@@ -352,12 +436,12 @@ const CourseCell = ({
     return (
       <div
         className={cn(
-          'absolute inset-[1px] rounded-sm overflow-visible',
+          'absolute inset-[1px] rounded-sm overflow-hidden',
           ghost && 'opacity-60 pointer-events-none',
         )}
       >
-        {/* Conflict indicator badge - z-index set to NOT overlap dialogs */}
-        <div className="absolute -top-1 -left-1 z-[10] flex items-center gap-0.5 bg-destructive text-destructive-foreground px-1 py-0.5 rounded text-[8px] font-bold shadow-md">
+        {/* Conflict indicator badge - positioned inside the cell to avoid overflow clipping */}
+        <div className="absolute top-0 left-0 z-[10] flex items-center gap-0.5 bg-destructive text-destructive-foreground px-1 py-0.5 rounded text-[8px] font-bold shadow-md">
           <AlertTriangle className="w-2.5 h-2.5" />
           {t('course.conflictIndicator', { count: sessions.length })}
         </div>
@@ -372,6 +456,7 @@ const CourseCell = ({
               stackIndex={index}
               totalStacked={sessions.length}
               ghost={ghost}
+              conflictPreview={conflictPreview}
             />
           ))}
         </div>
@@ -394,7 +479,9 @@ const CourseCell = ({
     return (
       <div
         className={cn(
-          'absolute inset-[1px] rounded-sm overflow-visible',
+          // Parent container must remain visually invisible here as well:
+          // no border, no background – only positioning.
+          'absolute inset-0',
           ghost && 'opacity-60 pointer-events-none',
         )}
       >
