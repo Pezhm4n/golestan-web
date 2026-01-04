@@ -1,9 +1,4 @@
 import http from 'http';
-import { promises as fs } from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { execFile } from 'child_process';
-import { promisify } from 'util';
 import {
   getStudentRecord,
   GolestanCredentials,
@@ -11,10 +6,9 @@ import {
 
 const PORT = 8000;
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const execFileAsync = promisify(execFile);
+const CAPTCHA_API_URL =
+  process.env.CAPTCHA_API_URL ||
+  'https://golestan-captcha-solvers-golestan-captcha-solver.hf.space/predict';
 
 process.on('uncaughtException', err => {
   console.error('[uncaughtException]', err);
@@ -25,62 +19,71 @@ process.on('unhandledRejection', reason => {
 });
 
 /**
- * Captcha solver that delegates to the Python TensorFlow/Keras model.
+ * Captcha solver that delegates to an external Hugging Face API.
  *
  * Behavior:
- * - Saves the captcha image to a temporary PNG file
- * - Runs server/python/captcha_wrapper.py as a child process
- * - Reads the predicted text from STDOUT
- * - Deletes the temporary file and returns the recognized text
- *
- * You can override the Python binary by setting the PYTHON_BIN environment variable.
+ * - Sends the captcha image as multipart/form-data to the external API
+ * - Parses the JSON/text response and extracts the captcha text
  */
 async function captchaSolver(image: Buffer): Promise<string> {
-  const tmpDir = path.join(__dirname, '..', 'tmp', 'captchas');
-  await fs.mkdir(tmpDir, { recursive: true });
-
-  const filename = `captcha-${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2)}.png`;
-  const tempImagePath = path.join(tmpDir, filename);
-
-  await fs.writeFile(tempImagePath, image);
-
-  const pythonBin =
-    process.env.PYTHON_BIN ||
-    (process.platform === 'win32' ? 'python' : 'python3');
-  const scriptPath = path.join(__dirname, 'python', 'captcha_wrapper.py');
-
   try {
-    console.log('[captchaSolver] Calling Python solver', {
-      pythonBin,
-      scriptPath,
-      tempImagePath,
+    const formData = new FormData();
+    const blob = new Blob([image], { type: 'image/png' });
+    formData.append('file', blob, 'captcha.png');
+
+    const response = await fetch(CAPTCHA_API_URL, {
+      method: 'POST',
+      body: formData,
     });
 
-    const { stdout } = await execFileAsync(pythonBin, [scriptPath, tempImagePath], {
-      maxBuffer: 1024 * 1024, // 1MB should be plenty for a short prediction
-    });
-
-    const prediction = stdout.toString().trim();
-
-    if (!prediction) {
-      throw new Error('Empty captcha prediction from Python solver');
+    if (!response.ok) {
+      const errorBody = await response.text().catch(() => '');
+      console.error('[captchaSolver] CAPTCHA API error', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorBody,
+      });
+      throw new Error(
+        `Captcha API request failed with status ${response.status} ${response.statusText}`,
+      );
     }
 
-    return prediction;
-  } catch (error) {
-    console.error('Error while running Python captcha solver:', error);
-    throw new Error('Failed to solve captcha using Python solver');
-  } finally {
+    const raw = (await response.text()).trim();
+    if (!raw) {
+      throw new Error('Empty captcha prediction from external API');
+    }
+
+    let extracted = raw;
+
+    // Try to parse JSON and read captcha_text field
     try {
-      await fs.unlink(tempImagePath);
-    } catch (e) {
-      const err = e as NodeJS.ErrnoException;
-      if (err.code !== 'ENOENT') {
-        console.warn('Failed to delete temporary captcha image:', err);
+      const parsed = JSON.parse(raw) as unknown;
+      if (parsed && typeof parsed === 'object') {
+        const obj = parsed as { captcha_text?: unknown; captcha?: unknown; text?: unknown };
+        const candidate =
+          (typeof obj.captcha_text === 'string' && obj.captcha_text) ||
+          (typeof obj.captcha === 'string' && obj.captcha) ||
+          (typeof obj.text === 'string' && obj.text);
+
+        if (candidate && candidate.trim()) {
+          extracted = candidate.trim();
+        }
       }
+    } catch {
+      // Not JSON, fall back to raw text
     }
+
+    console.log('[captchaSolver] Raw CAPTCHA API response:', raw.slice(0, 300));
+    console.log('[captchaSolver] Extracted captcha text:', `"${extracted}"`);
+
+    if (!extracted) {
+      throw new Error('Failed to extract captcha text from external API response');
+    }
+
+    return extracted;
+  } catch (error) {
+    console.error('[captchaSolver] Error while calling external CAPTCHA API:', error);
+    throw new Error('Failed to solve captcha using external CAPTCHA API');
   }
 }
 

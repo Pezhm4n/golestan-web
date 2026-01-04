@@ -80,6 +80,15 @@ function extractAspNetFields(html: string): AspNetFields {
     $('input[name="__EVENTVALIDATION"]').attr('value') ?? '';
   const ticket = $('input[name="TicketTextBox"]').attr('value') ?? null;
 
+  console.log('[GolestanClient][extractAspNetFields]', {
+    viewStatePresent: !!viewState,
+    viewStateSnippet: viewState ? viewState.slice(0, 64) : '',
+    viewStateGeneratorPresent: !!viewStateGenerator,
+    eventValidationPresent: !!eventValidation,
+    eventValidationSnippet: eventValidation ? eventValidation.slice(0, 64) : '',
+    ticket: ticket ?? null,
+  });
+
   if (!viewState || !viewStateGenerator || !eventValidation) {
     throw new Error('Failed to extract ASP.NET hidden fields.');
   }
@@ -329,7 +338,7 @@ function parseStudentInfoFromHtml(html: string, username: string): Student {
 }
 
 class GolestanClient {
-  private readonly baseUrl = 'https://golestan.ikiu.ac.ir';
+  private readonly baseUrl: string;
   private readonly jar: CookieJar;
   private readonly http: AxiosInstance;
   private readonly timeoutMs: number;
@@ -345,7 +354,7 @@ class GolestanClient {
 
   private readonly defaultHeaders = {
     Accept:
-      'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+      'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
     'Accept-Encoding': 'gzip, deflate, br, zstd',
     'Accept-Language': 'en-US,en;q=0.9',
     'Sec-Ch-Ua':
@@ -359,6 +368,7 @@ class GolestanClient {
   };
 
   constructor(options: GolestanClientOptions) {
+    this.baseUrl = options.baseUrl ?? 'https://golestan.ikiu.ac.ir';
     this.jar = new CookieJar();
     this.http = wrapper(
       axios.create({
@@ -380,6 +390,30 @@ class GolestanClient {
     }
   }
 
+  private async getCookieHeaderString(): Promise<string> {
+    const cookies = await this.jar.getCookies(this.baseUrl);
+    if (!cookies.length) return '';
+    return cookies.map(c => `${c.key}=${c.value}`).join('; ');
+  }
+
+  private async logSessionCookies(label: string): Promise<void> {
+    try {
+      const cookies = await this.jar.getCookies(this.baseUrl);
+      const sessionCookie = cookies.find(c => c.key === 'ASP.NET_SessionId');
+      const ltCookie = cookies.find(c => c.key === 'lt');
+      const uCookie = cookies.find(c => c.key === 'u');
+
+      console.log('[GolestanClient][session]', label, {
+        aspNetSessionId: sessionCookie?.value ?? null,
+        lt: ltCookie?.value ?? null,
+        u: uCookie?.value ?? null,
+        cookieHeader: cookies.map(c => `${c.key}=${c.value}`).join('; '),
+      });
+    } catch (err) {
+      console.warn('[GolestanClient][session] Failed to read cookies', label, err);
+    }
+  }
+
   private async safeRequest<T = any>(
     method: 'get' | 'post',
     url: string,
@@ -391,15 +425,60 @@ class GolestanClient {
       headers: { ...this.defaultHeaders, ...(config.headers || {}) },
     };
 
+    const cookiesBefore = await this.getCookieHeaderString();
+    let payloadPreview: string | undefined;
+
+    if (method === 'post' && finalConfig.data !== undefined) {
+      if (finalConfig.data instanceof URLSearchParams) {
+        payloadPreview = finalConfig.data.toString();
+      } else if (typeof finalConfig.data === 'string') {
+        payloadPreview = finalConfig.data.slice(0, 1000);
+      } else {
+        try {
+          payloadPreview = JSON.stringify(finalConfig.data).slice(0, 1000);
+        } catch {
+          payloadPreview = '[unserializable payload]';
+        }
+      }
+    }
+
+    console.log('[GolestanClient][request]', {
+      method,
+      url,
+      cookiesBefore,
+      hasData: typeof finalConfig.data !== 'undefined',
+      payloadPreview,
+    });
+
     try {
+      let response: AxiosResponse<T>;
       if (method === 'get') {
-        return await this.http.get<T>(url, finalConfig);
+        response = await this.http.get<T>(url, finalConfig);
+      } else if (method === 'post') {
+        response = await this.http.post<T>(url, finalConfig.data, finalConfig);
+      } else {
+        throw new Error(`Unsupported HTTP method: ${method}`);
       }
-      if (method === 'post') {
-        return await this.http.post<T>(url, finalConfig.data, finalConfig);
-      }
-      throw new Error(`Unsupported HTTP method: ${method}`);
+
+      const cookiesAfter = await this.getCookieHeaderString();
+      console.log('[GolestanClient][response]', {
+        method,
+        url,
+        status: response.status,
+        statusText: response.statusText,
+        cookiesAfter,
+      });
+
+      return response;
     } catch (err) {
+      const cookiesAfter = await this.getCookieHeaderString();
+      console.error('[GolestanClient][request-error]', {
+        method,
+        url,
+        cookiesAfter,
+        errorMessage: (err as Error).message,
+      });
+
       if (axios.isAxiosError(err)) {
         if (isSslError(err)) {
           throw new Error(
@@ -443,8 +522,10 @@ class GolestanClient {
         c => c.key === 'ASP.NET_SessionId',
       );
       this.sessionId = sessionCookie?.value;
+      await this.logSessionCookies('after-unvarm');
     }
 
+    // Initialize state cookies but keep the ASP.NET_SessionId coming from the server.
     await this.setCookies([
       ['ASP.NET_SessionId', this.sessionId ?? ''],
       ['f', ''],
@@ -481,6 +562,9 @@ class GolestanClient {
     aspnetFields = extractAspNetFields(initialPostResp.data);
 
     for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      // Log session just before requesting captcha
+      await this.logSessionCookies(`attempt-${attempt}-before-captcha`);
+
       const captchaUrl = `https://golestan.ikiu.ac.ir/Forms/AuthenticateUser/captcha.aspx?${Math.random()}`;
       const captchaResp = await this.safeRequest<ArrayBuffer>('get', captchaUrl, {
         responseType: 'arraybuffer',
@@ -488,12 +572,19 @@ class GolestanClient {
 
       const captchaBuffer = Buffer.from(captchaResp.data);
       const captchaText = await this.captchaSolver(captchaBuffer);
+      console.log('[GolestanClient][captcha]', {
+        attempt,
+        captchaText,
+      });
+
+      // Log session just before submitting login POST
+      await this.logSessionCookies(`attempt-${attempt}-before-login-post`);
 
       const payload = new URLSearchParams({
         '__VIEWSTATE': aspnetFields.viewState,
         '__VIEWSTATEGENERATOR': aspnetFields.viewStateGenerator,
         '__EVENTVALIDATION': aspnetFields.eventValidation,
-        'TxtMiddle': `<r F51851="" F80351="${username}" F80401="${password}" F51701="${captchaText}" F83181="1" F51602="" F51803="0" F51601="1"/>`,
+        'TxtMiddle': `<r F51851=\"\" F80351=\"${username}\" F80401=\"${password}\" F51701=\"${captchaText}\" F83181=\"1\" F51602=\"\" F51803=\"0\" F51601=\"1\"/>`,
         'Fm_Action': '09',
         'Frm_Type': '',
         'Frm_No': '',
@@ -520,8 +611,21 @@ class GolestanClient {
           c => c.key === 'ASP.NET_SessionId',
         );
         this.sessionId = sessionCookie?.value;
+
+        await this.logSessionCookies(`attempt-${attempt}-after-login-success`);
         break;
       }
+
+      // Login failed on this attempt – log HTML snippet for diagnosis
+      const bodySnippet = respPost.data
+        ? respPost.data.toString().slice(0, 1000)
+        : '';
+      console.warn('[GolestanClient][login-failed-html-snippet]', {
+        attempt,
+        snippet: bodySnippet,
+      });
+
+      await this.logSessionCookies(`attempt-${attempt}-after-login-failed`);
 
       if (attempt === maxAttempts) {
         throw new Error(
