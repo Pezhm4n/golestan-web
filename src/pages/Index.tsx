@@ -5,6 +5,7 @@ import Footer from '@/components/Footer';
 import Sidebar from '@/components/Sidebar';
 import MobileSidebar from '@/components/MobileSidebar';
 import ScheduleGrid from '@/components/ScheduleGrid';
+import UnscheduledCourses from '@/components/UnscheduledCourses';
 import { ScheduleProvider, useSchedule } from '@/contexts/ScheduleContext';
 import { useResponsive } from '@/hooks/use-responsive';
 import { Button } from '@/components/ui/button';
@@ -30,12 +31,17 @@ const ScheduleApp = () => {
     <div className="h-screen flex flex-col overflow-hidden bg-muted/30">
       <Header isDarkMode={isDarkMode} onToggleDarkMode={() => setIsDarkMode(!isDarkMode)} />
       
-      <div className={`flex-1 flex overflow-hidden min-h-0 ${showMobileSidebar ? 'mb-14' : 'mb-12'}`}>
-        {/* Desktop Sidebar */}
-        {!showMobileSidebar && <Sidebar />}
-        
-        {/* Schedule Grid */}
-        <ScheduleGrid />
+      <div className={`flex-1 flex flex-col overflow-hidden min-h-0 ${showMobileSidebar ? 'mb-14' : 'mb-12'}`}>
+        <div className="flex flex-1 overflow-hidden min-h-0">
+          {/* Desktop Sidebar */}
+          {!showMobileSidebar && <Sidebar />}
+
+          {/* Schedule Grid */}
+          <ScheduleGrid />
+        </div>
+
+        {/* Unscheduled courses (e.g. internships, projects without time) */}
+        <UnscheduledCourses courses={selectedCourses} />
       </div>
       
       {/* Mobile/Tablet Floating Action Button to open sidebar */}

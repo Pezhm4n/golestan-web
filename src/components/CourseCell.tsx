@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { X, AlertTriangle } from 'lucide-react';
+import { X, AlertTriangle, Pencil } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { ScheduledSession } from '@/types/course';
+import { CourseGroup, ScheduledSession } from '@/types/course';
 import { useSchedule } from '@/contexts/ScheduleContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { getCourseColor, GROUP_LABELS } from '@/hooks/useCourseColors';
@@ -20,6 +20,24 @@ interface CourseCellProps {
   conflictPreview?: boolean;
 }
 
+// Helper to generate a deterministic course color based on group/type and id.
+// Delegates to getCourseColor so the palette stays consistent across the app.
+const generateCourseColor = (group: CourseGroup, id: string): string => {
+  return getCourseColor(id, group);
+};
+
+interface SingleBlockProps {
+  session: ScheduledSession;
+  isHalf?: boolean;
+  isStacked?: boolean;
+  stackIndex?: number;
+  totalStacked?: number;
+  position?: 'top' | 'bottom';
+  ghost?: boolean;
+  conflictPreview?: boolean;
+  onEdit?: (session: ScheduledSession) => void;
+}
+
 const SingleBlock = ({
   session,
   isHalf = false,
@@ -29,34 +47,31 @@ const SingleBlock = ({
   position,
   ghost = false,
   conflictPreview = false,
-}: {
-  session: ScheduledSession;
-  isHalf?: boolean;
-  isStacked?: boolean;
-  stackIndex?: number;
-  totalStacked?: number;
-  position?: 'top' | 'bottom';
-  ghost?: boolean;
-  conflictPreview?: boolean;
-}) => {
-  const { hoveredCourseId, setHoveredCourseId, removeCourse } = useSchedule();
+  onEdit,
+}: SingleBlockProps) => {
+  const {
+    hoveredCourseId,
+    setHoveredCourseId,
+    removeCourse,
+  } = useSchedule();
   const { getFontSizeClass, fontSize } = useSettings();
   const [open, setOpen] = useState(false);
   const { t } = useTranslation();
 
-  const backgroundColor = getCourseColor(session.parentId, session.group);
-  const effectiveBackgroundColor = conflictPreview
-    ? 'rgba(239, 68, 68, 0.65)' // شبیه bg-red-500/70
-    : backgroundColor;
+  const baseColor = generateCourseColor(session.group, session.parentId);
+  // Always use the course color as the base background to preserve identity.
+  const effectiveBackgroundColor = baseColor;
 
   const isHighlighted = hoveredCourseId === session.parentId;
-  const isDimmed = hoveredCourseId !== null && hoveredCourseId !== session.parentId;
   const weekLabel =
     session.weekType === 'odd'
       ? t('course.weekType.odd')
       : session.weekType === 'even'
       ? t('course.weekType.even')
       : null;
+
+  // Custom courses are identified by their id prefix generated in AddCourseDialog
+  const isCustomCourse = session.parentId.startsWith('custom_');
 
   const groupNumberLabel =
     typeof session.groupNumber === 'number'
@@ -98,20 +113,31 @@ const SingleBlock = ({
   };
 
   // Stacked card layout for conflicting sessions -------------------------
-  // Use a fixed width and small horizontal offset so cards overlap but stay readable.
-  const STACK_OFFSET_PX = 12;
+  // Simple horizontal/vertical offset so cards overlap slightly.
+  const STACK_OFFSET_PX = 10;
 
   const baseStackOffset = isStacked ? stackIndex * STACK_OFFSET_PX : 0;
-  // Give each stacked card a substantial width instead of splitting 100% / N
-  const stackWidth = isStacked ? 'calc(100% - 24px)' : '100%';
+  const stackWidth = isStacked ? 'calc(100% - 16px)' : '100%';
 
-  // z-index: stacked cards get increasing z-index by index,
-  // but hovered/highlighted cards always come to the front.
-  const getZIndex = () => {
-    if (isHighlighted) return 50;
-    if (isStacked) return 10 + stackIndex;
-    return 1;
+  const baseStyle: React.CSSProperties = {
+    backgroundColor: effectiveBackgroundColor,
+    zIndex: isStacked ? 10 + stackIndex : 1,
   };
+
+  if (isStacked) {
+    baseStyle.left = `${baseStackOffset}px`;
+    baseStyle.top = `${baseStackOffset}px`;
+    baseStyle.width = stackWidth;
+    baseStyle.height = `calc(100% - ${baseStackOffset}px)`;
+  }
+
+  if (isHighlighted) {
+    baseStyle.zIndex = 30;
+  }
+
+  if (conflictPreview) {
+    baseStyle.zIndex = Math.max(baseStyle.zIndex ?? 0, 20);
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -122,52 +148,55 @@ const SingleBlock = ({
             'border-r-[3px] border-r-gray-700/50 rounded-lg',
             // Ensure content never exceeds cell bounds
             'max-w-full min-w-0',
-            // Conflict preview styling
-            conflictPreview && 'border-red-600 ring-2 ring-red-500/80 shadow-lg',
-            // Faster transitions for mobile
-            'transition-all duration-150',
+            // Conflict preview styling: keep course color, add red border/ring
+            conflictPreview && 'border-red-600 ring-2 ring-red-500/80',
+            // Unified, subtle hover
+            'transition-all duration-200 ease-out',
+            'hover:shadow-lg hover:brightness-[1.05]',
             isHalf ? 'h-1/2' : 'h-full',
             isHalf && position === 'top' ? 'border-b border-dashed border-gray-500/40' : '',
-            // Hover / highlight effect: bring to front visually
-            isHighlighted && 'ring-2 ring-offset-1 ring-primary shadow-lg scale-[1.03]',
-            isDimmed && 'opacity-50',
+            // Hover / highlight effect: slight ring/shadow without layout shift
+            isHighlighted && 'shadow-lg ring-2 ring-white/60',
             // Responsive padding
             'p-1.5 sm:p-2 md:p-2.5',
             // Stacked cards get absolute positioning and subtle border/shadow
-            isStacked && 'absolute shadow-md border border-gray-600/40',
+            isStacked && 'absolute shadow-sm border border-gray-600/40',
             // Touch feedback
             'active:scale-[0.98]',
           )}
-          style={{
-            backgroundColor: effectiveBackgroundColor,
-            ...(isStacked && {
-              left: `${baseStackOffset}px`,
-              top: `${baseStackOffset}px`,
-              width: stackWidth,
-              height: `calc(100% - ${baseStackOffset}px)`,
-              zIndex: getZIndex(),
-            }),
-            ...(conflictPreview && {
-              zIndex: 200,
-            }),
-          }}
+          style={baseStyle}
           onMouseEnter={() => setHoveredCourseId(session.parentId)}
           onMouseLeave={() => setHoveredCourseId(null)}
           onTouchStart={() => setHoveredCourseId(session.parentId)}
           onTouchEnd={() => setHoveredCourseId(null)}
         >
-          {/* Delete Button - larger touch target on mobile */}
+          {/* Edit / Delete Buttons - larger touch target on mobile */}
           {!ghost && (
-            <button
-              onClick={handleRemove}
+            <div
               className={cn(
-                'absolute z-30 flex items-center justify-center bg-red-500/90 text-white transition-all duration-200 hover:bg-red-600 rounded-md shadow-sm',
-                // Larger on mobile, visible by default on touch
-                'top-1 right-1 w-6 h-6 opacity-100 sm:top-2 sm:right-2 sm:w-5 sm:h-5 sm:opacity-0 sm:group-hover:opacity-100',
+                'absolute z-30 flex items-center gap-1',
+                'top-1 right-1 opacity-100 sm:top-2 sm:right-2 sm:opacity-0 sm:group-hover:opacity-100',
+                'transition-opacity duration-150',
               )}
             >
-              <X className="w-3 h-3 sm:w-3 sm:h-3" />
-            </button>
+              {isCustomCourse && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit?.(session);
+                  }}
+                  className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-500/90 text-white shadow-sm transition-colors hover:bg-amber-600 sm:h-5 sm:w-5"
+                >
+                  <Pencil className="h-3 w-3 sm:h-3 sm:w-3" />
+                </button>
+              )}
+              <button
+                onClick={handleRemove}
+                className="flex h-6 w-6 items-center justify-center rounded-md bg-red-500/90 text-white shadow-sm transition-colors hover:bg-red-600 sm:h-5 sm:w-5"
+              >
+                <X className="w-3 h-3 sm:w-3 sm:h-3" />
+              </button>
+            </div>
           )}
 
           {/* Week Type Badge */}
@@ -304,6 +333,7 @@ const CourseCell = ({
   conflictPreview = false,
 }: CourseCellProps) => {
   const { t } = useTranslation();
+  const { selectedCourses, setEditingCourse } = useSchedule();
 
   if (!sessions || sessions.length === 0) return null;
 
@@ -349,6 +379,13 @@ const CourseCell = ({
     );
   }
 
+  // Handler passed down to SingleBlock for editing custom courses
+  const handleEdit = (session: ScheduledSession) => {
+    const course = selectedCourses.find(c => c.id === session.parentId);
+    if (!course) return;
+    setEditingCourse(course);
+  };
+
   // Dual week view (odd/even) – render side-by-side in the same time block
   if (hasDualWeek) {
     const oddSession = sessions.find(s => s.weekType === 'odd') || sessions[0];
@@ -367,6 +404,7 @@ const CourseCell = ({
               session={oddSession}
               ghost={ghost}
               conflictPreview={conflictPreview}
+              onEdit={handleEdit}
             />
           </div>
           <div className="relative w-1/2 h-full">
@@ -374,6 +412,7 @@ const CourseCell = ({
               session={evenSession}
               ghost={ghost}
               conflictPreview={conflictPreview}
+              onEdit={handleEdit}
             />
           </div>
         </div>
@@ -393,6 +432,7 @@ const CourseCell = ({
         session={sessions[0]}
         ghost={ghost}
         conflictPreview={conflictPreview}
+        onEdit={handleEdit}
       />
     </div>
   );

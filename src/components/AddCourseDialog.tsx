@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Plus, Clock, User, MapPin, BookOpen, Calendar } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -10,6 +10,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { useSchedule } from '@/contexts/ScheduleContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -36,6 +37,7 @@ type SessionFormRow = {
 
 const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
   const { t } = useTranslation();
+  const { addCustomCourse, editCourse, editingCourse, setEditingCourse } = useSchedule();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [courseId, setCourseId] = useState('');
@@ -52,11 +54,26 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
   const [sessionErrors, setSessionErrors] = useState<string[]>([]);
   const [group, setGroup] = useState<CourseGroup>('specialized');
 
+  const isEditMode = !!editingCourse;
+
   const groupOptions: { value: CourseGroup; label: string }[] = [
     { value: 'specialized', label: t('addCourse.groupSpecialized') },
     { value: 'general', label: t('addCourse.groupGeneral') },
     { value: 'basic', label: t('addCourse.groupBasic') },
   ];
+
+  const resetForm = () => {
+    setName('');
+    setCourseId('');
+    setInstructor('');
+    setCredits(3);
+    setExamDate('');
+    setExamTime('');
+    setLocation('');
+    setSessionRows([{ day: 0, startTime: 8, endTime: 10, weekType: 'both' }]);
+    setSessionErrors([]);
+    setGroup('specialized');
+  };
 
   const handleSubmit = () => {
     const trimmedName = name.trim();
@@ -104,48 +121,107 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
       weekType: row.weekType,
     }));
 
-    const newCourse: Course = {
-      id: `custom_${Date.now()}`,
-      courseId: courseId || `C${Date.now()}`,
-      name: trimmedName,
-      instructor: trimmedInstructor,
-      credits,
-      examDate,
-      examTime,
-      description: '',
-      gender: 'mixed' as Gender,
-      capacity: 30,
-      enrolled: 0,
-      type: 'theoretical' as CourseType,
-      isGeneral: group === 'general',
-      category: 'available',
-      departmentId: 'custom',
-      group,
-      sessions: normalizedSessions,
-    };
+    if (isEditMode && editingCourse) {
+      // Edit existing custom course
+      const updatedCourse: Course = {
+        ...editingCourse,
+        courseId: courseId || editingCourse.courseId,
+        name: trimmedName,
+        instructor: trimmedInstructor,
+        credits,
+        examDate,
+        examTime,
+        location,
+        group,
+        isGeneral: group === 'general',
+        sessions: normalizedSessions,
+      };
 
-    onAddCourse(newCourse);
-    toast.success(t('addCourse.courseAdded'), { description: trimmedName });
+      editCourse(editingCourse.id, updatedCourse);
+      toast.success('درس ویرایش شد', { description: trimmedName });
+    } else {
+      // Create a new custom course
+      const newCourse: Course = {
+        id: `custom_${Date.now()}`,
+        courseId: courseId || `C${Date.now()}`,
+        name: trimmedName,
+        instructor: trimmedInstructor,
+        credits,
+        examDate,
+        examTime,
+        description: '',
+        gender: 'mixed' as Gender,
+        capacity: 30,
+        enrolled: 0,
+        type: 'theoretical' as CourseType,
+        isGeneral: group === 'general',
+        category: 'available',
+        departmentId: 'custom',
+        group,
+        sessions: normalizedSessions,
+      };
 
-    // Reset form
-    setName('');
-    setCourseId('');
-    setInstructor('');
-    setCredits(3);
-    setExamDate('');
-    setExamTime('');
-    setLocation('');
-    setSessionRows([{ day: 0, startTime: 8, endTime: 10, weekType: 'both' }]);
-    setSessionErrors([]);
-    setGroup('specialized');
+      if (onAddCourse) {
+        onAddCourse(newCourse);
+      } else {
+        addCustomCourse(newCourse);
+      }
+      toast.success(t('addCourse.courseAdded'), { description: trimmedName });
+    }
+
+    // Reset form and close
+    resetForm();
+    setEditingCourse(null);
     setOpen(false);
   };
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    if (!nextOpen) {
+      setEditingCourse(null);
+      resetForm();
+    }
+  };
+
+  // When a course is selected for editing, pre-fill the form and open dialog
+  useEffect(() => {
+    if (editingCourse) {
+      setName(editingCourse.name);
+      setCourseId(editingCourse.courseId);
+      setInstructor(editingCourse.instructor);
+      setCredits(editingCourse.credits);
+      setExamDate(editingCourse.examDate || '');
+      setExamTime(editingCourse.examTime || '');
+      // Use first session's location as default; custom courses typically share it
+      setLocation(editingCourse.sessions[0]?.location || '');
+      setGroup(editingCourse.group);
+
+      setSessionRows(
+        editingCourse.sessions.map((s) => ({
+          day: s.day,
+          startTime: s.startTime,
+          endTime: s.endTime,
+          weekType: s.weekType,
+        })),
+      );
+      setSessionErrors(new Array(editingCourse.sessions.length).fill(''));
+      setOpen(true);
+    }
+  }, [editingCourse]);
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs flex-1">
-          <Plus className="h-3.5 w-3.5" />
+        <Button
+          variant="outline"
+          size="default"
+          className="h-9 px-3 gap-2 text-sm flex-1 font-semibold"
+          onClick={() => {
+            setEditingCourse(null);
+            resetForm();
+          }}
+        >
+          <Plus className="h-4 w-4" />
           {t('addCourse.trigger')}
         </Button>
       </DialogTrigger>
@@ -153,9 +229,11 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Plus className="h-5 w-5" />
-            {t('addCourse.title')}
+            {isEditMode ? 'ویرایش درس' : t('addCourse.title')}
           </DialogTitle>
-          <DialogDescription>{t('addCourse.description')}</DialogDescription>
+          <DialogDescription>
+            {isEditMode ? 'مشخصات این درس را ویرایش کنید.' : t('addCourse.description')}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
@@ -429,12 +507,16 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
         </div>
 
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => setOpen(false)} className="text-xs">
+          <Button
+            variant="outline"
+            onClick={() => handleOpenChange(false)}
+            className="text-xs"
+          >
             {t('addCourse.cancel')}
           </Button>
           <Button onClick={handleSubmit} className="text-xs gap-1.5">
             <Plus className="h-3.5 w-3.5" />
-            {t('addCourse.submit')}
+            {isEditMode ? 'ذخیره تغییرات' : t('addCourse.submit')}
           </Button>
         </DialogFooter>
       </DialogContent>

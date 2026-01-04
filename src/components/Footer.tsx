@@ -299,68 +299,82 @@ const Footer = ({ isMobile = false }: FooterProps) => {
     );
   }
 
-  // Desktop Footer
+  // Desktop Footer + Floating Action Bar
   return (
     <TooltipProvider delayDuration={200}>
-      <footer className="fixed bottom-0 left-0 right-0 h-12 border-t-2 border-border bg-card px-4 flex items-center justify-between z-40 shadow-xl">
-        {/* Left Section - Stats */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            <span className={`
-              text-lg font-bold tabular-nums
-              ${unitStatus === 'low' ? 'text-amber-500' : unitStatus === 'high' ? 'text-destructive' : 'text-primary'}
-            `}>
-              {totalUnits}
-            </span>
-            <span className="text-[10px] text-muted-foreground">{t('footer.units')}</span>
-          </div>
-
-          <div className="w-px h-5 bg-border" />
-
-          <div className="flex items-center gap-3 text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <span className="text-xs font-medium text-foreground">{selectedCourses.length}</span>
-              <span className="text-[10px]">{t('footer.courses')}</span>
+      <>
+        {/* Fixed footer for stats & version */}
+        <footer className="fixed bottom-0 left-0 right-0 h-12 border-t-2 border-border bg-card/95 px-4 flex items-center justify-between z-40 shadow-xl">
+          {/* Left Section - Stats */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <span
+                className={`
+                text-lg font-bold tabular-nums
+                ${unitStatus === 'low' ? 'text-amber-500' : unitStatus === 'high' ? 'text-destructive' : 'text-primary'}
+              `}
+              >
+                {totalUnits}
+              </span>
+              <span className="text-[10px] text-muted-foreground">{t('footer.units')}</span>
             </div>
-            <div className="flex items-center gap-1">
-              <span className="text-xs font-medium text-foreground">{activeDays}</span>
-              <span className="text-[10px]">{t('footer.days')}</span>
+
+            <div className="w-px h-5 bg-border" />
+
+            <div className="flex items-center gap-3 text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <span className="text-xs font-medium text-foreground">{selectedCourses.length}</span>
+                <span className="text-[10px]">{t('footer.courses')}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-xs font-medium text-foreground">{activeDays}</span>
+                <span className="text-[10px]">{t('footer.days')}</span>
+              </div>
+            </div>
+
+            <div className="w-px h-5 bg-border" />
+
+            {getConflictStatus()}
+          </div>
+
+          {/* Right Section - Version */}
+          <div className="flex items-center">
+            <div className="text-[10px] text-muted-foreground">
+              {t('footer.version')}
             </div>
           </div>
+        </footer>
 
-          <div className="w-px h-5 bg-border" />
+        {/* Floating Action Bar - always accessible exam/download actions */}
+        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
+          <div className="flex items-center gap-3 rounded-full border border-border/60 bg-card/85 backdrop-blur-md px-5 py-2.5 shadow-2xl">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  data-tour="download-image"
+                  variant="outline"
+                  size="default"
+                  className="h-9 px-4 text-sm gap-2 border-primary/40 bg-background/70 hover:bg-primary/10"
+                  onClick={handleDownloadImage}
+                  disabled={isDownloading}
+                >
+                  {isDownloading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}
+                  <span>{t('footer.downloadImage')}</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top" align="center" className="text-[11px]" dir="rtl">
+                {t('footer.downloadImage')}
+              </TooltipContent>
+            </Tooltip>
 
-          {getConflictStatus()}
-        </div>
-
-        {/* Center Section - Exam Schedule & Download */}
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3">
-          <Button 
-            data-tour="download-image"
-            variant="outline" 
-            size="sm" 
-            className="h-8 px-3 text-xs gap-1.5 border-primary/30 hover:bg-primary/10"
-            onClick={handleDownloadImage}
-            disabled={isDownloading}
-          >
-            {isDownloading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Download className="h-4 w-4" />
-            )}
-            <span>{t('footer.downloadImage')}</span>
-          </Button>
-          
-          <ExamScheduleDialog />
-        </div>
-
-        {/* Right Section - Version */}
-        <div className="flex items-center">
-          <div className="text-[10px] text-muted-foreground">
-            {t('footer.version')}
+            <ExamScheduleDialog />
           </div>
         </div>
-      </footer>
+      </>
     </TooltipProvider>
   );
 };

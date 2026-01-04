@@ -18,6 +18,7 @@ interface ScheduleContextType {
   hoveredCourseId: string | null;
   customCourses: Course[];
   savedSchedules: SavedSchedule[];
+  editingCourse: Course | null;
 
   // Derived
   selectedCourses: Course[];
@@ -31,8 +32,10 @@ interface ScheduleContextType {
   clearAll: () => void;
   toggleCourse: (course: Course) => void;
   setHoveredCourseId: (id: string | null) => void;
+  setEditingCourse: (course: Course | null) => void;
   addCustomCourse: (course: Course) => void;
   removeCustomCourse: (courseId: string) => void;
+  editCourse: (courseId: string, updated: Course) => void;
   saveSchedule: (name: string) => void;
   loadSchedule: (id: string) => void;
   deleteSchedule: (id: string) => void;
@@ -60,6 +63,7 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   });
 
   const [hoveredCourseId, setHoveredCourseId] = useState<string | null>(null);
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
 
   const [customCourses, setCustomCourses] = useState<Course[]>(() => {
     if (typeof window === 'undefined') return [];
@@ -287,6 +291,19 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     [selectedCourses],
   );
 
+  // Edit an existing course (both in selectedCourses and customCourses)
+  const editCourse = useCallback(
+    (courseId: string, updated: Course) => {
+      setSelectedCourses(prev =>
+        prev.map(c => (c.id === courseId ? { ...updated, id: courseId } : c)),
+      );
+      setCustomCourses(prev =>
+        prev.map(c => (c.id === courseId ? { ...updated, id: courseId } : c)),
+      );
+    },
+    [],
+  );
+
   // Load a saved schedule into the active session
   const loadSchedule = useCallback(
     (id: string) => {
@@ -316,6 +333,7 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     hoveredCourseId,
     customCourses,
     savedSchedules,
+    editingCourse,
     selectedCourses,
     scheduledSessions,
     totalUnits,
@@ -325,8 +343,10 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     clearAll,
     toggleCourse,
     setHoveredCourseId,
+    setEditingCourse,
     addCustomCourse,
     removeCustomCourse,
+    editCourse,
     saveSchedule,
     loadSchedule,
     deleteSchedule,

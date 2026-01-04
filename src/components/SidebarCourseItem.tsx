@@ -1,4 +1,4 @@
-import { Plus, Check, AlertTriangle } from 'lucide-react';
+import { Plus, Check, AlertTriangle, Pencil } from 'lucide-react';
 import { Course } from '@/types/course';
 import { useSchedule } from '@/contexts/ScheduleContext';
 import { useSettings } from '@/contexts/SettingsContext';
@@ -23,6 +23,7 @@ const SidebarCourseItem = ({ course }: SidebarCourseItemProps) => {
     hoveredCourseId,
     setHoveredCourseId,
     removeCustomCourse,
+    setEditingCourse,
   } = useSchedule();
   const { getFontSizeClass } = useSettings();
   const { t } = useTranslation();
@@ -42,6 +43,12 @@ const SidebarCourseItem = ({ course }: SidebarCourseItemProps) => {
     e.stopPropagation();
     if (!isCustom) return;
     removeCustomCourse(course.id);
+  };
+
+  const handleEditCustom = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isCustom) return;
+    setEditingCourse(course);
   };
 
   return (
@@ -112,28 +119,38 @@ const SidebarCourseItem = ({ course }: SidebarCourseItemProps) => {
               {/* ستون دوم: وضعیت (گروه + برچسب‌ها) */}
               {/* shrink-0 باعث میشود این ستون همیشه عرض کاملش را داشته باشد و له نشود */}
               <div className="flex flex-col items-end gap-0.5 shrink-0 text-[11px]">
-              <span className="text-muted-foreground whitespace-nowrap leading-none">
-                {t('course.labels.group')} {groupLabel}
-              </span>
-                {course.isGeneral && (
-                    <Badge
-                        variant="secondary"
-                        className="h-3.5 px-1 text-[8px] mr-0 whitespace-nowrap flex items-center"
-                    >
-                      {t('sidebar.customCoursesHeader')}
-                    </Badge>
+                <span className="text-muted-foreground whitespace-nowrap leading-none">
+                  {t('course.labels.group')} {groupLabel}
+                </span>
+                {isCustom && (
+                  <Badge
+                    variant="secondary"
+                    className="h-3.5 px-1 text-[8px] mr-0 whitespace-nowrap flex items-center"
+                  >
+                    {t('sidebar.customCoursesHeader')}
+                  </Badge>
                 )}
               </div>
             </div>
 
-            {/* Custom course delete action */}
+            {/* Custom course actions: edit & delete */}
             {isCustom && (
+              <div className="flex items-center gap-1 ml-1 shrink-0">
                 <button
-                    onClick={handleDeleteCustom}
-                    className="shrink-0 ml-1 text-[10px] text-destructive hover:text-destructive/80 px-1 py-0.5 border border-destructive/40 rounded whitespace-nowrap"
+                  onClick={handleEditCustom}
+                  className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-500/90 text-white shadow-sm transition-colors hover:bg-amber-600"
+                  aria-label={t('course.actions.edit', 'Edit course')}
                 >
-                  {t('sidebar.clearConfirmOk')}
+                  <Pencil className="h-3 w-3" />
                 </button>
+                <button
+                  onClick={handleDeleteCustom}
+                  className="flex h-6 w-6 items-center justify-center rounded-md bg-red-500/90 text-white shadow-sm transition-colors hover:bg-red-600"
+                  aria-label={t('course.actions.delete', 'Delete course')}
+                >
+                  <AlertTriangle className="h-3 w-3" />
+                </button>
+              </div>
             )}
           </div>
         </HoverCardTrigger>

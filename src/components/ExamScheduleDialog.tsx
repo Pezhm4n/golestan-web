@@ -95,8 +95,13 @@ const ExamScheduleDialog = () => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button data-tour="exam-schedule" variant="outline" size="sm" className="h-8 px-3 text-xs gap-1.5">
-          <Calendar className="h-3.5 w-3.5" />
+        <Button
+          data-tour="exam-schedule"
+          variant="outline"
+          size="default"
+          className="h-9 px-4 text-sm gap-2"
+        >
+          <Calendar className="h-4 w-4" />
           <span className="hidden sm:inline">{t('examDialog.trigger')}</span>
         </Button>
       </DialogTrigger>

@@ -41,32 +41,44 @@ const ProfileDropdown = () => {
             </AvatarFallback>
           </Avatar>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48 text-right">
-          <DropdownMenuLabel className="text-xs font-normal">
+        <DropdownMenuContent align="end" className="w-56 text-right py-2 rounded-lg shadow-lg">
+          <DropdownMenuLabel className="text-xs font-normal pb-1">
             <div className="flex flex-col gap-1">
-              <p className="text-sm font-medium">{t('کاربر مهمان', 'Guest User')}</p>
-              <p className="text-xs text-muted-foreground">guest@example.com</p>
+              <p className="text-sm font-semibold">{t('کاربر مهمان', 'Guest User')}</p>
+              <p className="text-[11px] text-muted-foreground">guest@example.com</p>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           
-          <DropdownMenuItem onClick={() => setProfileOpen(true)} className="text-xs gap-2 cursor-pointer">
-            <User className="h-3.5 w-3.5" />
+          <DropdownMenuItem
+            onClick={() => setProfileOpen(true)}
+            className="text-base gap-2 cursor-pointer py-2"
+          >
+            <User className="h-4 w-4" />
             {t('پروفایل دانشجو', 'Student Profile')}
           </DropdownMenuItem>
           
-          <DropdownMenuItem onClick={() => setSettingsOpen(true)} className="text-xs gap-2 cursor-pointer">
-            <Settings className="h-3.5 w-3.5" />
+          <DropdownMenuItem
+            onClick={() => setSettingsOpen(true)}
+            className="text-base gap-2 cursor-pointer py-2"
+          >
+            <Settings className="h-4 w-4" />
             {t('تنظیمات', 'Settings')}
           </DropdownMenuItem>
           
-          <DropdownMenuItem onClick={() => setTourOpen(true)} className="text-xs gap-2 cursor-pointer">
-            <HelpCircle className="h-3.5 w-3.5" />
+          <DropdownMenuItem
+            onClick={() => setTourOpen(true)}
+            className="text-base gap-2 cursor-pointer py-2"
+          >
+            <HelpCircle className="h-4 w-4" />
             {t('راهنما', 'Guide')}
           </DropdownMenuItem>
           
-          <DropdownMenuItem onClick={handleAbout} className="text-xs gap-2 cursor-pointer">
-            <Info className="h-3.5 w-3.5" />
+          <DropdownMenuItem
+            onClick={handleAbout}
+            className="text-base gap-2 cursor-pointer py-2"
+          >
+            <Info className="h-4 w-4" />
             {t('درباره', 'About')}
           </DropdownMenuItem>
           
@@ -74,9 +86,9 @@ const ProfileDropdown = () => {
           
           <DropdownMenuItem 
             onClick={handleLogout} 
-            className="text-xs gap-2 cursor-pointer text-destructive focus:text-destructive"
+            className="text-base gap-2 cursor-pointer py-2 text-destructive focus:text-destructive"
           >
-            <LogOut className="h-3.5 w-3.5" />
+            <LogOut className="h-4 w-4" />
             {t('خروج', 'Logout')}
           </DropdownMenuItem>
         </DropdownMenuContent>
