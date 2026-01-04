@@ -36,12 +36,15 @@ const ScheduleApp = () => {
           {/* Desktop Sidebar */}
           {!showMobileSidebar && <Sidebar />}
 
-          {/* Schedule Grid */}
-          <ScheduleGrid />
-        </div>
+          {/* Main schedule column: grid + unscheduled courses */}
+          <div className="flex-1 flex flex-col min-h-0">
+            {/* Schedule Grid */}
+            <ScheduleGrid />
 
-        {/* Unscheduled courses (e.g. internships, projects without time) */}
-        <UnscheduledCourses courses={selectedCourses} />
+            {/* Unscheduled courses (e.g. internships, projects without time) */}
+            <UnscheduledCourses courses={selectedCourses} />
+          </div>
+        </div>
       </div>
       
       {/* Mobile/Tablet Floating Action Button to open sidebar */}
