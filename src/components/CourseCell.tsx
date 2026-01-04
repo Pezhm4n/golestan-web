@@ -21,7 +21,6 @@ interface CourseCellProps {
 }
 
 // Helper to generate a deterministic course color based on group/type and id.
-// Delegates to getCourseColor so the palette stays consistent across the app.
 const generateCourseColor = (group: CourseGroup, id: string): string => {
   return getCourseColor(id, group);
 };
@@ -36,6 +35,10 @@ interface SingleBlockProps {
   ghost?: boolean;
   conflictPreview?: boolean;
   onEdit?: (session: ScheduledSession) => void;
+  /** When true, this block is the active member of a stacked conflict cycle */
+  isActiveStack?: boolean;
+  /** Optional handler to cycle stacked conflicts on double click */
+  onStackDoubleClick?: (stackIndex: number) => void;
 }
 
 const adjustCourseColorForHover = (color: string, amount = 0.2): string => {
@@ -68,13 +71,15 @@ const SingleBlock = ({
   ghost = false,
   conflictPreview = false,
   onEdit,
+  isActiveStack = false,
+  onStackDoubleClick,
 }: SingleBlockProps) => {
   const {
     hoveredCourseId,
     setHoveredCourseId,
     removeCourse,
   } = useSchedule();
-  const { getFontSizeClass, fontSize } = useSettings();
+  const { fontSize } = useSettings();
   const [open, setOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const { t } = useTranslation();
@@ -83,13 +88,14 @@ const SingleBlock = ({
   // Always use the course color as the base background to preserve identity.
   const effectiveBackgroundColor = baseColor;
 
-  // Globally highlighted: هر جایی از جدول که این درس حضور دارد باید مشخص شود
+  // Globally highlighted: every session of this course across the grid.
   const isGloballyHighlighted = hoveredCourseId === session.parentId;
-  // Popout: فقط همان بلوکی که ماوس روی آن است
-  const isPopout = isHovered;
+  // زمانی که چرخهٔ تداخل فعال است، فقط عضو activeStack باید پاپ‌اوت شود،
+  // حتی اگر ماوس هنوز روی کارت قبلی باشد.
+  const hasStackSelection = typeof isActiveStack === 'boolean';
+  const isPopout = hasStackSelection ? !!isActiveStack : isHovered;
   const isHighlighted = isGloballyHighlighted || isPopout;
 
-  // وقتی یک درس هاور می‌شود، همه جلساتش پس‌زمینه کمی پررنگ‌تر می‌گیرند
   const backgroundColor = isHighlighted
     ? adjustCourseColorForHover(effectiveBackgroundColor, 0.2)
     : effectiveBackgroundColor;
@@ -114,8 +120,6 @@ const SingleBlock = ({
     : session.courseId;
 
   // ---- Duration helpers ------------------------------------
-  // Times may be stored as numbers (hour, possibly fractional)
-  // or as "HH:MM" strings. This helper supports both.
   const parseTime = (t: string | number): number => {
     if (typeof t === 'number') {
       const hours = Math.floor(t);
@@ -144,16 +148,19 @@ const SingleBlock = ({
   };
 
   // Stacked card layout for conflicting sessions -------------------------
-  // Simple horizontal/vertical offset so cards overlap slightly.
   const STACK_OFFSET_PX = 10;
-
   const baseStackOffset = isStacked ? stackIndex * STACK_OFFSET_PX : 0;
 
-  // Base visual style for the card. We keep the HSL background fully opaque
-  // so underlying content never bleeds through.
+  // Z‑index ladder (kept intentionally low to stay under global dialogs):
+  //  - normal cards: 1
+  //  - stacked cards: 5..(5 + n)
+  //  - globally highlighted cards: ~10
+  //  - conflict preview overlays: ~15
+  //  - pop‑out / active stacked card in a cell: 20
+  //  - conflict badge inside the cell: 22
   const baseStyle: React.CSSProperties = {
     backgroundColor,
-    zIndex: isStacked ? 10 + stackIndex : 1,
+    zIndex: isStacked ? 5 + stackIndex : 1,
   };
 
   if (isStacked) {
@@ -164,8 +171,7 @@ const SingleBlock = ({
     const inactiveWidth = 'calc(100% - 16px)';
     const inactiveHeight = `calc(100% - ${baseStackOffset}px)`;
 
-    // When we are actually hovered over this specific block, expand it
-    // to cover the whole cell so it becomes dominant.
+    // Popout / active item: expand to cover the whole cell.
     if (isPopout) {
       baseStyle.left = '0px';
       baseStyle.top = '0px';
@@ -180,18 +186,18 @@ const SingleBlock = ({
     baseStyle.height = '100%';
   }
 
-  // Pop‑out: the locally hovered card should dominate the z‑axis.
+  // Pop‑out / active stacked card: should dominate within this cell,
+  // اما همچنان زیر دیالوگ‌های سراسری بماند.
   if (isPopout) {
-    baseStyle.zIndex = 9999;
+    baseStyle.zIndex = 20;
   } else if (isGloballyHighlighted) {
-    // When highlighted from elsewhere (e.g. sidebar), lift slightly without full pop‑out.
-    baseStyle.zIndex = Math.max(baseStyle.zIndex ?? 0, isStacked ? 15 : 5);
+    // Highlight from elsewhere (e.g. sidebar) بدون پاپ‌اوت کامل.
+    baseStyle.zIndex = Math.max(baseStyle.zIndex ?? 0, isStacked ? 10 : 8);
   }
 
-  // Conflict preview overlay should still float above normal cards,
-  // but below things like dialogs/tooltips.
+  // Conflict preview overlay: بالاتر از کارت‌های عادی، پایین‌تر از پاپ‌اوت
   if (conflictPreview) {
-    baseStyle.zIndex = Math.max(baseStyle.zIndex ?? 0, 20);
+    baseStyle.zIndex = Math.max(baseStyle.zIndex ?? 0, 15);
   }
 
   return (
@@ -216,15 +222,13 @@ const SingleBlock = ({
             // Conflict preview styling: keep the course color but add a red emphasis frame.
             conflictPreview && 'border-red-600 ring-2 ring-red-500/80',
             // Premium hover interaction:
-            // - on hover: قوی‌ترین افکت برای همان بلوک
-            // - روی کل جلسات درس: هایلایت هماهنگ
             !ghost && [
               'hover:scale-[1.05] hover:shadow-2xl',
               'hover:ring-4 hover:ring-white/95',
             ],
-            // همه جلسات هایلایت‌شدهٔ این درس
+            // All highlighted sessions of this course
             isHighlighted && 'shadow-md ring-2 ring-white/70',
-            // بلوک دقیقی که زیر ماوس است (پاپ‌اوت اصلی)
+            // The exact block that is popped out (hovered or active in cycle)
             isPopout && [
               'scale-[1.05]',
               'shadow-2xl',
@@ -252,6 +256,17 @@ const SingleBlock = ({
           onTouchEnd={() => {
             setHoveredCourseId(null);
             setIsHovered(false);
+          }}
+          onDoubleClick={(e) => {
+            e.stopPropagation();
+            // فقط در حالت تداخل واقعی روی کارت‌های اصلی چرخه انجام شود
+            if (!isStacked || ghost) return;
+            // با دابل‌کلیک، هاور را ریست می‌کنیم تا فقط عضو activeStack پاپ‌اوت بماند
+            setHoveredCourseId(null);
+            setIsHovered(false);
+            if (typeof stackIndex === 'number') {
+              onStackDoubleClick?.(stackIndex);
+            }
           }}
         >
           {/* Edit / Delete Buttons - larger touch target on mobile */}
@@ -418,6 +433,8 @@ const CourseCell = ({
 }: CourseCellProps) => {
   const { t } = useTranslation();
   const { selectedCourses, setEditingCourse } = useSchedule();
+  // Index of the currently active item in a stacked conflict cycle (per cell)
+  const [activeStackIndex, setActiveStackIndex] = useState<number | null>(null);
 
   if (!sessions || sessions.length === 0) return null;
 
@@ -431,17 +448,30 @@ const CourseCell = ({
   // True conflict: more than 2 sessions, or 2+ sessions with same week type
   const hasConflict = sessions.length > 1 && !hasDualWeek;
 
+  // Handle double-click cycling within a stacked conflict cell
+  const handleStackDoubleClick = (currentStackIndex: number) => {
+    if (!hasConflict || sessions.length <= 1) return;
+
+    // همیشه از اندیسی که روی آن دابل‌کلیک شده شروع کن
+    // و به آیتم بعدی در آرایه برو (با حلقه‌ی بی‌نهایت).
+    const nextIndex = (currentStackIndex + 1) % sessions.length;
+    setActiveStackIndex(nextIndex);
+  };
+
   // Stacked conflict view - show all courses layered
   if (hasConflict) {
     return (
       <div
         className={cn(
-          'absolute inset-[1px] rounded-sm overflow-hidden',
+          // Parent container intentionally has NO visible styling:
+          // no border, no background, no radius – only positioning.
+          'absolute inset-0',
           ghost && 'opacity-60 pointer-events-none',
         )}
+        onMouseLeave={() => setActiveStackIndex(null)}
       >
-        {/* Conflict indicator badge - positioned inside the cell to avoid overflow clipping */}
-        <div className="absolute top-0 left-0 z-[10] flex items-center gap-0.5 bg-destructive text-destructive-foreground px-1 py-0.5 rounded text-[8px] font-bold shadow-md">
+        {/* Conflict indicator badge - روی کارت‌های این سلول، ولی زیر دیالوگ‌های سراسری */}
+        <div className="absolute top-0 left-0 z-[22] pointer-events-none flex items-center gap-0.5 bg-destructive text-destructive-foreground px-1 py-0.5 rounded text-[8px] font-bold shadow-md">
           <AlertTriangle className="w-2.5 h-2.5" />
           {t('course.conflictIndicator', { count: sessions.length })}
         </div>
@@ -452,11 +482,17 @@ const CourseCell = ({
             <SingleBlock
               key={`${session.parentId}-${session.day}-${session.startTime}-${session.weekType}-${index}`}
               session={session}
-              isStacked={true}
+              isStacked
               stackIndex={index}
               totalStacked={sessions.length}
               ghost={ghost}
               conflictPreview={conflictPreview}
+              isActiveStack={
+                activeStackIndex !== null ? index === activeStackIndex : false
+              }
+              onStackDoubleClick={(stackIndex) =>
+                handleStackDoubleClick(stackIndex)
+              }
             />
           ))}
         </div>
