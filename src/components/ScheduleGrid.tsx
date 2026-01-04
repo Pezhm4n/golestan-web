@@ -103,6 +103,7 @@ const ScheduleGrid = () => {
         }}
       >
         <div 
+          id="schedule-grid-capture"
           style={{
             display: 'grid',
             gridTemplateColumns: `${TIME_COL_WIDTH}px repeat(6, minmax(${MIN_COL_WIDTH}px, 1fr))`,

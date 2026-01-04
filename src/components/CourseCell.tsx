@@ -332,57 +332,61 @@ const SingleBlock = ({
               </EllipsisText>
             </h3>
 
-            {/* For 1-hour sessions, only show the course name to avoid clutter.
-                For longer sessions, show full details (code, instructor, units) as before. */}
-            {!isOneHourSession && (
-              <>
-                {/* Course code + group row (combined) */}
-                <div className="flex items-center justify-center w-full max-w-full min-w-0 gap-1 text-[11px] font-bold text-gray-800 overflow-hidden">
-                  <EllipsisText
-                    className="inline-block min-w-0 max-w-full font-mono tracking-tight"
-                    dir="ltr"
-                  >
-                    {courseCodeWithGroup}
+            {/* Metadata block is always rendered so it can appear in exports.
+                For compact (1-hour) sessions we hide it in the UI but reveal it
+                when the ancestor has the `.export-mode` class (export-only mode). */}
+            <div
+              className={cn(
+                'flex flex-col gap-0.5 w-full',
+                isOneHourSession ? 'hidden group-[.export-mode]:flex' : 'flex',
+              )}
+            >
+              {/* Course code + group row (combined) */}
+              <div className="flex items-center justify-center w-full max-w-full min-w-0 gap-1 text-[11px] font-bold text-gray-800 overflow-hidden">
+                <EllipsisText
+                  className="inline-block min-w-0 max-w-full font-mono tracking-tight"
+                  dir="ltr"
+                >
+                  {courseCodeWithGroup}
+                </EllipsisText>
+              </div>
+
+              {/* Subtitle - Instructor */}
+              {!isHalf && (
+                <p
+                  className={cn(
+                    'text-gray-700 w-full max-w-full min-w-0 overflow-hidden',
+                    fontSize === 'small'
+                      ? 'text-[11px]'
+                      : fontSize === 'large'
+                      ? 'text-xs'
+                      : 'text-xs',
+                  )}
+                >
+                  <EllipsisText className="block w-full" dir="rtl">
+                    {session.instructor}
                   </EllipsisText>
-                </div>
+                </p>
+              )}
 
-                {/* Subtitle - Instructor */}
-                {!isHalf && (
-                  <p
-                    className={cn(
-                      'text-gray-700 w-full max-w-full min-w-0 overflow-hidden',
-                      fontSize === 'small'
-                        ? 'text-[11px]'
-                        : fontSize === 'large'
-                        ? 'text-xs'
-                        : 'text-xs',
-                    )}
-                  >
-                    <EllipsisText className="block w-full" dir="rtl">
-                      {session.instructor}
-                    </EllipsisText>
-                  </p>
-                )}
-
-                {/* Metadata Row - Credits */}
-                <div className="flex items-center justify-center gap-1 max-w-full overflow-hidden">
-                  <span
-                    className={cn(
-                      'bg-gray-800/15 text-gray-800 px-1 py-0.5 rounded font-semibold whitespace-nowrap',
-                      isHalf
-                        ? 'text-[6px]'
-                        : fontSize === 'small'
-                        ? 'text-[7px]'
-                        : fontSize === 'large'
-                        ? 'text-[10px]'
-                        : 'text-[8px]',
-                    )}
-                  >
-                    {session.credits} {t('labels.units')}
-                  </span>
-                </div>
-              </>
-            )}
+              {/* Metadata Row - Credits */}
+              <div className="flex items-center justify-center gap-1 max-w-full overflow-hidden">
+                <span
+                  className={cn(
+                    'bg-gray-800/15 text-gray-800 px-1 py-0.5 rounded font-semibold whitespace-nowrap',
+                    isHalf
+                      ? 'text-[6px]'
+                      : fontSize === 'small'
+                      ? 'text-[7px]'
+                      : fontSize === 'large'
+                      ? 'text-[10px]'
+                      : 'text-[8px]',
+                  )}
+                >
+                  {session.credits} {t('labels.units')}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </PopoverTrigger>

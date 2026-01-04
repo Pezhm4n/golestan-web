@@ -1,7 +1,7 @@
 import { CheckCircle2, AlertTriangle, AlertCircle, Download, Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import html2canvas from 'html2canvas';
 import { useSchedule } from '@/contexts/ScheduleContext';
+import { downloadScheduleImage } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -23,147 +23,12 @@ const Footer = ({ isMobile = false }: FooterProps) => {
   const { t } = useTranslation();
 
   const handleDownloadImage = async () => {
-    const scheduleGrid = document.querySelector('[data-tour="schedule-grid"]');
-    
-    if (!scheduleGrid) {
-      toast.error(t('header.downloadImageError'));
-      return;
-    }
-
     setIsDownloading(true);
     toast.loading(t('header.downloadImagePreparing'), { id: 'download' });
 
     try {
-      const scrollContainer = scheduleGrid.querySelector('.overflow-auto');
-      const gridElement = scrollContainer?.firstElementChild as HTMLElement;
-      
-      if (!gridElement) {
-        toast.error(t('header.downloadImageNotFound'), { id: 'download' });
-        return;
-      }
-
-      const rootStyles = getComputedStyle(document.documentElement);
-      const getHSL = (varName: string) => {
-        const v = rootStyles.getPropertyValue(varName).trim();
-        return v ? `hsl(${v})` : '#ffffff';
-      };
-
-      const bgColor = getHSL('--card');
-      const textColor = getHSL('--foreground');
-      const mutedColor = getHSL('--muted-foreground');
-      const borderColor = getHSL('--border');
-      const isDarkMode = document.documentElement.classList.contains('dark');
-
-      const canvas = await html2canvas(gridElement, {
-        backgroundColor: bgColor,
-        scale: 2.5,
-        useCORS: true,
-        logging: false,
-        width: gridElement.scrollWidth,
-        height: gridElement.scrollHeight,
-        windowWidth: gridElement.scrollWidth,
-        windowHeight: gridElement.scrollHeight,
-        onclone: (clonedDoc, clonedElement) => {
-          // Ensure tight crop (no body margins) and anchor at top-left
-          clonedDoc.documentElement.style.margin = '0';
-          clonedDoc.documentElement.style.padding = '0';
-          clonedDoc.documentElement.dir = 'rtl';
-          clonedDoc.body.style.margin = '0';
-          clonedDoc.body.style.padding = '0';
-          clonedDoc.body.style.backgroundColor = bgColor;
-          clonedDoc.body.style.width = `${gridElement.scrollWidth}px`;
-          clonedDoc.body.style.height = `${gridElement.scrollHeight}px`;
-          clonedDoc.body.style.overflow = 'hidden';
-
-          (clonedElement as HTMLElement).style.position = 'absolute';
-          (clonedElement as HTMLElement).style.top = '0';
-          (clonedElement as HTMLElement).style.left = '0';
-          (clonedElement as HTMLElement).style.right = 'auto';
-          (clonedElement as HTMLElement).style.transform = 'none';
-          (clonedElement as HTMLElement).style.width = `${gridElement.scrollWidth}px`;
-          (clonedElement as HTMLElement).style.height = `${gridElement.scrollHeight}px`;
-
-          const style = clonedDoc.createElement('style');
-          style.innerHTML = `* { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }`;
-          clonedDoc.head.appendChild(style);
-
-          clonedElement.style.padding = '0';
-          clonedElement.style.margin = '0';
-          clonedElement.style.backgroundColor = bgColor;
-          clonedElement.style.border = `2px solid ${borderColor}`;
-
-          // Hide buttons
-          const buttons = clonedElement.querySelectorAll('button');
-          buttons.forEach((btn) => (btn as HTMLElement).style.display = 'none');
-
-          // Style header cells
-          const headerCells = clonedElement.querySelectorAll('[class*="bg-muted/95"]');
-          headerCells.forEach((cell) => {
-            (cell as HTMLElement).style.backgroundColor = getHSL('--muted');
-            (cell as HTMLElement).style.color = textColor;
-          });
-
-          // Style time cells
-          const timeCells = clonedElement.querySelectorAll('[class*="bg-muted/60"]');
-          timeCells.forEach((cell) => {
-            (cell as HTMLElement).style.backgroundColor = getHSL('--muted');
-            (cell as HTMLElement).style.color = mutedColor;
-          });
-
-          // Style course cells
-          const courseCells = clonedElement.querySelectorAll('[style*="background-color"]');
-          courseCells.forEach((cell) => {
-            const el = cell as HTMLElement;
-            el.style.padding = '8px';
-            el.style.borderRadius = '8px';
-            
-            const title = el.querySelector('h3');
-            if (title) {
-              (title as HTMLElement).style.fontSize = '13px';
-              (title as HTMLElement).style.fontWeight = '700';
-            }
-          });
-
-          // Remove truncate
-          const truncated = clonedElement.querySelectorAll('.truncate');
-          truncated.forEach((el) => {
-            (el as HTMLElement).style.overflow = 'visible';
-            (el as HTMLElement).style.whiteSpace = 'normal';
-          });
-        },
-      });
-
-      // Add watermark
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.font = 'bold 28px Arial';
-        ctx.fillStyle = isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.12)';
-        const text = 'Golestoon';
-        const metrics = ctx.measureText(text);
-        ctx.fillText(text, canvas.width - metrics.width - 40, canvas.height - 30);
-      }
-
-      canvas.toBlob((blob) => {
-        if (!blob) {
-          toast.error(t('header.downloadImageFailed'), { id: 'download' });
-          return;
-        }
-
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        
-        const date = new Date();
-        const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-        link.download = `golestoon-schedule-${dateStr}.png`;
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-
-        toast.success(t('header.downloadImageSuccess'), { id: 'download' });
-      }, 'image/png', 1.0);
+      await downloadScheduleImage('schedule-grid-capture');
+      toast.success(t('header.downloadImageSuccess'), { id: 'download' });
     } catch (error) {
       console.error('Error capturing schedule:', error);
       toast.error(t('header.downloadImageFailed'), { id: 'download' });
