@@ -31,7 +31,7 @@ import { useSchedule } from '@/contexts/ScheduleContext';
 import { toast } from 'sonner';
 
 const SidebarActions = () => {
-  const { selectedCourses, clearAll, saveSchedule } = useSchedule();
+  const { selectedCourses, clearAll, restoreCourses, saveSchedule } = useSchedule();
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [scheduleName, setScheduleName] = useState('');
 
@@ -54,8 +54,21 @@ const SidebarActions = () => {
   };
 
   const handleClearAll = () => {
+    const backup = [...selectedCourses];
     clearAll();
-    toast.info('جدول پاک شد');
+
+    // استفاده از toast.success تا دکمهٔ اکشن (بازگشت) به‌درستی رندر شود
+    toast.success('جدول پاک شد', {
+      duration: 4000,
+      action: backup.length
+        ? {
+            label: 'بازگشت',
+            onClick: () => {
+              restoreCourses(backup);
+            },
+          }
+        : undefined,
+    });
   };
 
   return (

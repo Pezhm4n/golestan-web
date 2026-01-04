@@ -30,6 +30,8 @@ interface ScheduleContextType {
   addCourse: (course: Course) => boolean;
   removeCourse: (courseId: string) => void;
   clearAll: () => void;
+  /** Restore a full list of courses (used for undo / schedule loading). */
+  restoreCourses: (courses: Course[]) => void;
   toggleCourse: (course: Course) => void;
   setHoveredCourseId: (id: string | null) => void;
   setEditingCourse: (course: Course | null) => void;
@@ -42,7 +44,11 @@ interface ScheduleContextType {
 
   // Helpers
   isCourseSelected: (courseId: string) => boolean;
-  hasConflict: (course: Course) => { hasConflict: boolean; conflictWith?: string; reason?: string };
+  hasConflict: (course: Course) => {
+    hasConflict: boolean;
+    conflictWith?: string;
+    reason?: string;
+  };
 }
 
 const ScheduleContext = createContext<ScheduleContextType | undefined>(undefined);
@@ -210,30 +216,49 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     [selectedCourseIds, hasConflict],
   );
 
-  // Remove course
+  // Remove course with undo support
   const removeCourse = useCallback(
     (courseId: string) => {
       const course = selectedCourses.find(c => c.id === courseId);
+
       setSelectedCourses(prev => prev.filter(c => c.id !== courseId));
       // Clear any hover/preview state so ghost previews disappear immediately
-      setHoveredCourseId(null);
-      if (course) {
-        toast.info('درس حذف شد', {
-          description: course.name,
-          duration: 2000,
-        });
-      }
+      setHoveredCourseId(prev => (prev === courseId ? null : prev));
+
+      if (!course) return;
+
+      toast.success('درس حذف شد', {
+        description: course.name,
+        duration: 4000,
+        action: {
+          label: 'بازگشت',
+          onClick: () => {
+            setSelectedCourses(prev => {
+              // اگر کاربر در این فاصله خودش درس را دوباره اضافه کرده باشد
+              if (prev.some(c => c.id === course.id)) return prev;
+              return [...prev, course];
+            });
+            setHoveredCourseId(null);
+          },
+        },
+      });
     },
     [selectedCourses],
   );
 
-  // Clear all courses
+  // Clear all courses (toast + undo handled at the UI layer)
   const clearAll = useCallback(() => {
     setSelectedCourses([]);
     setHoveredCourseId(null);
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem('golestan_active_session');
     }
+  }, []);
+
+  // Bulk restore courses (used for undo/restore)
+  const restoreCourses = useCallback((courses: Course[]) => {
+    setSelectedCourses(courses);
+    setHoveredCourseId(null);
   }, []);
 
   // Toggle course (add/remove)
@@ -341,6 +366,7 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     addCourse,
     removeCourse,
     clearAll,
+    restoreCourses,
     toggleCourse,
     setHoveredCourseId,
     setEditingCourse,

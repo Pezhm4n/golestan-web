@@ -385,7 +385,9 @@
       "odd": "فرد",
       "even": "زوج"
     },
-    "conflictIndicator": "تداخل ({{count}})"
+    "conflictIndicator": "تداخل ({{count}})",
+    "conflictTip": "نکته: برای مشاهده بقیه درس‌ها، دابل‌کلیک کنید!",
+    "conflictTipGotIt": "فهمیدم"
   },
   "department": {
     "placeholder": "انتخاب دانشکده/رشته",

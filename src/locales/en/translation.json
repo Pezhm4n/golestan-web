@@ -385,7 +385,9 @@
       "odd": "Odd week",
       "even": "Even week"
     },
-    "conflictIndicator": "Conflict ({{count}})"
+    "conflictIndicator": "Conflict ({{count}})",
+    "conflictTip": "Tip: Double-click to cycle through courses!",
+    "conflictTipGotIt": "Got it"
   },
   "department": {
     "placeholder": "Select department...",

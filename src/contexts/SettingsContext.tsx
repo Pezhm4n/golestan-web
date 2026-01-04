@@ -28,6 +28,10 @@ interface SettingsContextType {
   // Legacy helper (used in a few old places)
   t: (faText: string, enText: string) => string;
 
+  // One‑time onboarding flags
+  hasSeenConflictTip: boolean;
+  markConflictTipAsSeen: () => void;
+
   // Helpers
   getFontSizeClass: () => string;
 }
@@ -41,6 +45,8 @@ interface StoredSettings {
   themeMode: ThemeMode;
   showGridLines: boolean;
   language: Language;
+  /** One‑time flag: has the user seen the heavy‑conflict tip? */
+  hasSeenConflictTip?: boolean;
   version?: number;
 }
 
@@ -51,6 +57,7 @@ const defaultSettings: StoredSettings = {
   themeMode: 'light',
   showGridLines: true,
   language: 'fa',
+  hasSeenConflictTip: false,
   version: SETTINGS_VERSION,
 };
 
@@ -60,6 +67,9 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [showGridLines, setShowGridLinesState] = useState<boolean>(defaultSettings.showGridLines);
   const [language, setLanguageState] = useState<Language>(defaultSettings.language);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+  const [hasSeenConflictTip, setHasSeenConflictTip] = useState<boolean>(
+    defaultSettings.hasSeenConflictTip ?? false,
+  );
 
   // Save settings to localStorage
   const saveSettings = useCallback((settings: Partial<StoredSettings>) => {
@@ -109,6 +119,9 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           parsed.showGridLines ?? defaultSettings.showGridLines,
         );
         setLanguageState(parsed.language || defaultSettings.language);
+        setHasSeenConflictTip(
+          parsed.hasSeenConflictTip ?? defaultSettings.hasSeenConflictTip ?? false,
+        );
 
         const lang = parsed.language || defaultSettings.language;
         try {
@@ -228,6 +241,11 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [fontSize]);
 
+  const markConflictTipAsSeen = useCallback(() => {
+    setHasSeenConflictTip(true);
+    saveSettings({ hasSeenConflictTip: true });
+  }, [saveSettings]);
+
   const value: SettingsContextType = {
     fontSize,
     setFontSize,
@@ -240,6 +258,8 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setLanguage,
     toggleLanguage,
     t,
+    hasSeenConflictTip,
+    markConflictTipAsSeen,
     getFontSizeClass,
   };
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, AlertTriangle, Pencil } from 'lucide-react';
+import { X, AlertTriangle, Pencil, MousePointer2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { CourseGroup, ScheduledSession } from '@/types/course';
 import { useSchedule } from '@/contexts/ScheduleContext';
@@ -437,6 +437,7 @@ const CourseCell = ({
 }: CourseCellProps) => {
   const { t } = useTranslation();
   const { selectedCourses, setEditingCourse } = useSchedule();
+  const { hasSeenConflictTip, markConflictTipAsSeen } = useSettings();
   // Index of the currently active item in a stacked conflict cycle (per cell)
   const [activeStackIndex, setActiveStackIndex] = useState<number | null>(null);
 
@@ -451,10 +452,16 @@ const CourseCell = ({
 
   // True conflict: more than 2 sessions, or 2+ sessions with same week type
   const hasConflict = sessions.length > 1 && !hasDualWeek;
+  const hasHeavyConflict = hasConflict && sessions.length >= 3;
 
   // Handle double-click cycling within a stacked conflict cell
   const handleStackDoubleClick = (currentStackIndex: number) => {
     if (!hasConflict || sessions.length <= 1) return;
+
+    // اولین باری که کاربر واقعاً دابل‌کلیک می‌کند، نکته را دیده تلقی می‌کنیم
+    if (!hasSeenConflictTip) {
+      markConflictTipAsSeen();
+    }
 
     // همیشه از اندیسی که روی آن دابل‌کلیک شده شروع کن
     // و به آیتم بعدی در آرایه برو (با حلقه‌ی بی‌نهایت).
@@ -464,6 +471,9 @@ const CourseCell = ({
 
   // Stacked conflict view - show all courses layered
   if (hasConflict) {
+    const shouldShowConflictTip =
+      hasHeavyConflict && !ghost && !conflictPreview && !hasSeenConflictTip;
+
     return (
       <div
         className={cn(
@@ -479,6 +489,44 @@ const CourseCell = ({
           <AlertTriangle className="w-2.5 h-2.5" />
           {t('course.conflictIndicator', { count: sessions.length })}
         </div>
+
+        {/* One-time discovery tip for heavy conflicts (3+ courses) */}
+        {shouldShowConflictTip && (
+          <div
+            className="absolute -top-2 right-2 z-[30] -translate-y-full w-60 rounded-xl border border-sky-100 bg-sky-600/95 text-white shadow-2xl px-3 py-2 flex items-start gap-2"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="mt-0.5 shrink-0">
+              <MousePointer2 className="w-4 h-4" />
+            </div>
+            <div className="flex-1 text-[11px] leading-snug" dir="rtl">
+              <p>{t('course.conflictTip')}</p>
+              <div className="mt-1 flex justify-end">
+                <button
+                  type="button"
+                  onClick={e => {
+                    e.stopPropagation();
+                    markConflictTipAsSeen();
+                  }}
+                  className="inline-flex items-center rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-semibold hover:bg-white/25 transition-colors"
+                >
+                  {t('course.conflictTipGotIt')}
+                </button>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={e => {
+                e.stopPropagation();
+                markConflictTipAsSeen();
+              }}
+              className="mt-0.5 ml-1 text-white/70 hover:text-white transition-colors"
+              aria-label="dismiss conflict tip"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        )}
 
         {/* Stacked courses */}
         <div className="relative w-full h-full">
