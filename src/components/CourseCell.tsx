@@ -67,19 +67,49 @@ const SingleBlock = ({
     ? `${session.courseId}_${groupNumberLabel}`
     : session.courseId;
 
+  // ---- Duration helpers ------------------------------------
+  // Times may be stored as numbers (hour, possibly fractional)
+  // or as "HH:MM" strings. This helper supports both.
+  const parseTime = (t: string | number): number => {
+    if (typeof t === 'number') {
+      const hours = Math.floor(t);
+      const minutes = Math.round((t - hours) * 60);
+      return hours * 60 + minutes;
+    }
+
+    const [rawH, rawM] = t.split(':');
+    const h = Number(rawH);
+    const m = Number(rawM);
+    const hours = Number.isFinite(h) ? h : 0;
+    const minutes = Number.isFinite(m) ? m : 0;
+    return hours * 60 + minutes;
+  };
+
+  // Duration in minutes between start and end (calculated once)
+  const durationMinutes =
+    parseTime(session.endTime as any) - parseTime(session.startTime as any);
+
+  // Compact rule: only treat exactly 60‑minute sessions as compact
+  const isOneHourSession = durationMinutes === 60;
+
   const handleRemove = (e: React.MouseEvent) => {
     e.stopPropagation();
     removeCourse(session.parentId);
   };
 
-  // Calculate offset for stacked view - more spacing for easier hover
-  const baseStackOffset = isStacked ? stackIndex * 20 : 0;
-  const stackWidth = isStacked ? `calc(100% - ${(totalStacked - 1) * 20}px)` : '100%';
+  // Stacked card layout for conflicting sessions -------------------------
+  // Use a fixed width and small horizontal offset so cards overlap but stay readable.
+  const STACK_OFFSET_PX = 12;
 
-  // When hovered, bring to front with z-index 100
+  const baseStackOffset = isStacked ? stackIndex * STACK_OFFSET_PX : 0;
+  // Give each stacked card a substantial width instead of splitting 100% / N
+  const stackWidth = isStacked ? 'calc(100% - 24px)' : '100%';
+
+  // z-index: stacked cards get increasing z-index by index,
+  // but hovered/highlighted cards always come to the front.
   const getZIndex = () => {
-    if (isHighlighted) return 100;
-    if (isStacked) return totalStacked - stackIndex;
+    if (isHighlighted) return 50;
+    if (isStacked) return 10 + stackIndex;
     return 1;
   };
 
@@ -98,18 +128,20 @@ const SingleBlock = ({
             'transition-all duration-150',
             isHalf ? 'h-1/2' : 'h-full',
             isHalf && position === 'top' ? 'border-b border-dashed border-gray-500/40' : '',
-            isHighlighted && 'ring-2 ring-offset-1 ring-primary shadow-lg scale-[1.01]',
+            // Hover / highlight effect: bring to front visually
+            isHighlighted && 'ring-2 ring-offset-1 ring-primary shadow-lg scale-[1.03]',
             isDimmed && 'opacity-50',
             // Responsive padding
             'p-1.5 sm:p-2 md:p-2.5',
-            isStacked && 'absolute shadow-xl border border-gray-600/40',
+            // Stacked cards get absolute positioning and subtle border/shadow
+            isStacked && 'absolute shadow-md border border-gray-600/40',
             // Touch feedback
             'active:scale-[0.98]',
           )}
           style={{
             backgroundColor: effectiveBackgroundColor,
             ...(isStacked && {
-              right: `${baseStackOffset}px`,
+              left: `${baseStackOffset}px`,
               top: `${baseStackOffset}px`,
               width: stackWidth,
               height: `calc(100% - ${baseStackOffset}px)`,
@@ -172,51 +204,57 @@ const SingleBlock = ({
               </EllipsisText>
             </h3>
 
-            {/* Course code + group row (combined) */}
-            <div className="flex items-center justify-center w-full max-w-full min-w-0 gap-1 text-[11px] font-bold text-gray-800 overflow-hidden">
-              <EllipsisText
-                className="inline-block min-w-0 max-w-full font-mono tracking-tight"
-                dir="ltr"
-              >
-                {courseCodeWithGroup}
-              </EllipsisText>
-            </div>
+            {/* For 1-hour sessions, only show the course name to avoid clutter.
+                For longer sessions, show full details (code, instructor, units) as before. */}
+            {!isOneHourSession && (
+              <>
+                {/* Course code + group row (combined) */}
+                <div className="flex items-center justify-center w-full max-w-full min-w-0 gap-1 text-[11px] font-bold text-gray-800 overflow-hidden">
+                  <EllipsisText
+                    className="inline-block min-w-0 max-w-full font-mono tracking-tight"
+                    dir="ltr"
+                  >
+                    {courseCodeWithGroup}
+                  </EllipsisText>
+                </div>
 
-            {/* Subtitle - Instructor */}
-            {!isHalf && (
-              <p
-                className={cn(
-                  'text-gray-700 w-full max-w-full min-w-0 overflow-hidden',
-                  fontSize === 'small'
-                    ? 'text-[11px]'
-                    : fontSize === 'large'
-                    ? 'text-xs'
-                    : 'text-xs',
+                {/* Subtitle - Instructor */}
+                {!isHalf && (
+                  <p
+                    className={cn(
+                      'text-gray-700 w-full max-w-full min-w-0 overflow-hidden',
+                      fontSize === 'small'
+                        ? 'text-[11px]'
+                        : fontSize === 'large'
+                        ? 'text-xs'
+                        : 'text-xs',
+                    )}
+                  >
+                    <EllipsisText className="block w-full" dir="rtl">
+                      {session.instructor}
+                    </EllipsisText>
+                  </p>
                 )}
-              >
-                <EllipsisText className="block w-full" dir="rtl">
-                  {session.instructor}
-                </EllipsisText>
-              </p>
+
+                {/* Metadata Row - Credits */}
+                <div className="flex items-center justify-center gap-1 max-w-full overflow-hidden">
+                  <span
+                    className={cn(
+                      'bg-gray-800/15 text-gray-800 px-1 py-0.5 rounded font-semibold whitespace-nowrap',
+                      isHalf
+                        ? 'text-[6px]'
+                        : fontSize === 'small'
+                        ? 'text-[7px]'
+                        : fontSize === 'large'
+                        ? 'text-[10px]'
+                        : 'text-[8px]',
+                    )}
+                  >
+                    {session.credits} {t('labels.units')}
+                  </span>
+                </div>
+              </>
             )}
-
-            {/* Metadata Row - Credits */}
-            <div className="flex items-center justify-center gap-1 max-w-full overflow-hidden">
-              <span
-                className={cn(
-                  'bg-gray-800/15 text-gray-800 px-1 py-0.5 rounded font-semibold whitespace-nowrap',
-                  isHalf
-                    ? 'text-[6px]'
-                    : fontSize === 'small'
-                    ? 'text-[7px]'
-                    : fontSize === 'large'
-                    ? 'text-[10px]'
-                    : 'text-[8px]',
-                )}
-              >
-                {session.credits} {t('labels.units')}
-              </span>
-            </div>
           </div>
         </div>
       </PopoverTrigger>
@@ -311,32 +349,34 @@ const CourseCell = ({
     );
   }
 
-  // Dual week view (odd/even)
+  // Dual week view (odd/even) – render side-by-side in the same time block
   if (hasDualWeek) {
-    const oddSession = sessions.find((s) => s.weekType === 'odd') || sessions[0];
-    const evenSession = sessions.find((s) => s.weekType === 'even') || sessions[1];
+    const oddSession = sessions.find(s => s.weekType === 'odd') || sessions[0];
+    const evenSession = sessions.find(s => s.weekType === 'even') || sessions[1];
 
     return (
       <div
         className={cn(
-          'absolute inset-[1px] flex flex-col rounded-sm overflow-hidden',
+          'absolute inset-[1px] rounded-sm overflow-visible',
           ghost && 'opacity-60 pointer-events-none',
         )}
       >
-        <SingleBlock
-          session={oddSession}
-          isHalf={true}
-          position="top"
-          ghost={ghost}
-          conflictPreview={conflictPreview}
-        />
-        <SingleBlock
-          session={evenSession}
-          isHalf={true}
-          position="bottom"
-          ghost={ghost}
-          conflictPreview={conflictPreview}
-        />
+        <div className="relative flex w-full h-full gap-1">
+          <div className="relative w-1/2 h-full">
+            <SingleBlock
+              session={oddSession}
+              ghost={ghost}
+              conflictPreview={conflictPreview}
+            />
+          </div>
+          <div className="relative w-1/2 h-full">
+            <SingleBlock
+              session={evenSession}
+              ghost={ghost}
+              conflictPreview={conflictPreview}
+            />
+          </div>
+        </div>
       </div>
     );
   }

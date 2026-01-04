@@ -1,110 +1,54 @@
 import { useMemo } from 'react';
 import { CourseGroup, Course } from '@/types/course';
 
-// Color families for each course group
-// Each family has different hues that are visually similar but distinguishable
-const COLOR_FAMILIES = {
-  // تخصصی - آبی و بنفش (رنگ‌های سرد)
-  specialized: {
-    light: [
-      { h: 210, s: 75, l: 82 }, // آبی روشن
-      { h: 225, s: 70, l: 80 }, // آبی متمایل به بنفش
-      { h: 240, s: 65, l: 82 }, // بنفش کمرنگ
-      { h: 200, s: 70, l: 78 }, // آبی فیروزه‌ای
-      { h: 255, s: 60, l: 83 }, // بنفش روشن
-      { h: 195, s: 72, l: 80 }, // آبی آسمانی
-    ],
-    dark: [
-      { h: 210, s: 55, l: 38 },
-      { h: 225, s: 50, l: 36 },
-      { h: 240, s: 45, l: 38 },
-      { h: 200, s: 50, l: 34 },
-      { h: 255, s: 40, l: 39 },
-      { h: 195, s: 52, l: 36 },
-    ]
-  },
-  // عمومی - سبز و فیروزه‌ای (طبیعت)
-  general: {
-    light: [
-      { h: 150, s: 55, l: 80 }, // سبز نعنایی
-      { h: 165, s: 50, l: 78 }, // سبز فیروزه‌ای
-      { h: 135, s: 48, l: 82 }, // سبز کمرنگ
-      { h: 175, s: 52, l: 79 }, // فیروزه‌ای
-      { h: 120, s: 42, l: 83 }, // سبز چمنی روشن
-      { h: 158, s: 58, l: 77 }, // سبز زمردی
-    ],
-    dark: [
-      { h: 150, s: 40, l: 32 },
-      { h: 165, s: 38, l: 30 },
-      { h: 135, s: 35, l: 34 },
-      { h: 175, s: 38, l: 31 },
-      { h: 120, s: 32, l: 35 },
-      { h: 158, s: 42, l: 30 },
-    ]
-  },
-  // پایه - نارنجی و صورتی (رنگ‌های گرم)
-  basic: {
-    light: [
-      { h: 25, s: 75, l: 82 },  // نارنجی پرتقالی
-      { h: 35, s: 70, l: 80 },  // نارنجی طلایی
-      { h: 10, s: 72, l: 83 },  // قرمز گلبهی
-      { h: 340, s: 65, l: 82 }, // صورتی
-      { h: 45, s: 68, l: 79 },  // زرد طلایی
-      { h: 355, s: 70, l: 84 }, // صورتی قرمز
-    ],
-    dark: [
-      { h: 25, s: 55, l: 36 },
-      { h: 35, s: 50, l: 34 },
-      { h: 10, s: 52, l: 38 },
-      { h: 340, s: 45, l: 36 },
-      { h: 45, s: 48, l: 33 },
-      { h: 355, s: 50, l: 38 },
-    ]
-  }
+// Base HSL color per course group (hue fixed per group)
+const BASE_HSL: Record<CourseGroup, { h: number; s: number; l: number }> = {
+  // تخصصی - آبی / بنفش
+  specialized: { h: 210, s: 70, l: 75 },
+  // عمومی - سبز / فیروزه‌ای
+  general: { h: 160, s: 60, l: 74 },
+  // پایه - نارنجی / گرم
+  basic: { h: 25, s: 72, l: 74 },
 };
 
-// Track used colors per group to ensure uniqueness
-const usedColorsPerGroup: Record<CourseGroup, Set<number>> = {
-  specialized: new Set(),
-  general: new Set(),
-  basic: new Set()
-};
-
-// Map to store course-to-color assignments
-const courseColorMap = new Map<string, { index: number; group: CourseGroup }>();
-
-export function getCourseColor(courseId: string, group: CourseGroup, _isDark?: boolean): string {
-  // Check if this course already has a color assigned
-  let assignment = courseColorMap.get(courseId);
-  
-  if (!assignment) {
-    // Find the next available color in this group
-    const usedColors = usedColorsPerGroup[group];
-    const maxColors = COLOR_FAMILIES[group].light.length;
-    
-    let colorIndex = 0;
-    for (let i = 0; i < maxColors; i++) {
-      if (!usedColors.has(i)) {
-        colorIndex = i;
-        break;
-      }
-    }
-    
-    // If all colors are used, start over with variation
-    if (usedColors.size >= maxColors) {
-      colorIndex = usedColors.size % maxColors;
-    }
-    
-    usedColors.add(colorIndex);
-    assignment = { index: colorIndex, group };
-    courseColorMap.set(courseId, assignment);
+function hashStringToInt(input: string): number {
+  let hash = 0;
+  for (let i = 0; i < input.length; i += 1) {
+    hash = ((hash << 5) - hash + input.charCodeAt(i)) | 0; // 32-bit int
   }
-  
-  // Always use light colors for better readability in both themes
-  const colors = COLOR_FAMILIES[group].light;
-  const color = colors[assignment.index % colors.length];
-  
-  return `hsl(${color.h} ${color.s}% ${color.l}%)`;
+  return Math.abs(hash);
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+/**
+ * Deterministic color generator:
+ * - Keeps hue fixed per group (blueish / greenish / orangish)
+ * - Varies saturation (±5%) and lightness (±10%) based on a hash of courseId
+ */
+export function getCourseColor(
+  courseId: string,
+  group: CourseGroup,
+  _isDark?: boolean,
+): string {
+  const base = BASE_HSL[group];
+  const hash = hashStringToInt(`${group}-${courseId}`);
+
+  const satDelta = 5;
+  const lightDelta = 10;
+
+  // Saturation offset in [-5, +5]
+  const satOffset = (hash % (satDelta * 2 + 1)) - satDelta;
+  // Lightness offset in [-10, +10]
+  const lightOffset =
+    (Math.floor(hash / 31) % (lightDelta * 2 + 1)) - lightDelta;
+
+  const s = clamp(base.s + satOffset, 35, 95);
+  const l = clamp(base.l + lightOffset, 30, 90);
+
+  return `hsl(${base.h} ${s}% ${l}%)`;
 }
 
 export function getCourseColorClass(courseId: string, group: CourseGroup): string {
@@ -112,12 +56,9 @@ export function getCourseColorClass(courseId: string, group: CourseGroup): strin
   return `course-${group}-${courseId}`;
 }
 
-// Reset color assignments (useful for testing or when courses change significantly)
+// Reset color assignments (kept for API compatibility; no-op with hash-based colors)
 export function resetColorAssignments() {
-  usedColorsPerGroup.specialized.clear();
-  usedColorsPerGroup.general.clear();
-  usedColorsPerGroup.basic.clear();
-  courseColorMap.clear();
+  // no state to reset in hash-based scheme
 }
 
 // Hook to get color for a course
