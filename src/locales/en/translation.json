@@ -236,6 +236,8 @@
     },
     "noExamTime": "Not announced",
     "noLocation": "Not announced",
+    "missingDatesTitle": "Courses without registered exam dates",
+    "missingDatesDescription": "These courses are in your schedule but do not have an exam date in Golestan.",
     "summary": {
       "courses": "📚 Courses: {{count}}",
       "credits": "📦 Credits: {{credits}}",

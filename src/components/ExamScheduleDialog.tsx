@@ -26,9 +26,11 @@ const ExamScheduleDialog = () => {
   const { selectedCourses } = useSchedule();
   const { t } = useTranslation();
 
+  const coursesWithExam = selectedCourses.filter(c => c.examDate);
+  const coursesWithoutExam = selectedCourses.filter(c => !c.examDate);
+
   // Sort exams by date
-  const exams = selectedCourses
-    .filter(c => c.examDate)
+  const exams = coursesWithExam
     .map(c => ({
       id: c.id,
       name: c.name,
@@ -53,14 +55,14 @@ const ExamScheduleDialog = () => {
   });
 
   const handleExport = async () => {
-    const table = document.getElementById('exam-table-container');
-    if (!table) {
+    const element = document.getElementById('exam-table-export-only');
+    if (!element) {
       toast.error(t('examDialog.exportError') || 'Failed to export exam schedule.');
       return;
     }
 
     try {
-      const canvas = await html2canvas(table, {
+      const canvas = await html2canvas(element, {
         backgroundColor: '#ffffff',
         scale: 2,
       });
@@ -152,58 +154,86 @@ const ExamScheduleDialog = () => {
             </div>
           ) : (
             <div className="border rounded-lg overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-primary/10">
-                    <TableHead className="text-right text-xs font-bold py-3">{t('examDialog.headers.courseName')}</TableHead>
-                    <TableHead className="text-right text-xs font-bold py-3">{t('examDialog.headers.courseCode')}</TableHead>
-                    <TableHead className="text-right text-xs font-bold py-3">{t('examDialog.headers.instructor')}</TableHead>
-                    <TableHead className="text-right text-xs font-bold py-3">{t('examDialog.headers.classTime')}</TableHead>
-                    <TableHead className="text-right text-xs font-bold py-3">{t('examDialog.headers.examTime')}</TableHead>
-                    <TableHead className="text-right text-xs font-bold py-3">{t('examDialog.headers.credits')}</TableHead>
-                    <TableHead className="text-right text-xs font-bold py-3">{t('examDialog.headers.location')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {exams.map((exam, index) => (
-                    <TableRow 
-                      key={exam.id}
-                      className={`
-                        ${conflictingIds.has(exam.id) ? 'bg-destructive/10' : index % 2 === 0 ? 'bg-muted/20' : ''}
-                        hover:bg-muted/40 transition-colors
-                      `}
-                    >
-                      <TableCell className={`text-xs font-medium py-3 ${conflictingIds.has(exam.id) ? 'text-destructive' : ''}`}>
-                        {exam.name}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground py-3 font-mono">
-                        {exam.courseId}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground py-3">
-                        {exam.instructor}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground py-3">
-                        <div className="flex flex-col">
-                          <span>{exam.date}</span>
-                          <span className="text-[10px]">{exam.time}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className={`text-xs py-3 ${conflictingIds.has(exam.id) ? 'text-destructive font-bold' : 'text-muted-foreground'}`}>
-                        {exam.time}
-                      </TableCell>
-                      <TableCell className="text-xs text-center py-3">
-                        {exam.credits}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground py-3">
-                        {exam.location}
-                      </TableCell>
+              <div
+                id="exam-table-export-only"
+                className="p-4 bg-white dark:bg-zinc-950"
+              >
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-primary/10">
+                      <TableHead className="text-right text-xs font-bold py-3">{t('examDialog.headers.courseName')}</TableHead>
+                      <TableHead className="text-right text-xs font-bold py-3">{t('examDialog.headers.courseCode')}</TableHead>
+                      <TableHead className="text-right text-xs font-bold py-3">{t('examDialog.headers.instructor')}</TableHead>
+                      <TableHead className="text-right text-xs font-bold py-3">{t('examDialog.headers.classTime')}</TableHead>
+                      <TableHead className="text-right text-xs font-bold py-3">{t('examDialog.headers.examTime')}</TableHead>
+                      <TableHead className="text-right text-xs font-bold py-3">{t('examDialog.headers.credits')}</TableHead>
+                      <TableHead className="text-right text-xs font-bold py-3">{t('examDialog.headers.location')}</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {exams.map((exam, index) => (
+                      <TableRow 
+                        key={exam.id}
+                        className={`
+                          ${conflictingIds.has(exam.id) ? 'bg-destructive/10' : index % 2 === 0 ? 'bg-muted/20' : ''}
+                          hover:bg-muted/40 transition-colors
+                        `}
+                      >
+                        <TableCell className={`text-xs font-medium py-3 ${conflictingIds.has(exam.id) ? 'text-destructive' : ''}`}>
+                          {exam.name}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground py-3 font-mono">
+                          {exam.courseId}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground py-3">
+                          {exam.instructor}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground py-3">
+                          <div className="flex flex-col">
+                            <span>{exam.date}</span>
+                            <span className="text-[10px]">{exam.time}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className={`text-xs py-3 ${conflictingIds.has(exam.id) ? 'text-destructive font-bold' : 'text-muted-foreground'}`}>
+                          {exam.time}
+                        </TableCell>
+                        <TableCell className="text-xs text-center py-3">
+                          {exam.credits}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground py-3">
+                          {exam.location}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           )}
         </div>
+
+        {coursesWithoutExam.length > 0 && (
+          <div className="mt-3 border border-amber-300/70 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2 text-xs">
+            <p className="font-semibold text-amber-800 dark:text-amber-200 mb-1">
+              {t('examDialog.missingDatesTitle')}
+            </p>
+            <p className="text-[11px] text-amber-800/80 dark:text-amber-200/80 mb-1.5">
+              {t('examDialog.missingDatesDescription')}
+            </p>
+            <ul className="list-disc list-inside space-y-0.5">
+              {coursesWithoutExam.map(course => (
+                <li key={course.id}>
+                  <span className="font-medium">{course.name}</span>
+                  {course.courseId && (
+                    <span className="text-muted-foreground text-[11px] ml-1">
+                      ({course.courseId})
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* Footer Summary */}
         {exams.length > 0 && (

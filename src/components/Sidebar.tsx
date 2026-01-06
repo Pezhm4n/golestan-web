@@ -252,7 +252,7 @@ const Sidebar = () => {
     <aside
       data-tour="sidebar"
       dir={dir}
-      className="w-[320px] border-l border-border bg-card/50 backdrop-blur-sm flex flex-col shrink-0 rounded-l-xl overflow-hidden"
+      className={`w-[320px] border-border bg-card/50 backdrop-blur-sm flex flex-col shrink-0 overflow-hidden ${isRtl ? 'border-l rounded-l-xl' : 'border-r rounded-r-xl'}`}
     >
       {/* Department Selector - searchable combobox grouped by faculty */}
       <div className="px-2 pt-2 pb-1">

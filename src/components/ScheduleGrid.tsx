@@ -14,7 +14,9 @@ const ScheduleGrid = () => {
   const { scheduledSessions, hoveredCourseId, allCourses, hasConflict } = useSchedule();
   const { showGridLines, getFontSizeClass } = useSettings();
   const { isMobile, isTablet } = useResponsive();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const dir = i18n.dir();
+  const isRtl = dir === 'rtl';
 
   // Get the hovered course for preview
   const hoveredCourse = hoveredCourseId 
@@ -172,10 +174,15 @@ const ScheduleGrid = () => {
           {/* Header Row */}
           <div 
             className={cn(
-              "sticky top-0 left-0 bg-muted/95 backdrop-blur-md flex items-center justify-center",
+              "sticky top-0 bg-muted/95 backdrop-blur-md flex items-center justify-center",
               showGridLines ? "border border-border/50" : ""
             )}
-            style={{ gridColumn: 1, gridRow: 1, zIndex: Z_INDEX.gridHeader }}
+            style={{
+              gridColumn: 1,
+              gridRow: 1,
+              zIndex: Z_INDEX.gridHeader,
+              ...(isRtl ? { right: 0 } : { left: 0 }),
+            }}
           >
             <span className={cn(
               "font-bold text-muted-foreground",
@@ -194,7 +201,10 @@ const ScheduleGrid = () => {
                 className={cn(
                   "sticky top-0 bg-muted/95 backdrop-blur-md flex items-center justify-center font-bold text-foreground",
                   isMobile ? "text-[11px]" : "text-sm",
-                  showGridLines ? "border-t border-b border-l border-border/50" : "",
+                  showGridLines &&
+                    (isRtl
+                      ? "border-t border-b border-r border-border/50"
+                      : "border-t border-b border-l border-border/50"),
                   getFontSizeClass()
                 )}
                 style={{ gridColumn: dayIndex + 2, gridRow: 1, zIndex: Z_INDEX.gridHeader }}
@@ -209,14 +219,23 @@ const ScheduleGrid = () => {
             <React.Fragment key={`row-${time}`}>
               <div
                 className={cn(
-                  "sticky left-0 z-10 bg-muted/60 backdrop-blur-sm flex items-center justify-center text-muted-foreground font-mono",
+                  "sticky z-10 bg-muted/60 backdrop-blur-sm flex items-end justify-center text-muted-foreground font-mono",
                   isMobile ? "text-[9px]" : "text-xs",
-                  showGridLines ? "border-l border-b border-border/40" : "",
+                  showGridLines &&
+                    (isRtl
+                      ? "border-r border-b border-border/40"
+                      : "border-l border-b border-border/40"),
                   getFontSizeClass()
                 )}
-                style={{ gridColumn: 1, gridRow: rowIndex + 2 }}
+                style={{
+                  gridColumn: 1,
+                  gridRow: rowIndex + 2,
+                  ...(isRtl ? { right: 0 } : { left: 0 }),
+                }}
               >
-                {formatTime(time)}
+                <span className="translate-y-1/2">
+                  {formatTime(time)}
+                </span>
               </div>
 
               {DAYS.map((_, dayIndex) => {
@@ -245,7 +264,10 @@ const ScheduleGrid = () => {
                       "relative",
                       // Reduce animation on mobile for performance
                       isMobile ? "transition-colors duration-100" : "transition-all duration-200",
-                      showGridLines ? "border-l border-b border-border/60" : "",
+                      showGridLines &&
+                        (isRtl
+                          ? "border-r border-b border-border/60"
+                          : "border-l border-b border-border/60"),
                       rowIndex % 2 === 0 ? 'bg-background' : 'bg-muted/10',
                       // Larger touch target on mobile
                       isMobile ? "min-h-[48px]" : "",
@@ -255,7 +277,8 @@ const ScheduleGrid = () => {
                       "active:bg-accent/40",
                       // Highlight cells where hovered course would appear (non-conflict preview)
                       isPreviewCell && !mainSession && !hoveredHasConflict && "bg-primary/5"
-                    )}
+                    )
+                    }
                     style={{ 
                       gridColumn: dayIndex + 2, 
                       gridRow: rowSpan > 1 
