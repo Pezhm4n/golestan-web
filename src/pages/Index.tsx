@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { BookOpen } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -12,24 +12,15 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
 const ScheduleApp = () => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { isMobile, isTablet } = useResponsive();
   const { selectedCourses, totalUnits } = useSchedule();
-
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
 
   const showMobileSidebar = isMobile || isTablet;
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-muted/30">
-      <Header isDarkMode={isDarkMode} onToggleDarkMode={() => setIsDarkMode(!isDarkMode)} />
+      <Header />
       
       <div className={`flex-1 flex flex-col overflow-hidden min-h-0 ${showMobileSidebar ? 'mb-14' : 'mb-12'}`}>
         <div className="flex flex-1 overflow-hidden min-h-0">

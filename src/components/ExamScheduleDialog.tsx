@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Calendar, Download, Printer } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import {
   Dialog,
   DialogContent,
@@ -55,42 +56,225 @@ const ExamScheduleDialog = () => {
   });
 
   const handleExport = async () => {
-    const element = document.getElementById('exam-table-export-only');
-    if (!element) {
-      toast.error(t('examDialog.exportError') || 'Failed to export exam schedule.');
+    if (exams.length === 0) {
+      toast.error(t('examDialog.exportEmpty') || 'هیچ امتحانی برای خروجی وجود ندارد.');
       return;
     }
 
     try {
-      const canvas = await html2canvas(element, {
-        backgroundColor: '#ffffff',
-        scale: 2,
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4',
       });
 
-      const imgData = canvas.toDataURL('image/png');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
 
-      try {
-        const jsPDFModule = await import('jspdf');
-        const jsPDF = jsPDFModule.default;
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      // Title
+      const title = t('examDialog.title');
+      pdf.setFontSize(16);
+      pdf.setTextColor(40, 40, 40);
+      pdf.text(title, pageWidth - 14, 15, { align: 'right' });
 
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save('exam-schedule.pdf');
-        toast.success(t('examDialog.exportSuccess'));
-      } catch (err) {
-        // Fallback: download as high‑quality PNG image
-        const link = document.createElement('a');
-        link.href = imgData;
-        link.download = 'exam-schedule.png';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success(t('examDialog.exportSuccess'));
+      // Date
+      const currentDate = new Date().toLocaleDateString('fa-IR');
+      pdf.setFontSize(10);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text(`تاریخ صدور: ${currentDate}`, pageWidth - 14, 22, { align: 'right' });
+
+      // Separator line
+      pdf.setDrawColor(200);
+      pdf.setLineWidth(0.4);
+      pdf.line(14, 25, pageWidth - 14, 25);
+
+      // Prepare table headers (RTL: last column appears on the right)
+      const tableHeaders = [
+        t('examDialog.headers.courseName'),
+        t('examDialog.headers.courseCode'),
+        t('examDialog.headers.instructor'),
+        t('examDialog.headers.classTime'),
+        t('examDialog.headers.examTime'),
+        t('examDialog.headers.credits'),
+        t('examDialog.headers.location'),
+      ];
+
+      const head = [tableHeaders.slice().reverse()];
+
+      // Prepare body rows, matching header order (then reversed for RTL)
+      const body = exams.map(exam =>
+        [
+          exam.name,
+          exam.courseId,
+          exam.instructor,
+          `${exam.date}\n${exam.time}`,
+          exam.time,
+          String(exam.credits),
+          exam.location,
+        ].reverse(),
+      );
+
+      // Mark rows that have exam conflicts (same date & time)
+      const conflictRowIndices = exams
+        .map((exam, index) =>
+          conflictingIds.has(exam.id) ? index : -1,
+        )
+        .filter(index => index !== -1);
+
+      autoTable(pdf, {
+        head,
+        body,
+        startY: 30,
+        theme: 'striped',
+        styles: {
+          font: 'helvetica', // پیش‌فرض؛ برای نمایش درست فارسی باید فونت سفارشی اضافه شود
+          fontSize: 9,
+          cellPadding: 3,
+          halign: 'right',
+          valign: 'middle',
+          textColor: [40, 40, 40],
+        },
+        headStyles: {
+          fillColor: [79, 70, 229], // primary
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          halign: 'center',
+          fontSize: 10,
+        },
+        alternateRowStyles: {
+          fillColor: [249, 250, 251],
+        },
+        didParseCell: data => {
+          if (
+            data.section === 'body' &&
+            conflictRowIndices.includes(data.row.index)
+          ) {
+            // Highlight conflicting exam rows
+            data.cell.styles.fillColor = [254, 226, 226]; // red-100
+            data.cell.styles.textColor = [220, 38, 38]; // red-600
+            data.cell.styles.fontStyle = 'bold';
+          }
+        },
+        didDrawPage: data => {
+          // Centered page number at the bottom
+          pdf.setFontSize(8);
+          pdf.setTextColor(150, 150, 150);
+          pdf.text(
+            `${data.pageNumber}`,
+            pageWidth / 2,
+            pageHeight - 8,
+            { align: 'center' },
+          );
+        },
+        margin: { top: 30, right: 14, bottom: 16, left: 14 },
+        showHead: 'everyPage',
+      });
+
+      // Optional summary under the table, if space allows on last page
+      const finalY = (pdf as any).lastAutoTable?.finalY ?? 30;
+      if (finalY < pageHeight - 20) {
+        pdf.setFontSize(9);
+        pdf.setTextColor(80, 80, 80);
+
+        const totalCredits = exams.reduce((sum, e) => sum + e.credits, 0);
+        const uniqueDays = new Set(exams.map(e => e.date)).size;
+
+        const summaryText = [
+          t('examDialog.summary.courses', { count: exams.length }),
+          t('examDialog.summary.credits', { credits: totalCredits }),
+          t('examDialog.summary.days', { days: uniqueDays }),
+        ].join('  |  ');
+
+        pdf.text(summaryText, pageWidth / 2, finalY + 8, { align: 'center' });
+
+        if (conflictingIds.size > 0) {
+          pdf.setFontSize(8);
+          pdf.setTextColor(220, 38, 38);
+          pdf.text(
+            t('examDialog.conflictNotice'),
+            pageWidth - 14,
+            finalY + 14,
+            { align: 'right' },
+          );
+        }
       }
+
+      pdf.save(`exam-schedule-${Date.now()}.pdf`);
+      toast.success(t('examDialog.exportSuccess'));
     } catch (error) {
       console.error('[ExamScheduleDialog] Failed to export exams:', error);
+      toast.error(t('examDialog.exportError') || 'Failed to export exam schedule.');
+    }
+  };
+
+  const handleExportCsv = () => {
+    if (exams.length === 0) {
+      toast.error(t('examDialog.exportEmpty') || 'هیچ امتحانی برای خروجی وجود ندارد.');
+      return;
+    }
+
+    try {
+      // Header row
+      const headers = [
+        t('examDialog.headers.courseName'),
+        t('examDialog.headers.courseCode'),
+        t('examDialog.headers.instructor'),
+        t('examDialog.headers.credits'),
+        t('examDialog.headers.examTime'),
+        t('examDialog.headers.classTime'),
+        t('examDialog.headers.location'),
+        // ستون تداخل امتحان (بله/خیر)
+        t('examDialog.conflictNotice'),
+      ];
+
+      const escapeCsv = (value: unknown): string => {
+        const raw =
+          value === null || value === undefined
+            ? ''
+            : String(value);
+        // اگر شامل , یا \" یا \\n باشد، در کوتیشن قرار بده
+        if (/[",\n]/.test(raw)) {
+          return `"${raw.replace(/"/g, '""')}"`;
+        }
+        return raw;
+      };
+
+      const rows = exams.map(exam => {
+        const hasConflict = conflictingIds.has(exam.id);
+        return [
+          exam.name,
+          exam.courseId,
+          exam.instructor,
+          exam.credits,
+          exam.time,
+          exam.date,
+          exam.location,
+          hasConflict ? '1' : '0',
+        ];
+      });
+
+      const lines = [
+        headers.map(escapeCsv).join(','),
+        ...rows.map(row => row.map(escapeCsv).join(',')),
+      ];
+
+      // اضافه کردن BOM برای نمایش درست UTF-8 در Excel
+      const csvContent = '\uFEFF' + lines.join('\r\n');
+      const blob = new Blob([csvContent], {
+        type: 'text/csv;charset=utf-8;',
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `exam-schedule-${Date.now()}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success(t('examDialog.exportCsvSuccess'));
+    } catch (error) {
+      console.error('[ExamScheduleDialog] Failed to export CSV:', error);
       toast.error(t('examDialog.exportError') || 'Failed to export exam schedule.');
     }
   };
@@ -138,6 +322,15 @@ const ExamScheduleDialog = () => {
               >
                 <Download className="h-3.5 w-3.5" />
                 {t('examDialog.export')}
+              </Button>
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                className="h-7 text-xs gap-1.5"
+                onClick={handleExportCsv}
+              >
+                <Download className="h-3.5 w-3.5" />
+                {t('examDialog.exportCsv')}
               </Button>
             </div>
           </DialogTitle>

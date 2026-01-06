@@ -16,20 +16,31 @@ import { toast } from 'sonner';
 import { useResponsive } from '@/hooks/use-responsive';
 import MobileHeader from './MobileHeader';
 import { useTranslation } from 'react-i18next';
+import { useSettings } from '@/contexts/SettingsContext';
 
-interface HeaderProps {
-  isDarkMode: boolean;
-  onToggleDarkMode: () => void;
-}
-
-const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
+const Header = () => {
   const [isDownloading, setIsDownloading] = useState(false);
   const { isMobile, isTablet } = useResponsive();
   const { t } = useTranslation();
+  const { isDarkMode, themeMode, setThemeMode } = useSettings();
+
+  const handleToggleDarkMode = () => {
+    if (themeMode === 'dark') {
+      setThemeMode('light');
+    } else {
+      setThemeMode('dark');
+    }
+  };
 
   // Use mobile header for mobile and tablet devices
   if (isMobile || isTablet) {
-    return <MobileHeader isDarkMode={isDarkMode} onToggleDarkMode={onToggleDarkMode} isTablet={isTablet} />;
+    return (
+      <MobileHeader
+        isDarkMode={isDarkMode}
+        onToggleDarkMode={handleToggleDarkMode}
+        isTablet={isTablet}
+      />
+    );
   }
 
   const handleDownloadImage = async () => {
@@ -311,7 +322,7 @@ const Header = ({ isDarkMode, onToggleDarkMode }: HeaderProps) => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={onToggleDarkMode}
+                onClick={handleToggleDarkMode}
                 className="h-8 w-8 p-0"
               >
                 {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}

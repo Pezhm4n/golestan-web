@@ -109,11 +109,13 @@ const SingleBlock = ({
   // Pop-out rules:
   // - Stacked:
   //   - Active member (cycled) always pops out.
-  //   - Hovered card should also always pop out while the mouse is over it.
+  //   - Hovered card pops out while the mouse is over it.
+  //   - Any session of a globally highlighted course (hovered anywhere)
+  //     also pops out so all its blocks expand to full cells.
   // - Non-stacked:
   //   - Pop out when either globally highlighted or locally hovered.
   const isPopout = isStacked
-    ? isActiveStack || isHovered
+    ? isActiveStack || isHovered || isGloballyHighlighted
     : (isGloballyHighlighted || isHovered);
 
   const isHighlighted = isGloballyHighlighted || isPopout;

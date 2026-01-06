@@ -96,7 +96,14 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [language, setLanguageState] = useState<Language>(
     () => loadInitialSettings().language,
   );
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const initial = loadInitialSettings().themeMode;
+    if (initial === 'system') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return initial === 'dark';
+  });
   const [hasSeenConflictTip, setHasSeenConflictTip] = useState<boolean>(
     () => loadInitialSettings().hasSeenConflictTip ?? false,
   );
