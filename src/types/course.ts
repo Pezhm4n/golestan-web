@@ -52,6 +52,21 @@ export interface ScheduledSession extends CourseSession {
   groupNumber?: number; // شماره گروه
   examDate?: string;
   examTime?: string;
+
+  /**
+   * Optional metadata used by the grid to render complex time conflicts.
+   * When absent, CourseCell falls back to the legacy stacking behaviour.
+   */
+  conflictMetadata?: {
+    /** Real duration of this session in minutes (end - start). */
+    durationMinutes: number;
+    /** True when this session is part of a conflict group with mixed durations. */
+    hasMixedDurationConflict: boolean;
+    /** Display order inside the conflict stack (0 = first/shortest). */
+    conflictDisplayOrder?: number;
+    /** Total number of sessions in this conflicted group. */
+    totalConflicts?: number;
+  };
 }
 
 export const DAYS = [

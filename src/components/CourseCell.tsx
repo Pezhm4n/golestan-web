@@ -49,7 +49,13 @@ interface SingleBlockProps {
 const adjustCourseColorForHover = (color: string, amount = 0.2): string => {
   // Expecting colors in the form: hsl(h s% l%)
   const match = color.match(/hsl\(\s*([\d.]+)\s+([\d.]+)%\s+([\d.]+)%\s*\)/);
-  if (!match) return color;
+  if (!match) {
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.warn('Invalid course color format for hover adjustment:', color);
+    }
+    return color;
+  }
 
   const h = parseFloat(match[1]);
   const s = parseFloat(match[2]);
@@ -92,7 +98,10 @@ const SingleBlock = ({
 
   const baseColor = generateCourseColor(session.group, session.parentId);
   // Always use the course color as the base background to preserve identity.
-  const effectiveBackgroundColor = baseColor;
+  // If for any reason the color generator returns an invalid value, fall back
+  // to a very light gray so cards never appear as "white holes".
+  const effectiveBackgroundColor =
+    baseColor && baseColor.trim() !== '' ? baseColor : 'hsl(210 40% 96%)';
 
   // Globally highlighted: every session of this course across the grid.
   const isGloballyHighlighted = hoveredCourseId === session.parentId;
@@ -100,11 +109,11 @@ const SingleBlock = ({
   // Pop-out rules:
   // - Stacked:
   //   - Active member (cycled) always pops out.
-  //   - If no active member yet, the locally hovered card pops out.
+  //   - Hovered card should also always pop out while the mouse is over it.
   // - Non-stacked:
   //   - Pop out when either globally highlighted or locally hovered.
   const isPopout = isStacked
-    ? isActiveStack || (!hasActiveStack && isHovered)
+    ? isActiveStack || isHovered
     : (isGloballyHighlighted || isHovered);
 
   const isHighlighted = isGloballyHighlighted || isPopout;
@@ -160,20 +169,33 @@ const SingleBlock = ({
     removeCourse(session.parentId);
   };
 
+  const conflictMeta = session.conflictMetadata;
+
   // Stacked card layout for conflicting sessions -------------------------
   const STACK_OFFSET_PX = 10;
-  const baseStackOffset = isStacked ? stackIndex * STACK_OFFSET_PX : 0;
+
+  // If conflict metadata is available, we use its display order as the
+  // primary stacking index so shorter sessions appear visually distinct.
+  const stackOrderIndex =
+    isStacked &&
+    conflictMeta &&
+    conflictMeta.hasMixedDurationConflict &&
+    typeof conflictMeta.conflictDisplayOrder === 'number'
+      ? conflictMeta.conflictDisplayOrder
+      : stackIndex;
+
+  const baseStackOffset = isStacked ? stackOrderIndex * STACK_OFFSET_PX : 0;
 
   // Z‑index ladder (kept intentionally low to stay under global dialogs):
   //  - normal cards: 1
   //  - stacked cards: 5..(5 + n)
   //  - globally highlighted cards: ~10
   //  - conflict preview overlays: ~15
-  //  - pop‑out / active stacked card in a cell: 20
+  //  - pop‑out / active stacked card in a cell: 50
   //  - conflict badge inside the cell: 22
   const baseStyle: React.CSSProperties = {
     backgroundColor,
-    zIndex: isStacked ? 5 + stackIndex : 1,
+    zIndex: isStacked ? 5 + stackOrderIndex : 1,
   };
 
   if (isStacked) {
@@ -181,18 +203,39 @@ const SingleBlock = ({
     baseStyle.left = `${baseStackOffset}px`;
     baseStyle.top = `${baseStackOffset}px`;
 
-    const inactiveWidth = 'calc(100% - 16px)';
-    const inactiveHeight = `calc(100% - ${baseStackOffset}px)`;
+    if (conflictMeta?.hasMixedDurationConflict) {
+      const totalConflicts = conflictMeta.totalConflicts ?? totalStacked;
+      const maxOffset = Math.max(totalConflicts - 1, 0) * STACK_OFFSET_PX;
 
-    // Popout / active item: expand to cover the whole cell.
-    if (isPopout) {
-      baseStyle.left = '0px';
-      baseStyle.top = '0px';
-      baseStyle.width = '100%';
-      baseStyle.height = '100%';
+      if (isPopout) {
+        // When popped out (hovered or active in cycle), cover the whole cell.
+        baseStyle.left = '0px';
+        baseStyle.top = '0px';
+        baseStyle.width = '100%';
+        baseStyle.height = '100%';
+      } else {
+        // In stacked view, shorter sessions are slightly smaller so the
+        // longer ones remain visible underneath.
+        const widthReduction = maxOffset + 8;
+        const heightReduction = baseStackOffset;
+
+        baseStyle.width = `calc(100% - ${widthReduction}px)`;
+        baseStyle.height = `calc(100% - ${heightReduction}px)`;
+      }
     } else {
-      baseStyle.width = inactiveWidth;
-      baseStyle.height = inactiveHeight;
+      const inactiveWidth = 'calc(100% - 16px)';
+      const inactiveHeight = `calc(100% - ${baseStackOffset}px)`;
+
+      // Popout / active item: expand to cover the whole cell.
+      if (isPopout) {
+        baseStyle.left = '0px';
+        baseStyle.top = '0px';
+        baseStyle.width = '100%';
+        baseStyle.height = '100%';
+      } else {
+        baseStyle.width = inactiveWidth;
+        baseStyle.height = inactiveHeight;
+      }
     }
   } else {
     baseStyle.width = '100%';
@@ -202,7 +245,7 @@ const SingleBlock = ({
   // Pop‑out / active stacked card: should dominate within this cell,
   // اما همچنان زیر دیالوگ‌های سراسری بماند.
   if (isPopout) {
-    baseStyle.zIndex = 20;
+    baseStyle.zIndex = 50;
   } else if (isGloballyHighlighted) {
     // Highlight from elsewhere (e.g. sidebar) بدون پاپ‌اوت کامل.
     baseStyle.zIndex = Math.max(baseStyle.zIndex ?? 0, isStacked ? 10 : 8);
@@ -211,6 +254,11 @@ const SingleBlock = ({
   // Conflict preview overlay: بالاتر از کارت‌های عادی، پایین‌تر از پاپ‌اوت
   if (conflictPreview) {
     baseStyle.zIndex = Math.max(baseStyle.zIndex ?? 0, 15);
+  }
+
+  // Ghost / preview card: همیشه بالاتر از کارت‌های واقعی و Badgeهای تداخل.
+  if (ghost) {
+    baseStyle.zIndex = Z_INDEX.ghostPreview;
   }
 
   return (
@@ -326,7 +374,7 @@ const SingleBlock = ({
           )}
 
           {/* Content - Centered Layout with responsive text */}
-          <div className="flex flex-col items-center justify-center w-full h-full max-w-full min-w-0 text-center gap-0.5 overflow-hidden">
+          <div className="flex flex-col items-center justify-center w-full h-full max-w-full min-w-0 textcenter gap-0.5 overflow-hidden">
             {/* Title - Truncated to prevent overflow */}
             <h3
               className={cn(
@@ -344,6 +392,17 @@ const SingleBlock = ({
                 {session.courseName}
               </EllipsisText>
             </h3>
+
+            {/* Indicator for mixed-duration conflicts */}
+            {conflictMeta?.hasMixedDurationConflict && !isPopout && (
+              <div className="relative w-full flex justify-center">
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex items-center gap-0.5 bg-amber-500/90 text-white px-1.5 py-0.5 rounded-full text-[7px] font-bold shadow-sm pointer-events-none">
+                  <AlertTriangle className="w-2 h-2" />
+                  {conflictMeta.durationMinutes}
+                  {t('labels.minutes', { defaultValue: 'دقیقه' })}
+                </div>
+              </div>
+            )}
 
             {/* Metadata block is always rendered so it can appear in exports.
                 For compact (1-hour) sessions we hide it in the UI but reveal it
@@ -495,8 +554,9 @@ const CourseCell = ({
           // Parent container intentionally has NO visible styling:
           // no border, no background, no radius – only positioning.
           'absolute inset-0',
-          ghost && 'opacity-60 pointer-events-none',
+          ghost && 'pointer-events-none',
         )}
+        style={ghost ? { zIndex: Z_INDEX.ghostPreview } : undefined}
         onMouseLeave={() => setActiveStackIndex(null)}
       >
         {/* Conflict indicator badge - روی کارت‌های این سلول، ولی زیر دیالوگ‌های سراسری */}
@@ -589,8 +649,9 @@ const CourseCell = ({
           // Parent container must remain visually invisible here as well:
           // no border, no background – only positioning.
           'absolute inset-0',
-          ghost && 'opacity-60 pointer-events-none',
+          ghost && 'pointer-events-none',
         )}
+        style={ghost ? { zIndex: Z_INDEX.ghostPreview } : undefined}
       >
         <div className="relative flex w-full h-full gap-1">
           <div className="relative w-1/2 h-full">
@@ -619,8 +680,9 @@ const CourseCell = ({
     <div
       className={cn(
         'absolute inset-[1px] rounded-sm overflow-hidden',
-        ghost && 'opacity-60 pointer-events-none',
+        ghost && 'pointer-events-none',
       )}
+      style={ghost ? { zIndex: Z_INDEX.ghostPreview } : undefined}
     >
       <SingleBlock
         session={sessions[0]}
