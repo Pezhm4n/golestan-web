@@ -25,7 +25,7 @@ import { toast } from 'sonner';
 
 const ExamScheduleDialog = () => {
   const { selectedCourses } = useSchedule();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const coursesWithExam = selectedCourses.filter(c => c.examDate);
   const coursesWithoutExam = selectedCourses.filter(c => !c.examDate);
@@ -70,6 +70,57 @@ const ExamScheduleDialog = () => {
 
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
+
+      // Load Vazirmatn font so Persian text renders correctly
+      let fontName = 'helvetica';
+      try {
+        const response = await fetch('/fonts/Vazirmatn-Regular.ttf');
+        if (response.ok) {
+          const blob = await response.blob();
+          const base64 = await new Promise<string | null>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const result = reader.result?.toString();
+              if (!result) {
+                resolve(null);
+                return;
+              }
+              const base64data = result.split(',')[1];
+              resolve(base64data || null);
+            };
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(blob);
+          });
+
+          if (base64) {
+            // Register regular weight
+            pdf.addFileToVFS('Vazirmatn.ttf', base64);
+            pdf.addFont('Vazirmatn.ttf', 'Vazirmatn', 'normal');
+
+            // Register a \"bold\" face pointing to the same file so that
+            // using fontStyle: 'bold' for conflict rows and headers does
+            // not fall back to a Latin-only font (which causes mojibake).
+            pdf.addFileToVFS('Vazirmatn-Bold.ttf', base64);
+            pdf.addFont('Vazirmatn-Bold.ttf', 'Vazirmatn', 'bold');
+
+            pdf.setFont('Vazirmatn', 'normal');
+            fontName = 'Vazirmatn';
+          }
+        }
+      } catch (fontError) {
+        // If font loading fails, fall back to default font
+        console.error('[ExamScheduleDialog] Failed to load Vazirmatn font:', fontError);
+      }
+
+      // Signature text with app name and current site URL
+      let origin = '';
+      if (typeof window !== 'undefined' && window.location?.origin) {
+        origin = window.location.origin;
+      }
+      const isFa = i18n.language?.startsWith('fa');
+      const signatureText = origin
+        ? (isFa ? `گلستون – ${origin}` : `Golestoon – ${origin}`)
+        : (isFa ? 'گلستون' : 'Golestoon');
 
       // Title
       const title = t('examDialog.title');
@@ -127,7 +178,8 @@ const ExamScheduleDialog = () => {
         startY: 30,
         theme: 'striped',
         styles: {
-          font: 'helvetica', // پیش‌فرض؛ برای نمایش درست فارسی باید فونت سفارشی اضافه شود
+          font: fontName,
+          fontStyle: 'normal',
           fontSize: 9,
           cellPadding: 3,
           halign: 'right',
@@ -145,6 +197,11 @@ const ExamScheduleDialog = () => {
           fillColor: [249, 250, 251],
         },
         didParseCell: data => {
+          // برای فارسی، متن هدر را خودمان دستی می‌نویسیم تا encoding خراب نشود
+          if (isFa && data.section === 'head') {
+            data.cell.text = [''];
+          }
+
           if (
             data.section === 'body' &&
             conflictRowIndices.includes(data.row.index)
@@ -155,16 +212,48 @@ const ExamScheduleDialog = () => {
             data.cell.styles.fontStyle = 'bold';
           }
         },
+        didDrawCell: data => {
+          if (isFa && data.section === 'head') {
+            const headerTexts = head[0];
+            const headerText = headerTexts[data.column.index] ?? '';
+            if (!headerText) return;
+
+            pdf.setFont(fontName, 'normal');
+            pdf.setFontSize(10);
+            pdf.setTextColor(255, 255, 255);
+
+            const cell = data.cell;
+            const textX = cell.x + cell.width - 2;
+            const textY = cell.y + cell.height / 2 + 2;
+
+            pdf.text(headerText, textX, textY, {
+              align: 'right',
+              baseline: 'middle',
+            });
+          }
+        },
         didDrawPage: data => {
-          // Centered page number at the bottom
+          // Footer: page number (center) + Golestoon signature (left)
           pdf.setFontSize(8);
           pdf.setTextColor(150, 150, 150);
+          // Page number
           pdf.text(
             `${data.pageNumber}`,
             pageWidth / 2,
             pageHeight - 8,
             { align: 'center' },
           );
+          // Signature with site link
+          if (signatureText) {
+            pdf.setFontSize(7);
+            pdf.setTextColor(120, 120, 120);
+            pdf.text(
+              signatureText,
+              14,
+              pageHeight - 8,
+              { align: 'left' },
+            );
+          }
         },
         margin: { top: 30, right: 14, bottom: 16, left: 14 },
         showHead: 'everyPage',

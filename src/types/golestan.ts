@@ -35,7 +35,12 @@ export interface GolestanCourse {
   exam_time: GolestanExamTimeString;
   is_available: boolean;
   updated_at?: string;
+  /**
+   * Some backends send the instructor name as `instructor_name`,
+   * others as `instructor`. We keep both for compatibility.
+   */
   instructor: string;
+  instructor_name?: string;
   gender: string;
   schedule: GolestanTimeSlot[];
   description?: string;

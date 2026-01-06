@@ -267,6 +267,7 @@ const SingleBlock = ({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <div
+          data-export-course-card
           className={cn(
             'group relative flex flex-col items-center justify-center text-center cursor-pointer',
             'rounded-lg border border-gray-900/20',

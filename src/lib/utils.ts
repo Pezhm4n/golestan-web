@@ -9,10 +9,11 @@ export function cn(...inputs: ClassValue[]) {
 /**
  * Capture the schedule grid and download it as a high‑quality PNG image.
  *
- * Key features:
+ * Key goals:
+ *  - WYSIWYG: respect current theme (dark/light) and Tailwind classes
  *  - High DPI (scale=3) for crisp text
- *  - Uses an \"export mode\" class to reveal otherwise hidden metadata
- *  - Forces full text expansion (no ellipsis) in the cloned DOM
+ *  - Use an \"export mode\" class to reveal otherwise hidden metadata
+ *  - Expand truncated text without breaking layout
  */
 export const downloadScheduleImage = async (
   elementId: string
@@ -32,12 +33,17 @@ export const downloadScheduleImage = async (
   const width = element.scrollWidth || element.offsetWidth;
   const height = element.scrollHeight || element.offsetHeight;
 
+  // Determine background from the live element/theme so we don't force white
+  const liveBg = getComputedStyle(element).backgroundColor || '';
+
   // 2) Capture with html2canvas and enable export-mode in the cloned DOM
   const canvas = await html2canvas(element, {
     scale: 3,
     useCORS: true,
     allowTaint: true,
-    backgroundColor: "#ffffff",
+    // Let html2canvas infer the background from computed styles;
+    // if we pass a color here it would override dark mode.
+    backgroundColor: null,
     logging: false,
     width,
     height,
@@ -52,17 +58,20 @@ export const downloadScheduleImage = async (
       ) as HTMLElement | null;
       if (!clonedElement) return;
 
-      // Mark the capture root as the export group so Tailwind's
-      // `group-[.export-mode]:*` variants become active.
-      clonedElement.classList.add("group");
-      clonedElement.classList.add("export-mode");
+      // 2.1 Preserve theme context (Tailwind classes, dark mode, etc.)
+      clonedDoc.documentElement.className = document.documentElement.className;
+      clonedDoc.body.className = document.body.className;
 
-      // Force RTL + font family from the live document
+      // Keep direction and font from the live document
       clonedDoc.documentElement.dir = document.documentElement.dir || "rtl";
+
       const body = clonedDoc.body as HTMLBodyElement;
       body.style.margin = "0";
       body.style.padding = "0";
-      body.style.backgroundColor = "#ffffff";
+      // Use the same background that the element is rendered with (if any)
+      if (liveBg && liveBg !== "rgba(0, 0, 0, 0)" && liveBg !== "transparent") {
+        body.style.backgroundColor = liveBg;
+      }
       body.style.width = `${width}px`;
       body.style.height = `${height}px`;
       body.style.overflow = "hidden";
@@ -82,17 +91,55 @@ export const downloadScheduleImage = async (
         "system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
       clonedElement.style.fontFamily = bodyFont;
 
-      // B. Force full expansion of all truncated/hidden text
-      const textNodes = clonedDoc.querySelectorAll(
-        ".truncate, .overflow-hidden"
+      // Mark the capture root as the export group so Tailwind's
+      // `group-[.export-mode]:*` variants become active.
+      clonedElement.classList.add("group");
+      clonedElement.classList.add("export-mode");
+
+      // 2.2 Anti-truncate: expand course text so full content is visible
+      // We only target text containers inside course cards so the grid/time-slot
+      // sizing remains intact.
+      const textNodes = clonedElement.querySelectorAll<HTMLElement>(
+        "[data-export-course-card] .truncate, " +
+          "[data-export-course-card] .overflow-hidden, " +
+          "[data-export-course-card] [class*='line-clamp']"
       );
-      textNodes.forEach((node) => {
-        const el = node as HTMLElement;
+      textNodes.forEach((el) => {
         el.style.overflow = "visible";
-        el.style.whiteSpace = "normal";
+        el.style.whiteSpace = "normal"; // allow wrapping
         el.style.textOverflow = "clip";
+        el.style.maxHeight = "none";
         el.style.height = "auto";
         el.style.wordBreak = "break-word";
+        // @ts-expect-error non-standard properties for line clamping
+        (el.style as any).lineClamp = "none";
+        // @ts-expect-error vendor-prefixed property
+        (el.style as any).webkitLineClamp = "none";
+      });
+
+      // 2.3 Optimize course card spacing and font size for export
+      const courseCards = clonedElement.querySelectorAll<HTMLElement>(
+        "[data-export-course-card]"
+      );
+      courseCards.forEach((card) => {
+        card.style.padding = "2px";
+        card.style.fontSize = "0.75rem";
+        // Keep height controlled by the grid/time-slot; don't override it
+        // so that the visual duration mapping is preserved.
+      });
+
+      // 2.4 Prevent parent clipping: let ancestors of course cards overflow visibly
+      courseCards.forEach((card) => {
+        let parent = card.parentElement;
+        let depth = 0;
+        while (parent && parent !== clonedElement && depth < 5) {
+          const style = clonedDoc.defaultView?.getComputedStyle(parent);
+          if (style && style.overflow !== "visible") {
+            (parent as HTMLElement).style.overflow = "visible";
+          }
+          parent = parent.parentElement;
+          depth += 1;
+        }
       });
 
       // C. Hide UI controls (buttons, delete icons, floating toolbars)

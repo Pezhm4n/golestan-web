@@ -210,7 +210,8 @@ export function convertGolestanCourseToAppCourse(
     // Use base code (before the underscore) as logical courseId
     courseId: normalizedCourseId,
     name: gCourse.name,
-    instructor: gCourse.instructor || '',
+    // Prefer `instructor_name` from API if present, fall back to `instructor`
+    instructor: gCourse.instructor_name || gCourse.instructor || '',
     credits: gCourse.credits || 0,
     examDate,
     examTime,
