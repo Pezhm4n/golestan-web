@@ -1,0 +1,12 @@
+# .liaraignore
+node_modules
+.git
+.idea
+.vscode
+server/python
+_reference_logic
+translations
+*.py
+*.pyc
+__pycache__
+my_model.h5
