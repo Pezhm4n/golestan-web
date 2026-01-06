@@ -120,8 +120,8 @@ const Donate = () => {
     if (amount < 10000) {
       return;
     }
-    // Here you would integrate with payment gateway
-    console.log('Donating:', { amount, donorName, showInSupporters });
+    // Here you would integrate with your payment gateway.
+    // Intentionally no console logging to avoid leaking donor details.
   };
 
   const selectedAmountFormatted = formatNumber(getSelectedAmount());

@@ -373,6 +373,25 @@ function normalizeStudentProfile(raw: RawStudent): Student {
 }
 
 /**
+ * Map backend error codes to user-friendly, bilingual messages.
+ * This is a temporary layer until full i18n wiring for errors.
+ */
+function mapProfileErrorMessage(message: string): string {
+  switch (message) {
+    case 'LOGIN_FAILED':
+      return 'نام کاربری یا رمز عبور اشتباه است / کد کپچا صحیح نیست.';
+    case 'CONNECTION_ERROR':
+      return 'خطا در برقراری ارتباط با سیستم گلستان.';
+    case 'REMOTE_SERVICE_ERROR':
+      return 'سیستم گلستان در دسترس نیست.';
+    case 'UNKNOWN_ERROR':
+      return 'خطای نامشخص در ارتباط با سیستم گلستان.';
+    default:
+      return message;
+  }
+}
+
+/**
  * Fetch the student profile from the real backend.
  *
  * If credentials are provided, they are sent via headers.
@@ -433,7 +452,8 @@ export async function fetchStudentProfile(params?: {
       // Ignore JSON parse errors; keep default message.
     }
 
-    const error = new Error(message);
+    const userMessage = mapProfileErrorMessage(message);
+    const error = new Error(userMessage);
     (error as any).status = response.status;
     throw error;
   }

@@ -82,11 +82,9 @@ function extractAspNetFields(html: string): AspNetFields {
 
   console.log('[GolestanClient][extractAspNetFields]', {
     viewStatePresent: !!viewState,
-    viewStateSnippet: viewState ? viewState.slice(0, 64) : '',
     viewStateGeneratorPresent: !!viewStateGenerator,
     eventValidationPresent: !!eventValidation,
-    eventValidationSnippet: eventValidation ? eventValidation.slice(0, 64) : '',
-    ticket: ticket ?? null,
+    ticketPresent: ticket != null,
   });
 
   if (!viewState || !viewStateGenerator || !eventValidation) {
@@ -399,18 +397,18 @@ class GolestanClient {
   private async logSessionCookies(label: string): Promise<void> {
     try {
       const cookies = await this.jar.getCookies(this.baseUrl);
-      const sessionCookie = cookies.find(c => c.key === 'ASP.NET_SessionId');
-      const ltCookie = cookies.find(c => c.key === 'lt');
-      const uCookie = cookies.find(c => c.key === 'u');
+      const hasSession = cookies.some(c => c.key === 'ASP.NET_SessionId');
+      const hasLt = cookies.some(c => c.key === 'lt');
+      const hasU = cookies.some(c => c.key === 'u');
 
       console.log('[GolestanClient][session]', label, {
-        aspNetSessionId: sessionCookie?.value ?? null,
-        lt: ltCookie?.value ?? null,
-        u: uCookie?.value ?? null,
-        cookieHeader: cookies.map(c => `${c.key}=${c.value}`).join('; '),
+        aspNetSessionPresent: hasSession,
+        ltPresent: hasLt,
+        uPresent: hasU,
+        cookieCount: cookies.length,
       });
-    } catch (err) {
-      console.warn('[GolestanClient][session] Failed to read cookies', label, err);
+    } catch {
+      console.warn('[GolestanClient][session] Failed to read cookies', label);
     }
   }
 
@@ -425,29 +423,10 @@ class GolestanClient {
       headers: { ...this.defaultHeaders, ...(config.headers || {}) },
     };
 
-    const cookiesBefore = await this.getCookieHeaderString();
-    let payloadPreview: string | undefined;
-
-    if (method === 'post' && finalConfig.data !== undefined) {
-      if (finalConfig.data instanceof URLSearchParams) {
-        payloadPreview = finalConfig.data.toString();
-      } else if (typeof finalConfig.data === 'string') {
-        payloadPreview = finalConfig.data.slice(0, 1000);
-      } else {
-        try {
-          payloadPreview = JSON.stringify(finalConfig.data).slice(0, 1000);
-        } catch {
-          payloadPreview = '[unserializable payload]';
-        }
-      }
-    }
-
     console.log('[GolestanClient][request]', {
       method,
       url,
-      cookiesBefore,
       hasData: typeof finalConfig.data !== 'undefined',
-      payloadPreview,
     });
 
     try {
@@ -460,48 +439,35 @@ class GolestanClient {
         throw new Error(`Unsupported HTTP method: ${method}`);
       }
 
-      const cookiesAfter = await this.getCookieHeaderString();
       console.log('[GolestanClient][response]', {
         method,
         url,
         status: response.status,
         statusText: response.statusText,
-        cookiesAfter,
       });
 
       return response;
     } catch (err) {
-      const cookiesAfter = await this.getCookieHeaderString();
       console.error('[GolestanClient][request-error]', {
         method,
         url,
-        cookiesAfter,
         errorMessage: (err as Error).message,
+        code: (axios.isAxiosError(err) && err.code) || undefined,
       });
 
       if (axios.isAxiosError(err)) {
-        if (isSslError(err)) {
-          throw new Error(
-            'SSL_ERROR: VPN or proxy detected. Please disable VPN/proxy and try again.',
-          );
+        if (isSslError(err) || isConnectionError(err) || err.code === 'ECONNABORTED') {
+          throw new Error('CONNECTION_ERROR');
         }
-        if (isConnectionError(err)) {
-          throw new Error(`CONNECTION_ERROR: ${err.message}`);
-        }
-        if (err.code === 'ECONNABORTED') {
-          throw new Error(`TIMEOUT_ERROR: ${err.message}`);
-        }
-        throw new Error(`HTTP_ERROR: ${err.message}`);
+        throw new Error('REMOTE_SERVICE_ERROR');
       }
 
       const e = err as Error;
       if (isSslError(e)) {
-        throw new Error(
-          'SSL_ERROR: VPN or proxy detected. Please disable VPN/proxy and try again.',
-        );
+        throw new Error('CONNECTION_ERROR');
       }
 
-      throw new Error(`UNKNOWN_ERROR: ${e.message}`);
+      throw new Error('UNKNOWN_ERROR');
     }
   }
 
@@ -616,21 +582,18 @@ class GolestanClient {
         break;
       }
 
-      // Login failed on this attempt – log HTML snippet for diagnosis
-      const bodySnippet = respPost.data
-        ? respPost.data.toString().slice(0, 1000)
-        : '';
-      console.warn('[GolestanClient][login-failed-html-snippet]', {
+      // Login failed on this attempt – log attempt count only (no HTML or credentials)
+      console.warn('[GolestanClient][login-failed]', {
         attempt,
-        snippet: bodySnippet,
       });
 
       await this.logSessionCookies(`attempt-${attempt}-after-login-failed`);
 
       if (attempt === maxAttempts) {
-        throw new Error(
-          'CAPTCHA_FAILED: Authentication failed. Please check your username and password.',
+        console.error(
+          '[GolestanClient][login-failed-max-attempts]',
         );
+        throw new Error('LOGIN_FAILED');
       }
     }
 

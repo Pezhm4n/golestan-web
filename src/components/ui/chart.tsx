@@ -58,8 +58,34 @@ const ChartContainer = React.forwardRef<
 });
 ChartContainer.displayName = "Chart";
 
+/**
+ * Sanitize a color string before injecting into CSS.
+ * We only allow characters typically used in color values
+ * to prevent breaking out of the declaration context.
+ */
+function sanitizeColor(value: string | undefined | null): string | null {
+  if (!value) return null;
+
+  const trimmed = value.trim();
+
+  // Disallow characters that can terminate the declaration or inject new rules.
+  if (/[;{}]/.test(trimmed)) {
+    return null;
+  }
+
+  // Allow only a conservative set of characters for color values:
+  // letters, digits, spaces, parentheses, commas, dots, hashes, dashes, percent signs, and forward slashes.
+  if (!/^[a-zA-Z0-9\s(),.#%\/-]+$/.test(trimmed)) {
+    return null;
+  }
+
+  return trimmed;
+}
+
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
-  const colorConfig = Object.entries(config).filter(([_, config]) => config.theme || config.color);
+  const colorConfig = Object.entries(config).filter(
+    ([_, cfg]) => cfg.theme || cfg.color,
+  );
 
   if (!colorConfig.length) {
     return null;
@@ -74,14 +100,18 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
 ${prefix} [data-chart=${id}] {
 ${colorConfig
   .map(([key, itemConfig]) => {
-    const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
+    const rawColor =
+      itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
+      itemConfig.color;
+    const color = sanitizeColor(rawColor);
     return color ? `  --color-${key}: ${color};` : null;
   })
-  .join("\n")}
+  .filter(Boolean)
+  .join('\n')}
 }
 `,
           )
-          .join("\n"),
+          .join('\n'),
       }}
     />
   );
