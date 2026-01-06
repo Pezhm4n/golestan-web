@@ -29,9 +29,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# Lockfiles (this project prefers bun.lockb or other tooling)
-package-lock.json
-
-# Optional: ignore package.json changes if managed externally
-package.json
