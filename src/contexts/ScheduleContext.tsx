@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { hasConflict as schedulerHasConflict } from '@/lib/scheduler';
 import { useGolestanData } from '@/hooks/useGolestanData';
 import { convertGolestanCourseToAppCourse } from '@/lib/converters';
+import { useTranslation } from 'react-i18next';
 
 export interface SavedSchedule {
   id: string;
@@ -30,8 +31,11 @@ interface ScheduleContextType {
   addCourse: (course: Course) => boolean;
   removeCourse: (courseId: string) => void;
   clearAll: () => void;
-  /** Restore a full list of courses (used for undo / schedule loading). */
-  restoreCourses: (courses: Course[]) => void;
+  /**
+   * Restore or modify the current course list (used for undo / schedule loading).
+   * Accepts either a full list of courses or a functional updater.
+   */
+  restoreCourses: (updater: Course[] | ((prev: Course[]) => Course[])) => void;
   toggleCourse: (course: Course) => void;
   setHoveredCourseId: (id: string | null) => void;
   setEditingCourse: (course: Course | null) => void;
@@ -54,6 +58,8 @@ interface ScheduleContextType {
 const ScheduleContext = createContext<ScheduleContextType | undefined>(undefined);
 
 export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { t } = useTranslation();
+
   // Selected courses are persisted as full Course objects
   const [selectedCourses, setSelectedCourses] = useState<Course[]>(() => {
     if (typeof window === 'undefined') return [];
@@ -191,29 +197,43 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Add course - allow conflicts but warn
   const addCourse = useCallback(
     (course: Course): boolean => {
-      if (selectedCourseIds.includes(course.id)) return false;
+      let added = false;
+
+      setSelectedCourses(prev => {
+        if (prev.some(c => c.id === course.id)) {
+          return prev;
+        }
+        added = true;
+        return [...prev, course];
+      });
+
+      if (!added) return false;
 
       const conflict = hasConflict(course);
 
-      setSelectedCourses(prev => [...prev, course]);
-
       if (conflict.hasConflict) {
-        const reasonLabel = conflict.reason === 'exam' ? 'تداخل امتحان' : 'تداخل زمانی';
+        const reasonKey =
+          conflict.reason === 'exam' ? 'conflictExam' : 'conflictTime';
+        const reasonLabel = t(`schedule.${reasonKey}`);
+
         toast.warning(reasonLabel + '!', {
           description: conflict.conflictWith
-            ? `این درس با «${conflict.conflictWith}» ${reasonLabel.toLowerCase()} دارد. می‌تونی یکی رو حذف کنی.`
-            : 'این درس با یکی از درس‌های انتخاب‌شده تداخل دارد.',
+            ? t('schedule.conflictWithCourse', {
+                course: conflict.conflictWith,
+                reason: reasonLabel.toLowerCase(),
+              })
+            : t('schedule.conflictGeneric'),
           duration: 4000,
         });
       } else {
-        toast.success('درس اضافه شد', {
+        toast.success(t('schedule.courseAdded'), {
           description: course.name,
           duration: 2000,
         });
       }
       return true;
     },
-    [selectedCourseIds, hasConflict],
+    [hasConflict, t],
   );
 
   // Remove course with undo support
@@ -227,11 +247,11 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       if (!course) return;
 
-      toast.success('درس حذف شد', {
+      toast.success(t('schedule.courseRemoved'), {
         description: course.name,
         duration: 4000,
         action: {
-          label: 'بازگشت',
+          label: t('common.undo'),
           onClick: () => {
             setSelectedCourses(prev => {
               // اگر کاربر در این فاصله خودش درس را دوباره اضافه کرده باشد
@@ -243,7 +263,7 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         },
       });
     },
-    [selectedCourses],
+    [selectedCourses, t],
   );
 
   // Clear all courses (toast + undo handled at the UI layer)
@@ -255,11 +275,16 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
-  // Bulk restore courses (used for undo/restore)
-  const restoreCourses = useCallback((courses: Course[]) => {
-    setSelectedCourses(courses);
-    setHoveredCourseId(null);
-  }, []);
+  // Bulk restore / modify courses (used for undo/restore)
+  const restoreCourses = useCallback(
+    (updater: Course[] | ((prev: Course[]) => Course[])) => {
+      setSelectedCourses(prev =>
+        typeof updater === 'function' ? (updater as (prev: Course[]) => Course[])(prev) : updater,
+      );
+      setHoveredCourseId(null);
+    },
+    [],
+  );
 
   // Toggle course (add/remove)
   const toggleCourse = useCallback(
@@ -291,12 +316,12 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     (name: string) => {
       const trimmedName = name.trim();
       if (!trimmedName) {
-        toast.error('لطفاً نام برنامه را وارد کنید');
+        toast.error(t('schedule.enterScheduleName'));
         return;
       }
 
       if (selectedCourses.length === 0) {
-        toast.info('برنامه خالی است');
+        toast.info(t('schedule.scheduleEmpty'));
         return;
       }
 
@@ -309,11 +334,13 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       };
 
       setSavedSchedules(prev => [newSchedule, ...prev]);
-      toast.success('برنامه با موفقیت ذخیره شد', {
-        description: `${selectedCourses.length} درس ذخیره شد`,
+      toast.success(t('schedule.scheduleSaved'), {
+        description: t('schedule.scheduleSavedSummary', {
+          count: selectedCourses.length,
+        }),
       });
     },
-    [selectedCourses],
+    [selectedCourses, t],
   );
 
   // Edit an existing course (both in selectedCourses and customCourses)
@@ -334,24 +361,24 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     (id: string) => {
       const schedule = savedSchedules.find(s => s.id === id);
       if (!schedule) {
-        toast.error('برنامه مورد نظر یافت نشد');
+        toast.error(t('schedule.notFound'));
         return;
       }
 
       setSelectedCourses(schedule.courses);
       setHoveredCourseId(null);
-      toast.success('برنامه بارگذاری شد', {
+      toast.success(t('schedule.loaded'), {
         description: schedule.name,
       });
     },
-    [savedSchedules],
+    [savedSchedules, t],
   );
 
   // Delete a saved schedule
   const deleteSchedule = useCallback((id: string) => {
     setSavedSchedules(prev => prev.filter(s => s.id !== id));
-    toast.info('برنامه حذف شد');
-  }, []);
+    toast.info(t('schedule.deleted'));
+  }, [t]);
 
   const value: ScheduleContextType = {
     selectedCourseIds,

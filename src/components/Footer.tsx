@@ -56,7 +56,12 @@ const Footer = ({ isMobile = false }: FooterProps) => {
       for (let j = i + 1; j < scheduledSessions.length; j++) {
         const s1 = scheduledSessions[i];
         const s2 = scheduledSessions[j];
-        if (s1.day === s2.day && s1.startTime < s2.endTime && s2.startTime < s1.endTime) {
+        const s1Start = Number(s1.startTime);
+        const s1End = Number(s1.endTime);
+        const s2Start = Number(s2.startTime);
+        const s2End = Number(s2.endTime);
+
+        if (s1.day === s2.day && s1Start < s2End && s2Start < s1End) {
           // Check week type
           if (s1.weekType === 'both' || s2.weekType === 'both' || s1.weekType === s2.weekType) {
             conflicts++;

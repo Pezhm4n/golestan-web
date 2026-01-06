@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { DAYS, ScheduledSession } from '@/types/course';
 import { useSchedule } from '@/contexts/ScheduleContext';
 import { useSettings } from '@/contexts/SettingsContext';
@@ -6,6 +6,7 @@ import { useResponsive } from '@/hooks/use-responsive';
 import CourseCell from './CourseCell';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
+import { Z_INDEX } from '@/lib/constants';
 
 const TIME_SLOTS = Array.from({ length: 14 }, (_, i) => 7 + i);
 
@@ -40,30 +41,86 @@ const ScheduleGrid = () => {
     }));
   }, [hoveredCourse]);
 
-  const getSessionsForSlot = (day: number, time: number): ScheduledSession[] => {
-    return scheduledSessions.filter(
-      session => session.day === day && session.startTime === time
-    );
-  };
+  // Pre-index scheduled sessions for efficient lookups
+  const slotsIndex = useMemo(() => {
+    const byDayTime = new Map<string, ScheduledSession[]>();
+    const byDay = new Map<number, ScheduledSession[]>();
 
-  const isCellOccupiedByPrevious = (day: number, time: number): boolean => {
-    return scheduledSessions.some(
-      session => session.day === day && session.startTime < time && session.endTime > time
-    );
-  };
+    for (const session of scheduledSessions) {
+      const key = `${session.day}-${session.startTime}`;
+      const list = byDayTime.get(key);
+      if (list) {
+        list.push(session);
+      } else {
+        byDayTime.set(key, [session]);
+      }
 
-  const getHoveredStartSessionsForSlot = (day: number, time: number): ScheduledSession[] => {
-    return hoveredSessions.filter(
-      session => session.day === day && session.startTime === time,
-    );
-  };
+      const dayList = byDay.get(session.day);
+      if (dayList) {
+        dayList.push(session);
+      } else {
+        byDay.set(session.day, [session]);
+      }
+    }
+
+    return { byDayTime, byDay };
+  }, [scheduledSessions]);
+
+  const getSessionsForSlot = useCallback(
+    (day: number, time: number): ScheduledSession[] => {
+      const key = `${day}-${time}`;
+      return slotsIndex.byDayTime.get(key) ?? [];
+    },
+    [slotsIndex],
+  );
+
+  const isCellOccupiedByPrevious = useCallback(
+    (day: number, time: number): boolean => {
+      const daySessions = slotsIndex.byDay.get(day) ?? [];
+      return daySessions.some(
+        session =>
+          Number(session.startTime) < time && Number(session.endTime) > time,
+      );
+    },
+    [slotsIndex],
+  );
+
+  const getHoveredStartSessionsForSlot = useCallback(
+    (day: number, time: number): ScheduledSession[] => {
+      return hoveredSessions.filter(
+        session => session.day === day && Number(session.startTime) === time,
+      );
+    },
+    [hoveredSessions],
+  );
 
   // Check if this cell would be occupied by the hovered course (any part of its duration)
-  const isHoveredCourseCell = (day: number, time: number): boolean => {
-    return hoveredSessions.some(
-      session => session.day === day && time >= session.startTime && time < session.endTime,
-    );
-  };
+  const isHoveredCourseCell = useCallback(
+    (day: number, time: number): boolean => {
+      return hoveredSessions.some(
+        session =>
+          session.day === day &&
+          time >= Number(session.startTime) &&
+          time < Number(session.endTime),
+      );
+    },
+    [hoveredSessions],
+  );
+
+  // Find the first heavy conflict cell (3+ sessions starting at same slot)
+  const firstHeavyConflictKey = useMemo(() => {
+    const { byDayTime } = slotsIndex;
+    for (const time of TIME_SLOTS) {
+      for (let dayIndex = 0; dayIndex < DAYS.length; dayIndex++) {
+        const key = `${dayIndex}-${time}`;
+        const sessionsHere = byDayTime.get(key);
+        if (sessionsHere && sessionsHere.length >= 3) {
+          return key;
+        }
+      }
+    }
+    return null;
+  }, [slotsIndex]);
 
   const formatTime = (hour: number): string => {
     return `${hour.toString().padStart(2, '0')}:00`;
@@ -115,10 +172,10 @@ const ScheduleGrid = () => {
           {/* Header Row */}
           <div 
             className={cn(
-              "sticky top-0 left-0 z-30 bg-muted/95 backdrop-blur-md flex items-center justify-center",
+              "sticky top-0 left-0 bg-muted/95 backdrop-blur-md flex items-center justify-center",
               showGridLines ? "border border-border/50" : ""
             )}
-            style={{ gridColumn: 1, gridRow: 1 }}
+            style={{ gridColumn: 1, gridRow: 1, zIndex: Z_INDEX.gridHeader }}
           >
             <span className={cn(
               "font-bold text-muted-foreground",
@@ -135,12 +192,12 @@ const ScheduleGrid = () => {
               <div
                 key={`header-${dayIndex}`}
                 className={cn(
-                  "sticky top-0 z-20 bg-muted/95 backdrop-blur-md flex items-center justify-center font-bold text-foreground",
+                  "sticky top-0 bg-muted/95 backdrop-blur-md flex items-center justify-center font-bold text-foreground",
                   isMobile ? "text-[11px]" : "text-sm",
                   showGridLines ? "border-t border-b border-l border-border/50" : "",
                   getFontSizeClass()
                 )}
-                style={{ gridColumn: dayIndex + 2, gridRow: 1 }}
+                style={{ gridColumn: dayIndex + 2, gridRow: 1, zIndex: Z_INDEX.gridHeader }}
               >
                 {isMobile ? label.replace('\u200c', '') : label}
               </div>
@@ -167,6 +224,8 @@ const ScheduleGrid = () => {
                 const isOccupied = isCellOccupiedByPrevious(dayIndex, time);
                 const isPreviewCell = isHoveredCourseCell(dayIndex, time);
                 const hoveredStartSessions = getHoveredStartSessionsForSlot(dayIndex, time);
+                const cellKey = `${dayIndex}-${time}`;
+                const showDiscoveryTip = firstHeavyConflictKey === cellKey;
 
                 if (isOccupied) return null;
 
@@ -204,12 +263,13 @@ const ScheduleGrid = () => {
                         : rowIndex + 2,
                     }}
                   >
-                    <CourseCell sessions={sessions} />
+                    <CourseCell sessions={sessions} showConflictTip={showDiscoveryTip} />
                     {hoveredStartSessions.length > 0 && (
                       <CourseCell
                         sessions={hoveredStartSessions}
                         ghost
                         conflictPreview={hoveredHasConflict}
+                        showConflictTip={false}
                       />
                     )}
                   </div>

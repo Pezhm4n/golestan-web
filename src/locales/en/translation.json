@@ -207,6 +207,10 @@
     "sessionTimeError": "Start time must be before end time",
     "sessionErrorsFix": "Please fix session time errors",
     "courseAdded": "Course added",
+    "editTitle": "Edit course",
+    "editDescription": "Update the details of this course.",
+    "editSubmit": "Save changes",
+    "editSuccess": "Course updated",
     "unknownLocation": "Unknown",
     "groupSpecialized": "Specialized",
     "groupGeneral": "General",
@@ -362,6 +366,25 @@
     "conflict": "Conflict",
     "valid": "Valid"
   },
+  "schedule": {
+    "courseAdded": "Course added",
+    "courseRemoved": "Course removed",
+    "courseDeleted": "Course removed",
+    "conflictTime": "Time conflict",
+    "conflictExam": "Exam conflict",
+    "conflictWithCourse": "This course has a {{reason}} with “{{course}}”. You may want to remove one of them.",
+    "conflictGeneric": "This course conflicts with one of your selected courses.",
+    "scheduleSaved": "Schedule saved successfully",
+    "scheduleSavedSummary": "{{count}} courses saved",
+    "scheduleEmpty": "Schedule is empty",
+    "enterScheduleName": "Please enter a schedule name",
+    "cleared": "Schedule cleared",
+    "clearedWithCount": "{{count}} courses were removed from the schedule",
+    "undoHint": "You can undo this and restore your previous courses.",
+    "notFound": "The selected schedule was not found",
+    "loaded": "Schedule loaded",
+    "deleted": "Schedule deleted"
+  },
   "course": {
     "labels": {
       "instructor": "Instructor:",
@@ -436,6 +459,9 @@
       "mahyarRole": "Documentation and data analysis",
       "aydinRole": "AI model developer"
     }
+  },
+  "common": {
+    "undo": "Undo"
   },
   "donate": {
     "backToApp": "Back to planner",

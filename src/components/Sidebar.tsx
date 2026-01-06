@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useCallback } from 'react';
 import { Search, ChevronDown, Filter, Save, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -87,7 +87,7 @@ const VirtualizedCourseList = ({ courses }: VirtualizedCourseListProps) => {
 };
 
 const Sidebar = () => {
-  const { selectedCourses, allCourses, clearAll, addCustomCourse, saveSchedule } = useSchedule();
+  const { selectedCourses, allCourses, clearAll, restoreCourses, addCustomCourse, saveSchedule } = useSchedule();
   const { isLoading, error, departments } = useGolestanData();
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
@@ -131,7 +131,7 @@ const Sidebar = () => {
       const matchesFull = !hideFull || course.enrolled < course.capacity;
       const matchesTime =
         course.sessions.every(
-          s => s.startTime >= timeFrom && s.endTime <= timeTo,
+          s => Number(s.startTime) >= timeFrom && Number(s.endTime) <= timeTo,
         );
 
       return (
@@ -202,8 +202,42 @@ const Sidebar = () => {
   };
 
   const handleClearAll = () => {
+    const backup = [...selectedCourses];
+    if (backup.length === 0) return;
+
     clearAll();
-    toast.info(t('sidebar.cleared'));
+
+    toast.custom(
+      (id) => (
+        <div className="flex flex-row items-center justify-between w-full max-w-md gap-4 p-4 border rounded-lg shadow-lg bg-white dark:bg-zinc-950 border-gray-200 dark:border-zinc-800">
+          <div className="flex flex-col gap-1">
+            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+              {t('schedule.cleared')}
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {t('schedule.clearedWithCount', { count: backup.length })}
+            </p>
+            <p className="text-[11px] text-gray-500 dark:text-gray-400">
+              {t('schedule.undoHint')}
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              restoreCourses(prev => {
+                const existingIds = new Set(prev.map(c => c.id));
+                const uniqueBackup = backup.filter(c => !existingIds.has(c.id));
+                return [...prev, ...uniqueBackup];
+              });
+              toast.dismiss(id);
+            }}
+            className="px-3 py-1.5 text-xs font-medium text-white transition-colors bg-black rounded-md hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200"
+          >
+            {t('common.undo')}
+          </button>
+        </div>
+      ),
+      { duration: 5000 },
+    );
   };
 
   const handleAddCourse = (course: Course) => {

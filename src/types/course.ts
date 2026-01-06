@@ -6,8 +6,16 @@ export type CourseGroup = 'specialized' | 'general' | 'basic'; // تخصصی، �
 
 export interface CourseSession {
   day: number; // 0 = Saturday, 5 = Thursday
-  startTime: number; // 7-19 (hour)
-  endTime: number; // 8-20 (hour)
+  /**
+   * Start time of the session.
+   * Can be stored as an hour (e.g. 8, 9.5) or as a string \"HH:MM\".
+   */
+  startTime: number | string;
+  /**
+   * End time of the session.
+   * Can be stored as an hour (e.g. 10, 11.5) or as a string \"HH:MM\".
+   */
+  endTime: number | string;
   location: string;
   weekType: WeekType;
 }

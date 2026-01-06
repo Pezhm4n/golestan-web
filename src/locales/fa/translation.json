@@ -207,6 +207,10 @@
     "sessionTimeError": "ساعت شروع باید قبل از ساعت پایان باشد",
     "sessionErrorsFix": "لطفاً خطاهای زمان برگزاری جلسات را اصلاح کنید",
     "courseAdded": "درس اضافه شد",
+    "editTitle": "ویرایش درس",
+    "editDescription": "مشخصات این درس را ویرایش کنید.",
+    "editSubmit": "ذخیره تغییرات",
+    "editSuccess": "درس ویرایش شد",
     "unknownLocation": "نامشخص",
     "groupSpecialized": "تخصصی",
     "groupGeneral": "عمومی",
@@ -362,6 +366,25 @@
     "conflict": "تداخل",
     "valid": "معتبر"
   },
+  "schedule": {
+    "courseAdded": "درس اضافه شد",
+    "courseRemoved": "درس حذف شد",
+    "courseDeleted": "درس حذف شد",
+    "conflictTime": "تداخل زمانی",
+    "conflictExam": "تداخل امتحان",
+    "conflictWithCourse": "این درس با «{{course}}» {{reason}} دارد. می\u200cتونی یکی رو حذف کنی.",
+    "conflictGeneric": "این درس با یکی از درس\u200cهای انتخاب\u200cشده تداخل دارد.",
+    "scheduleSaved": "برنامه با موفقیت ذخیره شد",
+    "scheduleSavedSummary": "{{count}} درس ذخیره شد",
+    "scheduleEmpty": "برنامه خالی است",
+    "enterScheduleName": "لطفاً نام برنامه را وارد کنید",
+    "cleared": "جدول پاک شد",
+    "clearedWithCount": "{{count}} درس از جدول پاک شد",
+    "undoHint": "در صورت نیاز می\u200cتونی برنامه را برگردانی.",
+    "notFound": "برنامه مورد نظر یافت نشد",
+    "loaded": "برنامه بارگذاری شد",
+    "deleted": "برنامه حذف شد"
+  },
   "course": {
     "labels": {
       "instructor": "استاد:",
@@ -436,6 +459,9 @@
       "mahyarRole": "مسئول مستندسازی و تحلیل داده",
       "aydinRole": "توسعه‌دهنده مدل هوش مصنوعی"
     }
+  },
+  "common": {
+    "undo": "بازگشت"
   },
   "donate": {
     "backToApp": "بازگشت به برنامه",

@@ -12,12 +12,15 @@ import {
 } from '@/components/ui/popover';
 import { EllipsisText } from '@/components/ui/ellipsis-text';
 import { cn } from '@/lib/utils';
+import { Z_INDEX } from '@/lib/constants';
 
 interface CourseCellProps {
   sessions?: ScheduledSession[];
   ghost?: boolean;
   /** When true, render this cell as a red conflict preview overlay */
   conflictPreview?: boolean;
+  /** Whether this cell is chosen to show the smart discovery tip (only first heavy conflict). */
+  showConflictTip?: boolean;
 }
 
 // Helper to generate a deterministic course color based on group/type and id.
@@ -37,6 +40,8 @@ interface SingleBlockProps {
   onEdit?: (session: ScheduledSession) => void;
   /** When true, this block is the active member of a stacked conflict cycle */
   isActiveStack?: boolean;
+  /** True when any member of this stacked group is currently active (cycled). */
+  hasActiveStack?: boolean;
   /** Optional handler to cycle stacked conflicts on double click */
   onStackDoubleClick?: (stackIndex: number) => void;
 }
@@ -72,6 +77,7 @@ const SingleBlock = ({
   conflictPreview = false,
   onEdit,
   isActiveStack = false,
+  hasActiveStack = false,
   onStackDoubleClick,
 }: SingleBlockProps) => {
   const {
@@ -90,10 +96,17 @@ const SingleBlock = ({
 
   // Globally highlighted: every session of this course across the grid.
   const isGloballyHighlighted = hoveredCourseId === session.parentId;
-  // زمانی که چرخهٔ تداخل فعال است، فقط عضو activeStack باید پاپ‌اوت شود،
-  // حتی اگر ماوس هنوز روی کارت قبلی باشد.
-  const hasStackSelection = typeof isActiveStack === 'boolean';
-  const isPopout = hasStackSelection ? !!isActiveStack : isHovered;
+
+  // Pop-out rules:
+  // - Stacked:
+  //   - Active member (cycled) always pops out.
+  //   - If no active member yet, the locally hovered card pops out.
+  // - Non-stacked:
+  //   - Pop out when either globally highlighted or locally hovered.
+  const isPopout = isStacked
+    ? isActiveStack || (!hasActiveStack && isHovered)
+    : (isGloballyHighlighted || isHovered);
+
   const isHighlighted = isGloballyHighlighted || isPopout;
 
   const backgroundColor = isHighlighted
@@ -137,7 +150,7 @@ const SingleBlock = ({
 
   // Duration in minutes between start and end (calculated once)
   const durationMinutes =
-    parseTime(session.endTime as any) - parseTime(session.startTime as any);
+    parseTime(session.endTime) - parseTime(session.startTime);
 
   // Compact rule: only treat exactly 60‑minute sessions as compact
   const isOneHourSession = durationMinutes === 60;
@@ -393,8 +406,9 @@ const SingleBlock = ({
       <PopoverContent
         side="top"
         align="center"
-        className="max-w-xs p-2 z-[10000]"
+        className="max-w-xs p-2"
         sideOffset={8}
+        style={{ zIndex: Z_INDEX.popover }}
       >
         <div className="space-y-1 text-[11px]">
           <h4 className="font-bold text-sm">
@@ -434,6 +448,7 @@ const CourseCell = ({
   sessions = [],
   ghost = false,
   conflictPreview = false,
+  showConflictTip = false,
 }: CourseCellProps) => {
   const { t } = useTranslation();
   const { selectedCourses, setEditingCourse } = useSchedule();
@@ -485,7 +500,10 @@ const CourseCell = ({
         onMouseLeave={() => setActiveStackIndex(null)}
       >
         {/* Conflict indicator badge - روی کارت‌های این سلول، ولی زیر دیالوگ‌های سراسری */}
-        <div className="absolute top-0 left-0 z-[22] pointer-events-none flex items-center gap-0.5 bg-destructive text-destructive-foreground px-1 py-0.5 rounded text-[8px] font-bold shadow-md">
+        <div
+          className="absolute top-0 left-0 pointer-events-none flex items-center gap-0.5 bg-destructive text-destructive-foreground px-1 py-0.5 rounded text-[8px] font-bold shadow-md"
+          style={{ zIndex: Z_INDEX.conflictBadge }}
+        >
           <AlertTriangle className="w-2.5 h-2.5" />
           {t('course.conflictIndicator', { count: sessions.length })}
         </div>
@@ -493,13 +511,13 @@ const CourseCell = ({
         {/* One-time discovery tip for heavy conflicts (3+ courses) */}
         {shouldShowConflictTip && (
           <div
-            className="absolute -top-2 right-2 z-[30] -translate-y-full w-60 rounded-xl border border-sky-100 bg-sky-600/95 text-white shadow-2xl px-3 py-2 flex items-start gap-2"
-            onClick={e => e.stopPropagation()}
+            className="pointer-events-none absolute -top-2 right-2 -translate-y-full w-60 rounded-xl border bg-sky-600/95 text-white shadow-2xl px-3 py-2 flex items-start gap-2"
+            style={{ zIndex: Z_INDEX.discoveryTip, borderColor: '#e0f2fe' }}
           >
-            <div className="mt-0.5 shrink-0">
+            <div className="mt-0.5 shrink-0 pointer-events-auto">
               <MousePointer2 className="w-4 h-4" />
             </div>
-            <div className="flex-1 text-[11px] leading-snug" dir="rtl">
+            <div className="flex-1 text-[11px] leading-snug pointer-events-auto" dir="rtl">
               <p>{t('course.conflictTip')}</p>
               <div className="mt-1 flex justify-end">
                 <button
@@ -508,7 +526,7 @@ const CourseCell = ({
                     e.stopPropagation();
                     markConflictTipAsSeen();
                   }}
-                  className="inline-flex items-center rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-semibold hover:bg-white/25 transition-colors"
+                  className="inline-flex items-center rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-semibold hover:bg-white/25 transition-colors pointer-events-auto"
                 >
                   {t('course.conflictTipGotIt')}
                 </button>
@@ -520,7 +538,7 @@ const CourseCell = ({
                 e.stopPropagation();
                 markConflictTipAsSeen();
               }}
-              className="mt-0.5 ml-1 text-white/70 hover:text-white transition-colors"
+              className="mt-0.5 ml-1 text-white/70 hover:text-white transition-colors pointer-events-auto"
               aria-label="dismiss conflict tip"
             >
               <X className="w-3 h-3" />
@@ -542,6 +560,7 @@ const CourseCell = ({
               isActiveStack={
                 activeStackIndex !== null ? index === activeStackIndex : false
               }
+              hasActiveStack={activeStackIndex !== null}
               onStackDoubleClick={(stackIndex) =>
                 handleStackDoubleClick(stackIndex)
               }

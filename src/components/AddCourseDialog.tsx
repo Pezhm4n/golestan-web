@@ -138,7 +138,7 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
       };
 
       editCourse(editingCourse.id, updatedCourse);
-      toast.success('درس ویرایش شد', { description: trimmedName });
+      toast.success(t('addCourse.editSuccess'), { description: trimmedName });
     } else {
       // Create a new custom course
       const newCourse: Course = {
@@ -227,14 +227,14 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
       </DialogTrigger>
       <DialogContent className="max-w-md" dir="rtl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Plus className="h-5 w-5" />
-            {isEditMode ? 'ویرایش درس' : t('addCourse.title')}
-          </DialogTitle>
-          <DialogDescription>
-            {isEditMode ? 'مشخصات این درس را ویرایش کنید.' : t('addCourse.description')}
-          </DialogDescription>
-        </DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5" />
+              {isEditMode ? t('addCourse.editTitle') : t('addCourse.title')}
+            </DialogTitle>
+            <DialogDescription>
+              {isEditMode ? t('addCourse.editDescription') : t('addCourse.description')}
+            </DialogDescription>
+          </DialogHeader>
 
         <div className="grid gap-4 py-4">
           {/* Course Name */}
@@ -516,7 +516,7 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
           </Button>
           <Button onClick={handleSubmit} className="text-xs gap-1.5">
             <Plus className="h-3.5 w-3.5" />
-            {isEditMode ? 'ذخیره تغییرات' : t('addCourse.submit')}
+            {isEditMode ? t('addCourse.editSubmit') : t('addCourse.submit')}
           </Button>
         </DialogFooter>
       </DialogContent>
