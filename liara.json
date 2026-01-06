@@ -1,0 +1,5 @@
+{
+  "platform": "docker",
+  "app": "golestoon-backend",
+  "port": 3000
+}
