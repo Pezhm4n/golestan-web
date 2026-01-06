@@ -6,7 +6,11 @@ import type {
 } from '@/types/student';
 import { getCredentials } from '@/lib/studentStorage';
 
-const STUDENT_PROFILE_ENDPOINT = 'http://localhost:8000/api/student/profile';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+if (!API_BASE_URL) {
+  throw new Error('VITE_API_BASE_URL is not defined. Please set it in your environment.');
+}
+const STUDENT_PROFILE_ENDPOINT = `${API_BASE_URL}/api/student/profile`;
 
 /**
  * Raw models as they come from the backend.

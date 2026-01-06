@@ -7,8 +7,15 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
+# Environment files
+.env
+.env.local
+.env.production
+.env.development
+
+# Dependencies & build output
+node_modules/
+dist/
 dist-ssr
 *.local
 
@@ -23,6 +30,8 @@ dist-ssr
 *.sln
 *.sw?
 
+# Lockfiles (this project prefers bun.lockb or other tooling)
 package-lock.json
 
+# Optional: ignore package.json changes if managed externally
 package.json

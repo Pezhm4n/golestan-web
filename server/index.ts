@@ -1,13 +1,23 @@
+import 'dotenv/config';
 import http from 'http';
 import {
   getStudentRecord,
   GolestanCredentials,
 } from './golestan/golestanStudent';
 
-const PORT = Number(process.env.PORT) || 8000;
+const getEnv = (key: string): string => {
+  const value = process.env[key];
+  if (!value) {
+    console.error(`Missing required environment variable: ${key}`);
+    process.exit(1);
+  }
+  return value;
+};
+
+const PORT = Number(process.env.PORT || '8000');
 const HOST = process.env.HOST || '127.0.0.1';
-const ALLOWED_ORIGIN =
-  process.env.ALLOWED_ORIGIN || 'http://localhost:8080';
+const ALLOWED_ORIGIN = getEnv('ALLOWED_ORIGIN');
+const CAPTCHA_API_URL = getEnv('CAPTCHA_API_URL');
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX_REQUESTS = 10;
@@ -31,10 +41,6 @@ function isRateLimited(ip: string): boolean {
   info.count += 1;
   return info.count > RATE_LIMIT_MAX_REQUESTS;
 }
-
-const CAPTCHA_API_URL =
-  process.env.CAPTCHA_API_URL ||
-  'https://golestan-captcha-solvers-golestan-captcha-solver.hf.space/predict';
 
 process.on('uncaughtException', err => {
   console.error('[uncaughtException]', err);
@@ -109,7 +115,10 @@ async function captchaSolver(image: Buffer): Promise<string> {
 
     return extracted;
   } catch (error) {
-    console.error('[captchaSolver] Error while calling external CAPTCHA API:', (error as Error).message);
+    console.error(
+      '[captchaSolver] Error while calling external CAPTCHA API:',
+      (error as Error).message,
+    );
     throw new Error('Failed to solve captcha using external CAPTCHA API');
   }
 }
@@ -152,7 +161,7 @@ const server = http.createServer(async (req, res) => {
         ? req.headers['x-forwarded-for'].split(',')[0].trim()
         : req.socket.remoteAddress) || 'unknown';
 
-    const url = new URL(req.url, `http://localhost:${PORT}`);
+    const url = new URL(req.url, `http://${HOST || '127.0.0.1'}:${PORT}`);
 
     console.log('[request]', req.method, url.pathname, 'from', ip);
 

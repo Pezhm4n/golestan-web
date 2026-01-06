@@ -4,8 +4,13 @@ import type {
 } from '@/types/golestan';
 import type { Student } from '@/types/student';
 
-const API_BASE_URL = 'https://golestoon-scraper.onrender.com';
-const COURSES_ENDPOINT = `${API_BASE_URL}/api/courses/all`;
+const SCRAPER_API_BASE_URL = import.meta.env.VITE_SCRAPER_API_BASE_URL;
+if (!SCRAPER_API_BASE_URL) {
+  throw new Error(
+    'VITE_SCRAPER_API_BASE_URL is not defined. Please set it in your environment.',
+  );
+}
+const COURSES_ENDPOINT = `${SCRAPER_API_BASE_URL}/api/courses/all`;
 
 export type CourseAvailability = 'available' | 'unavailable' | 'both';
 
