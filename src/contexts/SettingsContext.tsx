@@ -61,14 +61,44 @@ const defaultSettings: StoredSettings = {
   version: SETTINGS_VERSION,
 };
 
+const loadInitialSettings = (): StoredSettings => {
+  if (typeof window === 'undefined') {
+    return defaultSettings;
+  }
+  try {
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    if (!stored) {
+      return defaultSettings;
+    }
+    const parsed: StoredSettings = JSON.parse(stored);
+    if (!parsed.version || parsed.version !== SETTINGS_VERSION) {
+      return defaultSettings;
+    }
+    return {
+      ...defaultSettings,
+      ...parsed,
+    };
+  } catch {
+    return defaultSettings;
+  }
+};
+
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [fontSize, setFontSizeState] = useState<FontSize>(defaultSettings.fontSize);
-  const [themeMode, setThemeModeState] = useState<ThemeMode>(defaultSettings.themeMode);
-  const [showGridLines, setShowGridLinesState] = useState<boolean>(defaultSettings.showGridLines);
-  const [language, setLanguageState] = useState<Language>(defaultSettings.language);
+  const [fontSize, setFontSizeState] = useState<FontSize>(
+    () => loadInitialSettings().fontSize,
+  );
+  const [themeMode, setThemeModeState] = useState<ThemeMode>(
+    () => loadInitialSettings().themeMode,
+  );
+  const [showGridLines, setShowGridLinesState] = useState<boolean>(
+    () => loadInitialSettings().showGridLines,
+  );
+  const [language, setLanguageState] = useState<Language>(
+    () => loadInitialSettings().language,
+  );
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [hasSeenConflictTip, setHasSeenConflictTip] = useState<boolean>(
-    defaultSettings.hasSeenConflictTip ?? false,
+    () => loadInitialSettings().hasSeenConflictTip ?? false,
   );
 
   // Save settings to localStorage

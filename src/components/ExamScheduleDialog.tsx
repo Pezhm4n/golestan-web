@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Calendar, Download, Printer } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import html2canvas from 'html2canvas';
 import {
   Dialog,
   DialogContent,
@@ -51,40 +52,45 @@ const ExamScheduleDialog = () => {
     });
   });
 
-  const handleExport = () => {
-    // Create CSV content
-    const headers = [
-      t('examDialog.headers.courseName'),
-      t('examDialog.headers.courseCode'),
-      t('examDialog.headers.instructor'),
-      t('examDialog.headers.classTime'),
-      t('examDialog.headers.examTime'),
-      t('examDialog.headers.location'),
-      t('examDialog.headers.credits'),
-    ];
-    const rows = exams.map(exam => [
-      exam.name,
-      exam.courseId,
-      exam.instructor,
-      exam.date || '-',
-      exam.time,
-      exam.location,
-      exam.credits.toString()
-    ]);
-    
-    const csvContent = [headers, ...rows]
-      .map(row => row.join(','))
-      .join('\n');
-    
-    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'exam-schedule.csv';
-    link.click();
-    URL.revokeObjectURL(url);
-    
-    toast.success(t('examDialog.exportSuccess'));
+  const handleExport = async () => {
+    const table = document.getElementById('exam-table-container');
+    if (!table) {
+      toast.error(t('examDialog.exportError') || 'Failed to export exam schedule.');
+      return;
+    }
+
+    try {
+      const canvas = await html2canvas(table, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+
+      try {
+        const jsPDFModule = await import('jspdf');
+        const jsPDF = jsPDFModule.default;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save('exam-schedule.pdf');
+        toast.success(t('examDialog.exportSuccess'));
+      } catch (err) {
+        // Fallback: download as high‑quality PNG image
+        const link = document.createElement('a');
+        link.href = imgData;
+        link.download = 'exam-schedule.png';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success(t('examDialog.exportSuccess'));
+      }
+    } catch (error) {
+      console.error('[ExamScheduleDialog] Failed to export exams:', error);
+      toast.error(t('examDialog.exportError') || 'Failed to export exam schedule.');
+    }
   };
 
   const handlePrint = () => {

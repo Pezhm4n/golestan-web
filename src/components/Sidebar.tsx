@@ -6,6 +6,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
 import {
@@ -89,7 +90,10 @@ const VirtualizedCourseList = ({ courses }: VirtualizedCourseListProps) => {
 const Sidebar = () => {
   const { selectedCourses, allCourses, clearAll, restoreCourses, addCustomCourse, saveSchedule } = useSchedule();
   const { isLoading, error, departments } = useGolestanData();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const dir = i18n.dir();
+  const isRtl = dir === 'rtl';
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState<string | 'all' | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -192,7 +196,7 @@ const Sidebar = () => {
           action: {
             label: t('sidebar.donateLabel'),
             onClick: () => {
-              window.location.href = '/donate';
+              navigate('/donate');
             },
           },
           duration: 8000,
@@ -245,7 +249,11 @@ const Sidebar = () => {
   };
 
   return (
-    <aside data-tour="sidebar" dir="rtl" className="w-[320px] border-l border-border bg-card/50 backdrop-blur-sm flex flex-col shrink-0 rounded-l-xl overflow-hidden">
+    <aside
+      data-tour="sidebar"
+      dir={dir}
+      className="w-[320px] border-l border-border bg-card/50 backdrop-blur-sm flex flex-col shrink-0 rounded-l-xl overflow-hidden"
+    >
       {/* Department Selector - searchable combobox grouped by faculty */}
       <div className="px-2 pt-2 pb-1">
         <DepartmentCombobox
@@ -259,12 +267,18 @@ const Sidebar = () => {
       {/* Search - connected to department selector */}
       <div className="px-2 pb-2 border-b border-border/50">
         <div className="relative">
-          <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Search
+            className={`absolute top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground ${
+              isRtl ? 'right-2.5' : 'left-2.5'
+            }`}
+          />
           <Input
             placeholder={t('sidebar.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pr-8 h-8 text-xs bg-background/50"
+            className={`h-8 text-xs bg-background/50 ${
+              isRtl ? 'pr-8 pl-2' : 'pl-8 pr-2'
+            }`}
           />
         </div>
       </div>
@@ -422,7 +436,7 @@ const Sidebar = () => {
 
       {/* Save schedule dialog */}
       <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
-        <DialogContent dir="rtl" className="max-w-sm">
+        <DialogContent dir={dir} className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-sm font-semibold">
               {t('sidebar.saveDialogTitle')}

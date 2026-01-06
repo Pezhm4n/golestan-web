@@ -223,8 +223,8 @@ const SingleBlock = ({
             // Ensure the card can visually pop outside the slot when zoomed,
             // while the parent cell controls clipping.
             'max-w-full min-w-0 w-full h-full overflow-visible',
-            // Smooth, spring‑like transition for all interactive states.
-            'transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
+            // Smooth transition for all interactive states.
+            'transition-all duration-300 ease-out',
             // Base shadow so the card feels tactile.
             'shadow-sm',
             // Vertical split support (kept for future use).
