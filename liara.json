@@ -1,9 +1,5 @@
 {
   "platform": "react",
   "app": "golestoon-web",
-  "port": 80,
-  "build": {
-    "command": "npm run build",
-    "output": "dist"
-  }
+  "port": 80
 }
