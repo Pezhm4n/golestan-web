@@ -1,5 +1,8 @@
 {
-  "platform": "docker",
-  "app": "golestoon-backend",
-  "port": 3000
+  "platform": "static",
+  "app": "golestoon-web",
+  "build": {
+    "command": "npm run build",
+    "output": "dist"
+  }
 }
