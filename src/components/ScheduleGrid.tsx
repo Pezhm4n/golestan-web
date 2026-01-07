@@ -348,26 +348,30 @@ const ScheduleGrid = () => {
       
       <div 
         className={cn(
-          "flex-1 overflow-auto bg-card shadow-md border border-border/40",
-          isMobile ? "rounded-xl" : "rounded-2xl",
-          // Smooth scrolling for touch
-          "scroll-smooth touch-pan-x touch-pan-y"
+          "flex-1 bg-card shadow-md border border-border/40",
+          isMobile ? "rounded-xl" : "rounded-2xl"
         )}
-        style={{
-          // Prevent overscroll bounce on iOS
-          WebkitOverflowScrolling: 'touch',
-        }}
       >
-        <div 
-          id="schedule-grid-capture"
+        <div
+          className={cn(
+            "w-full h-full overflow-x-auto overflow-y-auto",
+            "scroll-smooth touch-pan-x touch-pan-y"
+          )}
           style={{
-            display: 'grid',
-            gridTemplateColumns: `${TIME_COL_WIDTH}px repeat(6, minmax(${MIN_COL_WIDTH}px, 1fr))`,
-            gridTemplateRows: `${HEADER_HEIGHT}px repeat(${TIME_SLOTS.length}, ${ROW_HEIGHT}px)`,
-            gap: isMobile ? '1px' : '2px',
-            minWidth: `${TIME_COL_WIDTH + (MIN_COL_WIDTH * 6) + 12}px`,
+            // Prevent overscroll bounce on iOS
+            WebkitOverflowScrolling: 'touch',
           }}
         >
+          <div 
+            id="schedule-grid-capture"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: `${TIME_COL_WIDTH}px repeat(6, minmax(${MIN_COL_WIDTH}px, 1fr))`,
+              gridTemplateRows: `${HEADER_HEIGHT}px repeat(${TIME_SLOTS.length}, ${ROW_HEIGHT}px)`,
+              gap: isMobile ? '1px' : '2px',
+              minWidth: `${TIME_COL_WIDTH + (MIN_COL_WIDTH * 6) + 12}px`,
+            }}
+          >
           {/* Header Row */}
           <div 
             className={cn(
@@ -446,8 +450,6 @@ const ScheduleGrid = () => {
                 const cellKey = `${dayIndex}-${time}`;
                 const showDiscoveryTip = firstHeavyConflictKey === cellKey;
 
-                // Only treat the cell as occupied by a previous block if
-                // there is no session starting at this time (and no preview).
                 const hasStartHere =
                   sessions.length > 0 || hoveredStartSessions.length > 0;
                 const isOccupied =
@@ -464,7 +466,6 @@ const ScheduleGrid = () => {
                   rowSpan = getRowSpanFromSession(ghostMain);
                 }
 
-                // Cascading layout: indent overlapping sessions within a day
                 let layoutStyle: React.CSSProperties | undefined;
                 if (mainSession && sessions.length === 1) {
                   const layout = layoutBySessionKey.get(getSessionKey(mainSession));
@@ -478,9 +479,6 @@ const ScheduleGrid = () => {
                   }
                 }
 
-                // When this cell is the start of a hovered (ghost) session,
-                // we give the wrapper a higher z-index so the preview stack
-                // stays visually above regular cells.
                 const isGhostStartCell = hoveredStartSessions.length > 0 && !mainSession;
 
                 return (
@@ -488,20 +486,15 @@ const ScheduleGrid = () => {
                     key={`cell-${dayIndex}-${time}`}
                     className={cn(
                       "relative",
-                      // Reduce animation on mobile for performance
                       isMobile ? "transition-colors duration-100" : "transition-all duration-200",
                       showGridLines &&
                         (isRtl
                           ? "border-r border-b border-border/60"
                           : "border-l border-b border-border/60"),
                       rowIndex % 2 === 0 ? 'bg-background' : 'bg-muted/10',
-                      // Larger touch target on mobile
                       isMobile ? "min-h-[48px]" : "",
-                      // Highlight on hover (desktop only)
                       !isMobile && "hover:bg-accent/30",
-                      // Active state for touch
                       "active:bg-accent/40",
-                      // Highlight cells where hovered course would appear (non-conflict preview)
                       isPreviewCell && !mainSession && !hoveredHasConflict && "bg-primary/5"
                     )}
                     style={{ 
@@ -527,6 +520,7 @@ const ScheduleGrid = () => {
               })}
             </React.Fragment>
           ))}
+          </div>
         </div>
       </div>
     </div>

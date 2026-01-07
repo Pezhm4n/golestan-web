@@ -75,7 +75,7 @@ const DepartmentCombobox = ({
       <PopoverContent className="w-[280px] p-0" align="start">
         <Command>
           <CommandInput placeholder={t('department.searchPlaceholder')} />
-          <CommandList>
+          <CommandList className="max-h-[min(60vh,320px)] overflow-y-auto">
             <CommandEmpty>{t('department.empty')}</CommandEmpty>
 
             {groups.map(([facultyName, deps]) => (

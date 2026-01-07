@@ -26,6 +26,8 @@ interface ScheduleContextType {
   scheduledSessions: ScheduledSession[];
   totalUnits: number;
   allCourses: Course[];
+  /** ISO string (or backend-provided) timestamp of the last courses refresh, if available. */
+  lastCoursesUpdatedAt: string | null;
 
   // Actions
   addCourse: (course: Course) => boolean;
@@ -104,6 +106,13 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   });
 
   const { flattenedCourses } = useGolestanData();
+
+  // Derive last updated timestamp for the courses dataset
+  const lastCoursesUpdatedAt = useMemo(() => {
+    if (!flattenedCourses || flattenedCourses.length === 0) return null;
+    const first = flattenedCourses[0].course as { updated_at?: string } | undefined;
+    return first?.updated_at ?? null;
+  }, [flattenedCourses]);
 
   // Persist custom courses to localStorage
   useEffect(() => {
@@ -390,6 +399,7 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     scheduledSessions,
     totalUnits,
     allCourses,
+    lastCoursesUpdatedAt,
     addCourse,
     removeCourse,
     clearAll,

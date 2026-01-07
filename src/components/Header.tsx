@@ -1,6 +1,6 @@
 import { Moon, Sun, Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import html2canvas from 'html2canvas';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,12 +17,55 @@ import { useResponsive } from '@/hooks/use-responsive';
 import MobileHeader from './MobileHeader';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '@/contexts/SettingsContext';
+import { useSchedule } from '@/contexts/ScheduleContext';
 
 const Header = () => {
   const [isDownloading, setIsDownloading] = useState(false);
   const { isMobile, isTablet } = useResponsive();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { isDarkMode, themeMode, setThemeMode } = useSettings();
+  const { lastCoursesUpdatedAt } = useSchedule();
+
+  const lastUpdatedParts = useMemo(() => {
+    if (!lastCoursesUpdatedAt) return null;
+    const date = new Date(lastCoursesUpdatedAt);
+    if (Number.isNaN(date.getTime())) return null;
+
+    const isFa = i18n.language.startsWith('fa');
+
+    if (isFa) {
+      const dateFormatter = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+      const timeFormatter = new Intl.DateTimeFormat('fa-IR', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      });
+      return {
+        date: dateFormatter.format(date),
+        time: timeFormatter.format(date),
+      };
+    }
+
+    const dateFormatter = new Intl.DateTimeFormat(i18n.language || 'en-GB', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    const timeFormatter = new Intl.DateTimeFormat(i18n.language || 'en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+
+    return {
+      date: dateFormatter.format(date),
+      time: timeFormatter.format(date),
+    };
+  }, [i18n.language, lastCoursesUpdatedAt]);
 
   const handleToggleDarkMode = () => {
     if (themeMode === 'dark') {
@@ -283,9 +326,19 @@ const Header = () => {
   return (
     <header className="h-[50px] border-b border-border bg-card/80 backdrop-blur-sm px-4 flex items-center justify-between shrink-0">
       <div className="flex items-center gap-3">
-        <h1 className="text-sm font-bold text-foreground">
-          {t('header.appName')}
-        </h1>
+        <div className="flex flex-col">
+          <h1 className="text-sm font-bold text-foreground">
+            {t('header.appName')}
+          </h1>
+          {lastUpdatedParts && (
+            <p className="mt-0.5 text-[11px] text-muted-foreground leading-tight">
+              {t('header.lastUpdatedLabel')}:{' '}
+              {i18n.language.startsWith('fa')
+                ? `${lastUpdatedParts.date} ${t('header.lastUpdatedAt')} ${lastUpdatedParts.time}`
+                : `${lastUpdatedParts.date} ${t('header.lastUpdatedAt')} ${lastUpdatedParts.time}`}
+            </p>
+          )}
+        </div>
       </div>
       
       <TooltipProvider delayDuration={200}>

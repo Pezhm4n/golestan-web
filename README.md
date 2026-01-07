@@ -122,9 +122,17 @@ You can set them via a `.env` file (if you use something like `dotenv`) or via y
 - `CAPTCHA_API_URL`  
   - **Description:** Endpoint of the external captcha solver API.  
   - **Default:** A HuggingFace Space endpoint like  
-    `https://......space/predict`  
+    `https://golestan-captcha-solvers-golestan-captcha-solver.hf.space/predict`  
   - **Use case:** Override this if you host your own solver or use a different provider.
 
+Example `.env` (for local development):
+
+```env
+PORT=8000
+HOST=127.0.0.1
+ALLOWED_ORIGIN=http://localhost:8080
+CAPTCHA_API_URL=https://golestan-captcha-solvers-golestan-captcha-solver.hf.space/predict
+```
 
 > Adjust according to your actual deployment domain and captcha provider.
 

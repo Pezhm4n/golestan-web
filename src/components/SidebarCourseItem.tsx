@@ -98,21 +98,32 @@ const SidebarCourseItem = ({ course }: SidebarCourseItemProps) => {
               <div className="flex flex-col min-w-0 overflow-hidden">
                 {/* نام درس */}
                 <div
-                    dir="rtl"
-                    className="truncate text-right font-normal text-foreground leading-snug"
-                    title={course.name} // نمایش تولتیپ پیش‌فرض مرورگر برای اطمینان
+                  dir="rtl"
+                  className="truncate text-right font-normal text-foreground leading-snug"
+                  title={course.name}
                 >
                   {course.name}
                 </div>
 
                 {/* نام استاد */}
                 {course.instructor && (
-                    <div
-                        dir="rtl"
-                        className="truncate text-right text-[11px] text-muted-foreground leading-snug"
-                    >
-                      {course.instructor}
-                    </div>
+                  <div
+                    dir="rtl"
+                    className="truncate text-right text-[11px] text-muted-foreground leading-snug"
+                  >
+                    {course.instructor}
+                  </div>
+                )}
+
+                {/* توضیحات کوتاه درس (در صورت وجود) */}
+                {course.description && course.description.trim() !== '' && (
+                  <div
+                    dir="rtl"
+                    className="mt-0.5 truncate text-right text-[10px] text-muted-foreground/80 leading-snug"
+                    title={course.description}
+                  >
+                    {course.description}
+                  </div>
                 )}
               </div>
 

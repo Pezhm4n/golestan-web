@@ -3,6 +3,7 @@ import { Calendar, Download, Printer } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { VAZIRMATN_REGULAR_TTF_BASE64 } from '@/lib/fonts/vazirmatn';
 import {
   Dialog,
   DialogContent,
@@ -71,45 +72,28 @@ const ExamScheduleDialog = () => {
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
 
-      // Load Vazirmatn font so Persian text renders correctly
+      // Load Vazirmatn font from embedded Base64 so Persian text renders correctly
       let fontName = 'helvetica';
       try {
-        const response = await fetch('/fonts/Vazirmatn-Regular.ttf');
-        if (response.ok) {
-          const blob = await response.blob();
-          const base64 = await new Promise<string | null>((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              const result = reader.result?.toString();
-              if (!result) {
-                resolve(null);
-                return;
-              }
-              const base64data = result.split(',')[1];
-              resolve(base64data || null);
-            };
-            reader.onerror = () => resolve(null);
-            reader.readAsDataURL(blob);
-          });
+        if (VAZIRMATN_REGULAR_TTF_BASE64 && VAZIRMATN_REGULAR_TTF_BASE64.trim() !== '') {
+          const base64 = VAZIRMATN_REGULAR_TTF_BASE64.trim();
 
-          if (base64) {
-            // Register regular weight
-            pdf.addFileToVFS('Vazirmatn.ttf', base64);
-            pdf.addFont('Vazirmatn.ttf', 'Vazirmatn', 'normal');
+          // Register regular weight
+          pdf.addFileToVFS('Vazirmatn.ttf', base64);
+          pdf.addFont('Vazirmatn.ttf', 'Vazirmatn', 'normal');
 
-            // Register a \"bold\" face pointing to the same file so that
-            // using fontStyle: 'bold' for conflict rows and headers does
-            // not fall back to a Latin-only font (which causes mojibake).
-            pdf.addFileToVFS('Vazirmatn-Bold.ttf', base64);
-            pdf.addFont('Vazirmatn-Bold.ttf', 'Vazirmatn', 'bold');
+          // Register a "bold" face pointing to the same file so that
+          // using fontStyle: 'bold' for conflict rows and headers does
+          // not fall back to a Latin-only font (which causes mojibake).
+          pdf.addFileToVFS('Vazirmatn-Bold.ttf', base64);
+          pdf.addFont('Vazirmatn-Bold.ttf', 'Vazirmatn', 'bold');
 
-            pdf.setFont('Vazirmatn', 'normal');
-            fontName = 'Vazirmatn';
-          }
+          pdf.setFont('Vazirmatn', 'normal');
+          fontName = 'Vazirmatn';
         }
       } catch (fontError) {
         // If font loading fails, fall back to default font
-        console.error('[ExamScheduleDialog] Failed to load Vazirmatn font:', fontError);
+        console.error('[ExamScheduleDialog] Failed to initialise Vazirmatn font:', fontError);
       }
 
       // Signature text with app name and current site URL
