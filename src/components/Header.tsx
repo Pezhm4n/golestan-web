@@ -19,6 +19,51 @@ import { useTranslation } from 'react-i18next';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useSchedule } from '@/contexts/ScheduleContext';
 
+/**
+ * Parse a backend-provided timestamp string into a Date that represents
+ * the correct absolute moment for later formatting in Asia/Tehran.
+ *
+ * Rules:
+ * - If the string already contains an explicit timezone (Z or +hh:mm),
+ *   we trust the built-in Date parser.
+ * - If it has no timezone (naive string like "2025-01-07T10:40:00"),
+ *   we interpret it as a UTC timestamp (10:40 UTC), not local time.
+ *   This ensures later formatting with timeZone: 'Asia/Tehran' converts
+ *   it to Iran time (e.g. 13:10 / 14:10) rather than leaving it as-is.
+ */
+const parseUpdatedAtAsUtc = (raw: string | null | undefined): Date | null => {
+  if (!raw) return null;
+
+  // If there is an explicit timezone (Z or ±hh:mm), rely on native parsing.
+  if (/[zZ]|[+-]\d{2}:?\d{2}$/.test(raw)) {
+    const d = new Date(raw);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  // Try to match a naive ISO-like timestamp without timezone:
+  //  "YYYY-MM-DDTHH:mm[:ss]" or "YYYY-MM-DD HH:mm[:ss]"
+  const match = raw.match(
+    /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?/,
+  );
+  if (match) {
+    const [, y, mo, dStr, hh, mm, ss] = match;
+    const ms = Date.UTC(
+      Number(y),
+      Number(mo) - 1,
+      Number(dStr),
+      Number(hh),
+      Number(mm),
+      ss ? Number(ss) : 0,
+    );
+    const d = new Date(ms);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  // Fallback: let Date try; if it fails, return null.
+  const fallback = new Date(raw);
+  return Number.isNaN(fallback.getTime()) ? null : fallback;
+};
+
 const Header = () => {
   const [isDownloading, setIsDownloading] = useState(false);
   const { isMobile, isTablet } = useResponsive();
@@ -27,9 +72,8 @@ const Header = () => {
   const { lastCoursesUpdatedAt } = useSchedule();
 
   const lastUpdatedParts = useMemo(() => {
-    if (!lastCoursesUpdatedAt) return null;
-    const date = new Date(lastCoursesUpdatedAt);
-    if (Number.isNaN(date.getTime())) return null;
+    const date = parseUpdatedAtAsUtc(lastCoursesUpdatedAt);
+    if (!date) return null;
 
     const isFa = i18n.language.startsWith('fa');
 
@@ -38,11 +82,13 @@ const Header = () => {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
+        timeZone: 'Asia/Tehran',
       });
       const timeFormatter = new Intl.DateTimeFormat('fa-IR', {
         hour: '2-digit',
         minute: '2-digit',
         hour12: false,
+        timeZone: 'Asia/Tehran',
       });
       return {
         date: dateFormatter.format(date),
@@ -54,11 +100,13 @@ const Header = () => {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
+      timeZone: 'Asia/Tehran',
     });
     const timeFormatter = new Intl.DateTimeFormat(i18n.language || 'en-GB', {
       hour: '2-digit',
       minute: '2-digit',
       hour12: false,
+      timeZone: 'Asia/Tehran',
     });
 
     return {

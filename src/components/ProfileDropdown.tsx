@@ -15,6 +15,7 @@ import GuidedTour from './GuidedTour';
 import SettingsDialog from './SettingsDialog';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 const ProfileDropdown = () => {
   const [profileOpen, setProfileOpen] = useState(false);
@@ -22,8 +23,20 @@ const ProfileDropdown = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { t } = useSettings();
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
 
-  const handleLogout = () => {
+  const displayName =
+    (user?.user_metadata?.full_name as string | undefined) ||
+    user?.email ||
+    t('کاربر مهمان', 'Guest User');
+
+  const email = user?.email || 'guest@example.com';
+
+  const initials =
+    (displayName && displayName.trim()[0]?.toUpperCase()) || 'U';
+
+  const handleLogout = async () => {
+    await signOut();
     toast.info(t('از حساب کاربری خارج شدید', 'Logged out'));
   };
 
@@ -37,15 +50,15 @@ const ProfileDropdown = () => {
         <DropdownMenuTrigger asChild>
           <Avatar className="h-8 w-8 cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all">
             <AvatarFallback className="text-xs bg-primary/10 text-primary flex items-center justify-center">
-              <User className="h-4 w-4" />
+              {initials}
             </AvatarFallback>
           </Avatar>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56 text-right py-2 rounded-lg shadow-lg">
           <DropdownMenuLabel className="text-xs font-normal pb-1">
             <div className="flex flex-col gap-1">
-              <p className="text-sm font-semibold">{t('کاربر مهمان', 'Guest User')}</p>
-              <p className="text-[11px] text-muted-foreground">guest@example.com</p>
+              <p className="text-sm font-semibold">{displayName}</p>
+              <p className="text-[11px] text-muted-foreground">{email}</p>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
