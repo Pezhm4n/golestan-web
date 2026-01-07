@@ -183,7 +183,16 @@ export function convertGolestanCourseToAppCourse(
 
   const gender = mapGender(gCourse.gender);
   const group = mapCourseGroup(gCourse);
-  const type = mapCourseType(gCourse.name, gCourse.description);
+  // Prefer description; but also support legacy/backends that might send
+  // a free-text field under alternative keys like `comment` or `note`.
+  const rawDescription =
+    gCourse.description ||
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (gCourse as any).comment ||
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (gCourse as any).note ||
+    '';
+  const type = mapCourseType(gCourse.name, rawDescription);
 
   const facultyName = faculty ?? gCourse.faculty ?? '';
   const deptName = department ?? gCourse.department ?? '';
@@ -215,7 +224,7 @@ export function convertGolestanCourseToAppCourse(
     credits: gCourse.credits || 0,
     examDate,
     examTime,
-    description: gCourse.description || '',
+    description: rawDescription,
     gender,
     capacity: safeCapacity,
     enrolled: 0,                   // API does not currently expose enrolled count

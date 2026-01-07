@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, AlertTriangle, Pencil, MousePointer2 } from 'lucide-react';
+import { X, AlertTriangle, Pencil, MousePointer2, Info } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { CourseGroup, ScheduledSession } from '@/types/course';
 import { useSchedule } from '@/contexts/ScheduleContext';
@@ -499,6 +499,17 @@ const SingleBlock = ({
                 </span>
               </>
             )}
+          </div>
+
+          <div className="mt-3 pt-3 border-t border-border/50">
+            <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 rounded-md px-2 py-1.5">
+              <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+              <p className="leading-relaxed text-foreground/90 max-h-20 overflow-y-auto">
+                {session.description && session.description.toString().trim() !== ''
+                  ? session.description
+                  : '---'}
+              </p>
+            </div>
           </div>
         </div>
       </PopoverContent>

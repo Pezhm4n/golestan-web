@@ -178,6 +178,7 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         groupNumber: course.groupNumber,
         examDate: course.examDate,
         examTime: course.examTime,
+        description: course.description,
       })),
     );
   }, [selectedCourses]);

@@ -38,9 +38,10 @@ const ExamScheduleDialog = () => {
       name: c.name,
       courseId: c.courseId,
       instructor: c.instructor,
+      description: c.description,
       date: c.examDate,
-      time: c.examTime || 'اعلام نشده',
-      location: c.sessions[0]?.location || 'اعلام نشده',
+      time: c.examTime || t('examDialog.noExamTime'),
+      location: c.sessions[0]?.location || t('examDialog.noLocation'),
       credits: c.credits,
     }))
     .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
@@ -128,6 +129,7 @@ const ExamScheduleDialog = () => {
         t('examDialog.headers.courseName'),
         t('examDialog.headers.courseCode'),
         t('examDialog.headers.instructor'),
+        t('examDialog.headers.description'),
         t('examDialog.headers.classTime'),
         t('examDialog.headers.examTime'),
         t('examDialog.headers.credits'),
@@ -142,6 +144,7 @@ const ExamScheduleDialog = () => {
           exam.name,
           exam.courseId,
           exam.instructor,
+          exam.description || '',
           `${exam.date}\n${exam.time}`,
           exam.time,
           String(exam.credits),
@@ -292,6 +295,7 @@ const ExamScheduleDialog = () => {
         t('examDialog.headers.courseName'),
         t('examDialog.headers.courseCode'),
         t('examDialog.headers.instructor'),
+        t('examDialog.headers.description'),
         t('examDialog.headers.credits'),
         t('examDialog.headers.examTime'),
         t('examDialog.headers.classTime'),
@@ -318,6 +322,7 @@ const ExamScheduleDialog = () => {
           exam.name,
           exam.courseId,
           exam.instructor,
+          exam.description || '',
           exam.credits,
           exam.time,
           exam.date,
@@ -427,13 +432,30 @@ const ExamScheduleDialog = () => {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-primary/10">
-                      <TableHead className="text-right text-xs font-bold py-3">{t('examDialog.headers.courseName')}</TableHead>
-                      <TableHead className="text-right text-xs font-bold py-3">{t('examDialog.headers.courseCode')}</TableHead>
-                      <TableHead className="text-right text-xs font-bold py-3">{t('examDialog.headers.instructor')}</TableHead>
-                      <TableHead className="text-right text-xs font-bold py-3">{t('examDialog.headers.classTime')}</TableHead>
-                      <TableHead className="text-right text-xs font-bold py-3">{t('examDialog.headers.examTime')}</TableHead>
-                      <TableHead className="text-right text-xs font-bold py-3">{t('examDialog.headers.credits')}</TableHead>
-                      <TableHead className="text-right text-xs font-bold py-3">{t('examDialog.headers.location')}</TableHead>
+                      <TableHead className="text-right text-xs font-bold py-3">
+                        {t('examDialog.headers.courseName')}
+                      </TableHead>
+                      <TableHead className="text-right text-xs font-bold py-3">
+                        {t('examDialog.headers.courseCode')}
+                      </TableHead>
+                      <TableHead className="text-right text-xs font-bold py-3">
+                        {t('examDialog.headers.instructor')}
+                      </TableHead>
+                      <TableHead className="text-right text-xs font-bold py-3">
+                        {t('examDialog.headers.description')}
+                      </TableHead>
+                      <TableHead className="text-right text-xs font-bold py-3">
+                        {t('examDialog.headers.classTime')}
+                      </TableHead>
+                      <TableHead className="text-right text-xs font-bold py-3">
+                        {t('examDialog.headers.examTime')}
+                      </TableHead>
+                      <TableHead className="text-right text-xs font-bold py-3">
+                        {t('examDialog.headers.credits')}
+                      </TableHead>
+                      <TableHead className="text-right text-xs font-bold py-3">
+                        {t('examDialog.headers.location')}
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -445,7 +467,11 @@ const ExamScheduleDialog = () => {
                           hover:bg-muted/40 transition-colors
                         `}
                       >
-                        <TableCell className={`text-xs font-medium py-3 ${conflictingIds.has(exam.id) ? 'text-destructive' : ''}`}>
+                        <TableCell
+                          className={`text-xs font-medium py-3 ${
+                            conflictingIds.has(exam.id) ? 'text-destructive' : ''
+                          }`}
+                        >
                           {exam.name}
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground py-3 font-mono">
@@ -454,13 +480,33 @@ const ExamScheduleDialog = () => {
                         <TableCell className="text-xs text-muted-foreground py-3">
                           {exam.instructor}
                         </TableCell>
+                        <TableCell
+                          className="text-xs text-muted-foreground py-3 max-w-[220px]"
+                          title={
+                            exam.description && exam.description.toString().trim() !== ''
+                              ? exam.description
+                              : undefined
+                          }
+                        >
+                          <div className="line-clamp-2 leading-snug">
+                            {exam.description && exam.description.toString().trim() !== ''
+                              ? exam.description
+                              : '---'}
+                          </div>
+                        </TableCell>
                         <TableCell className="text-xs text-muted-foreground py-3">
                           <div className="flex flex-col">
                             <span>{exam.date}</span>
                             <span className="text-[10px]">{exam.time}</span>
                           </div>
                         </TableCell>
-                        <TableCell className={`text-xs py-3 ${conflictingIds.has(exam.id) ? 'text-destructive font-bold' : 'text-muted-foreground'}`}>
+                        <TableCell
+                          className={`text-xs py-3 ${
+                            conflictingIds.has(exam.id)
+                              ? 'text-destructive font-bold'
+                              : 'text-muted-foreground'
+                          }`}
+                        >
                           {exam.time}
                         </TableCell>
                         <TableCell className="text-xs text-center py-3">

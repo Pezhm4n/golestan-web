@@ -272,7 +272,8 @@
       "classTime": "Class time",
       "examTime": "Exam time",
       "credits": "Credits",
-      "location": "Location"
+      "location": "Location",
+      "description": "Description"
     },
     "noExamTime": "Not announced",
     "noLocation": "Not announced",

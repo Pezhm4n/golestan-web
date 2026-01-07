@@ -272,7 +272,8 @@
       "classTime": "زمان کلاس",
       "examTime": "زمان امتحان",
       "credits": "واحد",
-      "location": "محل برگزاری"
+      "location": "محل برگزاری",
+      "description": "توضیحات"
     },
     "noExamTime": "اعلام نشده",
     "noLocation": "اعلام نشده",

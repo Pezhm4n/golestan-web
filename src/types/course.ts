@@ -52,6 +52,8 @@ export interface ScheduledSession extends CourseSession {
   groupNumber?: number; // شماره گروه
   examDate?: string;
   examTime?: string;
+  /** Optional course description propagated from the parent Course. */
+  description?: string;
 
   /**
    * Optional metadata used by the grid to render complex time conflicts.
