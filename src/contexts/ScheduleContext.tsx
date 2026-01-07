@@ -5,6 +5,8 @@ import { hasConflict as schedulerHasConflict } from '@/lib/scheduler';
 import { useGolestanData } from '@/hooks/useGolestanData';
 import { convertGolestanCourseToAppCourse } from '@/lib/converters';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/contexts/AuthContext';
+import { fetchUserSchedules, saveUserSchedule, deleteUserSchedule } from '@/services/scheduleService';
 
 export interface SavedSchedule {
   id: string;
@@ -61,6 +63,7 @@ const ScheduleContext = createContext<ScheduleContextType | undefined>(undefined
 
 export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { t } = useTranslation();
+  const { user } = useAuth();
 
   // Selected courses are persisted as full Course objects
   const [selectedCourses, setSelectedCourses] = useState<Course[]>(() => {
@@ -106,6 +109,35 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   });
 
   const { flattenedCourses } = useGolestanData();
+
+  // When user logs in, load schedules from Supabase.
+  // For guests (no user), keep using localStorage as before.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Guest: rely on whatever is in localStorage (initialiser already loaded it)
+    if (!user) {
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const remote = await fetchUserSchedules(user.id);
+        if (!cancelled) {
+          setSavedSchedules(remote);
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('[ScheduleContext] Failed to fetch user schedules from Supabase:', error);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   // Derive last updated timestamp for the courses dataset
   const lastCoursesUpdatedAt = useMemo(() => {
@@ -335,22 +367,47 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return;
       }
 
+      const coursesSnapshot = [...selectedCourses];
+
+      // Authenticated user: persist to Supabase + local state
+      if (user) {
+        (async () => {
+          try {
+            const created = await saveUserSchedule(user.id, trimmedName, coursesSnapshot);
+            setSavedSchedules(prev => [created, ...prev]);
+            toast.success(t('schedule.scheduleSaved'), {
+              description: t('schedule.scheduleSavedSummary', {
+                count: coursesSnapshot.length,
+              }),
+            });
+          } catch (error) {
+            // eslint-disable-next-line no-console
+            console.error('[ScheduleContext] saveUserSchedule error:', error);
+            toast.error(t('schedule.scheduleEmpty'), {
+              description: t('schedule.conflictGeneric'),
+            });
+          }
+        })();
+        return;
+      }
+
+      // Guest: localStorage only (previous behaviour)
       const now = Date.now();
       const newSchedule: SavedSchedule = {
         id: now.toString(),
         name: trimmedName,
         createdAt: now,
-        courses: selectedCourses,
+        courses: coursesSnapshot,
       };
 
       setSavedSchedules(prev => [newSchedule, ...prev]);
       toast.success(t('schedule.scheduleSaved'), {
         description: t('schedule.scheduleSavedSummary', {
-          count: selectedCourses.length,
+          count: coursesSnapshot.length,
         }),
       });
     },
-    [selectedCourses, t],
+    [selectedCourses, t, user],
   );
 
   // Edit an existing course (both in selectedCourses and customCourses)
@@ -386,9 +443,28 @@ export const ScheduleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Delete a saved schedule
   const deleteSchedule = useCallback((id: string) => {
+    // Authenticated user: delete from Supabase + local state
+    if (user) {
+      setSavedSchedules(prev => prev.filter(s => s.id !== id));
+      (async () => {
+        try {
+          await deleteUserSchedule(id);
+          toast.info(t('schedule.deleted'));
+        } catch (error) {
+          // eslint-disable-next-line no-console
+          console.error('[ScheduleContext] deleteUserSchedule error:', error);
+          toast.error(t('schedule.scheduleEmpty'), {
+            description: t('schedule.conflictGeneric'),
+          });
+        }
+      })();
+      return;
+    }
+
+    // Guest: local-only delete (previous behaviour)
     setSavedSchedules(prev => prev.filter(s => s.id !== id));
     toast.info(t('schedule.deleted'));
-  }, [t]);
+  }, [t, user]);
 
   const value: ScheduleContextType = {
     selectedCourseIds,
