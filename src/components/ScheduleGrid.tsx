@@ -1,4 +1,5 @@
 import React, { useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DAYS, ScheduledSession } from '@/types/course';
 import { useSchedule } from '@/contexts/ScheduleContext';
 import { useSettings } from '@/contexts/SettingsContext';
@@ -7,6 +8,8 @@ import CourseCell from './CourseCell';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 import { Z_INDEX } from '@/lib/constants';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
 
 const TIME_SLOTS = Array.from({ length: 14 }, (_, i) => 7 + i);
 
@@ -335,7 +338,7 @@ const ScheduleGrid = () => {
     <div 
       data-tour="schedule-grid" 
       className={cn(
-        "flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden bg-muted/20",
+        "relative flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden bg-muted/20",
         isMobile ? "p-2" : isTablet ? "p-3" : "p-4 md:p-6"
       )}
     >

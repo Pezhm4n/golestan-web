@@ -1,12 +1,10 @@
 import { useState, useMemo, FormEvent } from 'react';
-import { Mail, Lock, Eye, EyeOff, User, Loader2 } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, User, Loader2, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Card,
   CardHeader,
-  CardTitle,
-  CardDescription,
   CardContent,
   CardFooter,
 } from '@/components/ui/card';
@@ -14,20 +12,26 @@ import { Input } from '@/components/ui/input';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
+import ForgotPassword from '@/components/ForgotPassword';
 
 type AuthMode = 'login' | 'signup';
+type AuthView = 'auth' | 'forgot';
 
 interface AuthFormValues {
   fullName: string;
   email: string;
   password: string;
+  confirmPassword: string;
 }
 
 const initialValues: AuthFormValues = {
   fullName: '',
   email: '',
   password: '',
+  confirmPassword: '',
 };
+
+type Touched = Partial<Record<keyof AuthFormValues, boolean>>;
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -36,18 +40,16 @@ const LoginAuth = () => {
   const { t, i18n } = useTranslation();
 
   const [mode, setMode] = useState<AuthMode>('login');
+  const [view, setView] = useState<AuthView>('auth');
   const [values, setValues] = useState<AuthFormValues>(initialValues);
+  const [touched, setTouched] = useState<Touched>({});
+  const [submitted, setSubmitted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
 
   const isSignup = mode === 'signup';
-
-  const modeTitle = isSignup ? t('auth.signupTitle') : t('auth.loginTitle');
-  const modeDescription = isSignup
-    ? t('auth.signupDescription')
-    : t('auth.loginDescription');
 
   const validate = useMemo(() => {
     const errors: Partial<AuthFormValues> = {};
@@ -68,6 +70,12 @@ const LoginAuth = () => {
       } else if (values.fullName.trim().length < 3) {
         errors.fullName = t('auth.fieldErrorNameShort');
       }
+
+      if (!values.confirmPassword.trim()) {
+        errors.confirmPassword = t('auth.fieldErrorConfirmPasswordRequired');
+      } else if (values.confirmPassword !== values.password) {
+        errors.confirmPassword = t('auth.fieldErrorConfirmPasswordMismatch');
+      }
     }
 
     return errors;
@@ -75,12 +83,24 @@ const LoginAuth = () => {
 
   const hasErrors = Object.keys(validate).length > 0;
 
+  const showFullNameError =
+    isSignup && (submitted || touched.fullName) && !!validate.fullName;
+  const showEmailError = (submitted || touched.email) && !!validate.email;
+  const showPasswordError = (submitted || touched.password) && !!validate.password;
+  const showConfirmPasswordError =
+    isSignup && (submitted || touched.confirmPassword) && !!validate.confirmPassword;
+
   const handleChange =
     (field: keyof AuthFormValues) =>
     (event: React.ChangeEvent<HTMLInputElement>) => {
+      const value = event.target.value;
       setValues(prev => ({
         ...prev,
-        [field]: event.target.value,
+        [field]: value,
+      }));
+      setTouched(prev => ({
+        ...prev,
+        [field]: true,
       }));
       setError(null);
     };
@@ -89,6 +109,7 @@ const LoginAuth = () => {
     event.preventDefault();
     setError(null);
     setInfoMessage(null);
+    setSubmitted(true);
 
     if (hasErrors) {
       setError(t('auth.formErrorGeneric'));
@@ -154,64 +175,95 @@ const LoginAuth = () => {
     setMode(nextMode);
     setError(null);
     setInfoMessage(null);
+    setSubmitted(false);
+    setTouched({});
     setValues(prev => ({
       fullName: '',
       email: prev.email,
       password: '',
+      confirmPassword: '',
     }));
   };
+
+  // Separate view for forgot password
+  if (view === 'forgot') {
+    return (
+      <div className="w-full max-w-md mx-auto">
+        <Card className="relative overflow-hidden border border-border/70 bg-card/90 backdrop-blur-xl shadow-xl shadow-black/5">
+          <div className="pointer-events-none absolute inset-x-10 -top-32 h-40 bg-gradient-to-b from-primary/20 via-primary/5 to-transparent blur-3xl opacity-70" />
+
+          <CardHeader className="relative space-y-4 flex flex-col items-center text-center pt-6 pb-4">
+            <img
+              src="/icons/t_600x600-removebg-preview.png"
+              alt="Golestoon logo"
+              className="h-16 w-16 md:h-20 md:w-20 rounded-2xl shadow-md bg-background object-contain"
+            />
+            <div className="space-y-1">
+              <p className="text-sm font-semibold tracking-[0.25em] uppercase text-primary/80">
+                {t('auth.brandTitle')}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {t('auth.brandSubtitle')}
+              </p>
+            </div>
+            <div className="space-y-1">
+              <h2 className="text-base sm:text-lg font-bold text-foreground">
+                {t('auth.forgotPasswordTitle')}
+              </h2>
+              <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
+                {t('auth.forgotPasswordDescription')}
+              </p>
+            </div>
+          </CardHeader>
+
+          <CardContent className="relative pt-2 pb-6 px-5 space-y-4">
+            <ForgotPassword onBackToLogin={() => setView('auth')} />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-md mx-auto">
       <Card className="relative overflow-hidden border border-border/70 bg-card/90 backdrop-blur-xl shadow-xl shadow-black/5">
         <div className="pointer-events-none absolute inset-x-10 -top-32 h-40 bg-gradient-to-b from-primary/20 via-primary/5 to-transparent blur-3xl opacity-70" />
 
-        <CardHeader className="relative space-y-2">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex flex-col gap-1 text-right">
-              <CardTitle className="text-xl sm:text-2xl font-bold">
-                {modeTitle}
-              </CardTitle>
-              <CardDescription className="text-xs sm:text-sm leading-relaxed">
-                {modeDescription}
-              </CardDescription>
-            </div>
-            <div className="hidden sm:flex items-center justify-center h-10 w-10 rounded-full bg-primary/10 text-primary">
-              <User className="w-5 h-5" />
-            </div>
+        <CardHeader className="relative space-y-4 flex flex-col items-center text-center pt-6 pb-4">
+          {/* Logo */}
+          <img
+            src="/icons/t_600x600-removebg-preview.png"
+            alt="Golestoon logo"
+            className="h-16 w-16 md:h-20 md:w-20 rounded-2xl shadow-md bg-background object-contain"
+          />
+
+          {/* English title + Persian subtitle */}
+          <div className="space-y-1">
+            <p className="text-sm font-semibold tracking-[0.25em] uppercase text-primary/80">
+              {t('auth.brandTitle')}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {t('auth.brandSubtitle')}
+            </p>
           </div>
 
-          <div className="mt-3 inline-flex items-center rounded-full border border-border bg-muted/60 p-1 text-xs sm:text-[13px]">
-            <button
-              type="button"
-              className={cn(
-                'flex-1 px-3 py-1.5 rounded-full transition-all duration-200',
-                'flex items-center justify-center gap-1.5',
-                mode === 'login'
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
-              onClick={() => handleModeToggle('login')}
-            >
-              <span>{t('auth.loginButton')}</span>
-            </button>
-            <button
-              type="button"
-              className={cn(
-                'flex-1 px-3 py-1.5 rounded-full transition-all duration-200',
-                'flex items-center justify-center gap-1.5',
-                mode === 'signup'
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
-              onClick={() => handleModeToggle('signup')}
-            >
-              <span>{t('auth.signupButton')}</span>
-            </button>
+          {/* Slogan + description */}
+          <div className="space-y-1">
+            <h2 className="text-lg sm:text-xl font-extrabold bg-gradient-to-r from-primary to-sky-400 bg-clip-text text-transparent">
+              {t('auth.brandSlogan')}
+            </h2>
+            <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
+              {t('auth.brandDescription')}
+            </p>
           </div>
+
+          {/* CTA label */}
+          <p className="text-[11px] sm:text-xs text-muted-foreground">
+            {t('auth.ctaLabel')}
+          </p>
         </CardHeader>
 
-        <CardContent className="relative pt-2 space-y-4">
+        <CardContent className="relative pt-1 pb-5 px-5 space-y-4">
           {error && (
             <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-[11px] sm:text-xs text-destructive">
               <AlertIcon />
@@ -234,7 +286,7 @@ const LoginAuth = () => {
                   className="flex items-center justify-between text-xs font-medium text-foreground"
                 >
                   <span>{t('auth.nameLabel')}</span>
-                  {validate.fullName && (
+                  {showFullNameError && validate.fullName && (
                     <span className="text-[10px] text-destructive">
                       {validate.fullName}
                     </span>
@@ -253,7 +305,7 @@ const LoginAuth = () => {
                     onChange={handleChange('fullName')}
                     className={cn(
                       'pr-9 text-xs sm:text-sm',
-                      validate.fullName &&
+                      showFullNameError &&
                         'border-destructive/60 focus-visible:ring-destructive',
                     )}
                   />
@@ -267,7 +319,7 @@ const LoginAuth = () => {
                 className="flex items-center justify-between text-xs font-medium text-foreground"
               >
                 <span>{t('auth.emailLabel')}</span>
-                {validate.email && (
+                {showEmailError && validate.email && (
                   <span className="text-[10px] text-destructive">
                     {validate.email}
                   </span>
@@ -287,7 +339,7 @@ const LoginAuth = () => {
                   onChange={handleChange('email')}
                   className={cn(
                     'pr-9 text-xs sm:text-sm',
-                    validate.email &&
+                    showEmailError &&
                       'border-destructive/60 focus-visible:ring-destructive',
                   )}
                 />
@@ -300,7 +352,7 @@ const LoginAuth = () => {
                 className="flex items-center justify-between text-xs font-medium text-foreground"
               >
                 <span>{t('auth.passwordLabel')}</span>
-                {validate.password && (
+                {showPasswordError && validate.password && (
                   <span className="text-[10px] text-destructive">
                     {validate.password}
                   </span>
@@ -324,7 +376,7 @@ const LoginAuth = () => {
                   onChange={handleChange('password')}
                   className={cn(
                     'pr-9 pl-9 text-xs sm:text-sm',
-                    validate.password &&
+                    showPasswordError &&
                       'border-destructive/60 focus-visible:ring-destructive',
                   )}
                 />
@@ -347,13 +399,80 @@ const LoginAuth = () => {
               </div>
             </div>
 
-            <p className="mt-1 text-[10px] sm:text-[11px] text-muted-foreground leading-relaxed">
-              {t('auth.rememberText')}
-            </p>
+            {isSignup && (
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="confirmPassword"
+                  className="flex items-center justify-between text-xs font-medium text-foreground"
+                >
+                  <span>{t('auth.confirmPasswordLabel')}</span>
+                  {showConfirmPasswordError && validate.confirmPassword && (
+                    <span className="text-[10px] text-destructive">
+                      {validate.confirmPassword}
+                    </span>
+                  )}
+                </label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="new-password"
+                    dir="ltr"
+                    placeholder={t('auth.confirmPasswordPlaceholder')}
+                    value={values.confirmPassword}
+                    onChange={handleChange('confirmPassword')}
+                    className={cn(
+                      'pr-3 pl-9 text-xs sm:text-sm',
+                      showConfirmPasswordError &&
+                        'border-destructive/60 focus-visible:ring-destructive',
+                    )}
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="mt-1 flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={() => setView('forgot')}
+                className="text-[10px] sm:text-[11px] text-primary hover:underline"
+              >
+                {t('auth.forgotPasswordLink')}
+              </button>
+
+              <div className="inline-flex items-center rounded-full border border-border bg-muted/60 p-1 text-[10px] sm:text-[11px]">
+                <button
+                  type="button"
+                  className={cn(
+                    'flex-1 px-2 py-1 rounded-full transition-all duration-200',
+                    'flex items-center justify-center gap-1',
+                    mode === 'login'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground',
+                  )}
+                  onClick={() => handleModeToggle('login')}
+                >
+                  <span>{t('auth.loginButton')}</span>
+                </button>
+                <button
+                  type="button"
+                  className={cn(
+                    'flex-1 px-2 py-1 rounded-full transition-all duration-200',
+                    'flex items-center justify-center gap-1',
+                    mode === 'signup'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground',
+                  )}
+                  onClick={() => handleModeToggle('signup')}
+                >
+                  <span>{t('auth.signupButton')}</span>
+                </button>
+              </div>
+            </div>
 
             <Button
               type="submit"
-              className="w-full mt-1 relative justify-center"
+              className="w-full mt-2 relative justify-center"
               disabled={isSubmitting}
             >
               {isSubmitting && (
@@ -369,7 +488,7 @@ const LoginAuth = () => {
           </form>
         </CardContent>
 
-        <CardFooter className="relative flex flex-col items-center justify-center gap-2 pt-4 pb-5 text-[11px] sm:text-xs text-muted-foreground">
+        <CardFooter className="relative flex flex-col items-center justify-center gap-2 pt-3 pb-5 text-[11px] sm:text-xs text-muted-foreground">
           <span>
             {isSignup ? t('auth.footerHaveAccount') : t('auth.footerNoAccount')}{' '}
             <button
@@ -383,6 +502,16 @@ const LoginAuth = () => {
               {isSignup ? t('auth.toggleToLogin') : t('auth.toggleToSignup')}
             </button>
           </span>
+
+          <a
+            href="https://t.me/golestoon_ir"
+            target="_blank"
+            rel="noreferrer"
+            className="mt-1 inline-flex items-center gap-1.5 text-[11px] sm:text-xs text-muted-foreground hover:text-primary transition-colors"
+          >
+            <Send className="h-3.5 w-3.5" />
+            <span>{t('auth.telegramLinkLabel')}</span>
+          </a>
         </CardFooter>
       </Card>
     </div>

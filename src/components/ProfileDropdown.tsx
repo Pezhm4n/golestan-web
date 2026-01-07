@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LogOut, User, Settings, HelpCircle, Info } from 'lucide-react';
+import { LogOut, User, Settings, HelpCircle, Info, SlidersHorizontal } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -9,10 +9,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import StudentProfileDialog from './StudentProfileDialog';
 import GuidedTour from './GuidedTour';
 import SettingsDialog from './SettingsDialog';
+import ProfileDialog from './ProfileDialog';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,6 +23,7 @@ const ProfileDropdown = () => {
   const [profileOpen, setProfileOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
   const { t } = useSettings();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
@@ -56,9 +59,21 @@ const ProfileDropdown = () => {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56 text-right py-2 rounded-lg shadow-lg">
           <DropdownMenuLabel className="text-xs font-normal pb-1">
-            <div className="flex flex-col gap-1">
-              <p className="text-sm font-semibold">{displayName}</p>
-              <p className="text-[11px] text-muted-foreground">{email}</p>
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex flex-col gap-1">
+                <p className="text-sm font-semibold">{displayName}</p>
+                <p className="text-[11px] text-muted-foreground">{email}</p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                onClick={() => setAccountSettingsOpen(true)}
+                aria-label={t('auth.accountSettings', 'تنظیمات حساب')}
+              >
+                <Settings className="h-3.5 w-3.5" />
+              </Button>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
@@ -75,7 +90,7 @@ const ProfileDropdown = () => {
             onClick={() => setSettingsOpen(true)}
             className="text-base gap-2 cursor-pointer py-2"
           >
-            <Settings className="h-4 w-4" />
+            <SlidersHorizontal className="h-4 w-4" />
             {t('تنظیمات', 'Settings')}
           </DropdownMenuItem>
           
@@ -110,6 +125,7 @@ const ProfileDropdown = () => {
       <StudentProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
       <GuidedTour isOpen={tourOpen} onClose={() => setTourOpen(false)} />
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <ProfileDialog open={accountSettingsOpen} onOpenChange={setAccountSettingsOpen} />
     </>
   );
 };

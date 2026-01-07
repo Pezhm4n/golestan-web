@@ -7,6 +7,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
 import {
@@ -92,6 +93,7 @@ const Sidebar = () => {
   const { isLoading, error, departments } = useGolestanData();
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const dir = i18n.dir();
   const isRtl = dir === 'rtl';
   const [searchQuery, setSearchQuery] = useState('');
@@ -248,11 +250,13 @@ const Sidebar = () => {
     addCustomCourse(course);
   };
 
+  const isGuest = !user;
+
   return (
     <aside
       data-tour="sidebar"
       dir={dir}
-      className={`w-[320px] border-border bg-card/50 backdrop-blur-sm flex flex-col shrink-0 overflow-hidden ${isRtl ? 'border-l rounded-l-xl' : 'border-r rounded-r-xl'}`}
+      className={`relative w-[320px] border-border bg-card/50 backdrop-blur-sm flex flex-col shrink-0 overflow-hidden ${isRtl ? 'border-l rounded-l-xl' : 'border-r rounded-r-xl'}`}
     >
       {/* Department Selector - searchable combobox grouped by faculty */}
       <div className="px-2 pt-2 pb-1">
@@ -488,6 +492,23 @@ const Sidebar = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {isGuest && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-background/85 backdrop-blur-sm">
+          <div className="px-4 text-center space-y-3">
+            <p className="text-xs font-semibold text-foreground">
+              {t('auth.loginToUnlock')}
+            </p>
+            <Button
+              size="sm"
+              className="mt-1"
+              onClick={() => navigate('/auth')}
+            >
+              {t('auth.loginButton')}
+            </Button>
+          </div>
+        </div>
+      )}
     </aside>
   );
 };

@@ -46,6 +46,7 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
   const [examDate, setExamDate] = useState('');
   const [examTime, setExamTime] = useState('');
   const [location, setLocation] = useState('');
+  const [description, setDescription] = useState('');
 
   // Session info (allow multiple sessions)
   const [sessionRows, setSessionRows] = useState<SessionFormRow[]>([
@@ -70,6 +71,7 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
     setExamDate('');
     setExamTime('');
     setLocation('');
+    setDescription('');
     setSessionRows([{ day: 0, startTime: 8, endTime: 10, weekType: 'both' }]);
     setSessionErrors([]);
     setGroup('specialized');
@@ -194,6 +196,7 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
       setExamTime(editingCourse.examTime || '');
       // Use first session's location as default; custom courses typically share it
       setLocation(editingCourse.sessions[0]?.location || '');
+      setDescription(editingCourse.description || '');
       setGroup(editingCourse.group);
 
       setSessionRows(
@@ -313,6 +316,23 @@ const AddCourseDialog = ({ onAddCourse }: AddCourseDialogProps) => {
                 className="text-xs"
               />
             </div>
+          </div>
+
+          {/* Description (optional) */}
+          <div className="grid gap-2">
+            <Label htmlFor="description" className="text-xs">
+              {t('addCourse.descriptionLabel')}
+              <span className="mr-1 text-[10px] text-muted-foreground">
+                ({t('addCourse.descriptionOptional')})
+              </span>
+            </Label>
+            <Input
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder={t('addCourse.descriptionPlaceholder')}
+              className="text-xs"
+            />
           </div>
 
           {/* Session Day & Time - multiple sessions */}

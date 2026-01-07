@@ -374,18 +374,25 @@ const Header = () => {
   return (
     <header className="h-[50px] border-b border-border bg-card/80 backdrop-blur-sm px-4 flex items-center justify-between shrink-0">
       <div className="flex items-center gap-3">
-        <div className="flex flex-col">
-          <h1 className="text-sm font-bold text-foreground">
-            {t('header.appName')}
-          </h1>
-          {lastUpdatedParts && (
-            <p className="mt-0.5 text-[11px] text-muted-foreground leading-tight">
-              {t('header.lastUpdatedLabel')}:{' '}
-              {i18n.language.startsWith('fa')
-                ? `${lastUpdatedParts.date} ${t('header.lastUpdatedAt')} ${lastUpdatedParts.time}`
-                : `${lastUpdatedParts.date} ${t('header.lastUpdatedAt')} ${lastUpdatedParts.time}`}
-            </p>
-          )}
+        <div className="flex items-center gap-2">
+          <img
+            src="/icons/t_600x600-removebg-preview.png"
+            alt="Golestoon logo"
+            className="h-8 w-8 object-contain drop-shadow-sm"
+          />
+          <div className="flex flex-col">
+            <h1 className="text-sm font-bold text-foreground">
+              {t('header.appName')}
+            </h1>
+            {lastUpdatedParts && (
+              <p className="mt-0.5 text-[11px] text-muted-foreground leading-tight">
+                {t('header.lastUpdatedLabel')}:{' '}
+                {i18n.language.startsWith('fa')
+                  ? `${lastUpdatedParts.date} ${t('header.lastUpdatedAt')} ${lastUpdatedParts.time}`
+                  : `${lastUpdatedParts.date} ${t('header.lastUpdatedAt')} ${lastUpdatedParts.time}`}
+              </p>
+            )}
+          </div>
         </div>
       </div>
       

@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import { AuthProvider } from "@/contexts/AuthContext";
-import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Donate from "./pages/Donate";
 import About from "./pages/About";
@@ -23,30 +22,11 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <Routes>
-              <Route
-                path="/"
-                element={
-                  <ProtectedRoute>
-                    <Index />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/donate"
-                element={
-                  <ProtectedRoute>
-                    <Donate />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/about"
-                element={
-                  <ProtectedRoute>
-                    <About />
-                  </ProtectedRoute>
-                }
-              />
+              {/* Home page is publicly accessible; schedule grid and sidebar handle auth gating themselves */}
+              <Route path="/" element={<Index />} />
+              <Route path="/donate" element={<Donate />} />
+              <Route path="/about" element={<About />} />
+              {/* Auth page (login / signup) remains public */}
               <Route path="/auth" element={<AuthPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

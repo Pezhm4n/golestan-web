@@ -3,6 +3,8 @@ import { Search, Plus, Filter, ChevronDown, Save, Trash2, X } from 'lucide-react
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import DepartmentCombobox from './DepartmentCombobox';
 import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
@@ -37,6 +39,8 @@ const MobileSidebar = ({ isOpen, onOpenChange }: MobileSidebarProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState<string | 'all' | null>(null);
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   
   // Filter states
   const [gender, setGender] = useState<Gender | 'all'>('all');
@@ -96,10 +100,12 @@ const MobileSidebar = ({ isOpen, onOpenChange }: MobileSidebarProps) => {
     addCustomCourse(course);
   };
 
+  const isGuest = !user;
+
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="h-[85vh] p-0 rounded-t-2xl">
-        <div className="flex flex-col h-full" dir="rtl">
+        <div className="relative flex flex-col h-full" dir="rtl">
           {/* Header with drag handle */}
           <div className="flex flex-col items-center pt-2 pb-3 border-b border-border">
             <div className="w-12 h-1.5 bg-muted-foreground/30 rounded-full mb-3" />
@@ -245,6 +251,23 @@ const MobileSidebar = ({ isOpen, onOpenChange }: MobileSidebarProps) => {
               </AlertDialog>
             </div>
           </div>
+
+          {isGuest && (
+            <div className="absolute inset-0 z-40 flex items-center justify-center bg-background/85 backdrop-blur-sm px-6">
+              <div className="text-center space-y-3">
+                <p className="text-sm font-semibold text-foreground">
+                  {t('auth.loginToUnlock')}
+                </p>
+                <Button
+                  size="sm"
+                  className="mt-1"
+                  onClick={() => navigate('/auth')}
+                >
+                  {t('auth.loginButton')}
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </SheetContent>
     </Sheet>
