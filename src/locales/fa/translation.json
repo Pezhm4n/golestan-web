@@ -416,6 +416,7 @@
   },
   "settings": {
     "title": "تنظیمات برنامه",
+    "dialogDescription": "در این بخش می‌توانید حالت نمایش، اندازه فونت، زبان و خطوط جدول را تنظیم کنید.",
     "appearance": "ظاهر",
     "themeSection": "حالت نمایش",
     "theme": {
@@ -506,7 +507,7 @@
   "mobile": {
     "menuTitle": "منو",
     "donate": "حمایت از ما",
-    "language": "زبان",
+    "language": "تغییر زبان",
     "profile": "پروفایل",
     "version": "نسخه {{version}}",
     "sidebarTitle": "لیست دروس"
@@ -577,5 +578,4 @@
     "thankYouLine2": "همین که هستی، بهمون انرژی می‌ده",
     "footerLine": "گلستون © {{year}} - ساخته شده برای دانشجوهای ایران"
   }
-}
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { LogOut, User, Settings, HelpCircle, Info, SlidersHorizontal } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -12,21 +12,30 @@ import {
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import StudentProfileDialog from './StudentProfileDialog';
-import GuidedTour from './GuidedTour';
 import SettingsDialog from './SettingsDialog';
 import ProfileDialog from './ProfileDialog';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTour } from '@/contexts/TourContext';
 
-const ProfileDropdown = () => {
+interface ProfileDropdownProps {
+  trigger?: ReactNode;
+  /**
+   * Optional hook for parents (e.g. mobile header sheet) to run logic
+   * right before the tour opens – e.g. closing a Sheet.
+   */
+  onBeforeOpenTour?: () => void;
+}
+
+const ProfileDropdown = ({ trigger, onBeforeOpenTour }: ProfileDropdownProps) => {
   const [profileOpen, setProfileOpen] = useState(false);
-  const [tourOpen, setTourOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
   const { t } = useSettings();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { startTour } = useTour();
 
   const displayName =
     (user?.user_metadata?.full_name as string | undefined) ||
@@ -47,15 +56,28 @@ const ProfileDropdown = () => {
     navigate('/about');
   };
 
+  const defaultTrigger = (
+    <Avatar className="h-8 w-8 cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all">
+      <AvatarFallback className="text-xs bg-primary/10 text-primary flex items-center justify-center">
+        {initials}
+      </AvatarFallback>
+    </Avatar>
+  );
+
+  const handleOpenTour = () => {
+    // Allow parent (e.g. mobile Sheet) to close itself before tour starts
+    if (onBeforeOpenTour) {
+      onBeforeOpenTour();
+    }
+    // Start the global tour (lives in App root, not tied to this component's lifecycle)
+    startTour();
+  };
+
   return (
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Avatar className="h-8 w-8 cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all">
-            <AvatarFallback className="text-xs bg-primary/10 text-primary flex items-center justify-center">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
+          {trigger ?? defaultTrigger}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56 text-right py-2 rounded-lg shadow-lg">
           <DropdownMenuLabel className="text-xs font-normal pb-1">
@@ -95,7 +117,7 @@ const ProfileDropdown = () => {
           </DropdownMenuItem>
           
           <DropdownMenuItem
-            onClick={() => setTourOpen(true)}
+            onClick={handleOpenTour}
             className="text-base gap-2 cursor-pointer py-2"
           >
             <HelpCircle className="h-4 w-4" />
@@ -123,7 +145,6 @@ const ProfileDropdown = () => {
       </DropdownMenu>
 
       <StudentProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
-      <GuidedTour isOpen={tourOpen} onClose={() => setTourOpen(false)} />
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
       <ProfileDialog open={accountSettingsOpen} onOpenChange={setAccountSettingsOpen} />
     </>

@@ -4,6 +4,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -56,6 +57,9 @@ const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
             <Settings className="h-5 w-5 text-primary" />
             {t('settings.title')}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            {t('settings.dialogDescription')}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-2">

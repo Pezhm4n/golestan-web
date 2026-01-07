@@ -145,7 +145,14 @@ const MobileSidebar = ({ isOpen, onOpenChange }: MobileSidebarProps) => {
           </div>
 
           {/* Course List */}
-          <ScrollArea className="flex-1 px-2">
+          <ScrollArea
+            className="flex-1 px-2"
+            style={{
+              WebkitOverflowScrolling: 'touch',
+              touchAction: 'pan-y',
+              overscrollBehavior: 'contain',
+            }}
+          >
             {isLoading && (
               <p className="text-center text-muted-foreground text-sm py-12">
                 در حال بارگذاری دروس...

@@ -1,5 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useMemo, useCallback, useState } from 'react';
 import { DAYS, ScheduledSession } from '@/types/course';
 import { useSchedule } from '@/contexts/ScheduleContext';
 import { useSettings } from '@/contexts/SettingsContext';
@@ -8,10 +7,9 @@ import CourseCell from './CourseCell';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 import { Z_INDEX } from '@/lib/constants';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
 
-const TIME_SLOTS = Array.from({ length: 14 }, (_, i) => 7 + i);
+// ✅ Full possible time range (7:00 to 21:00) used as a base template
+const ALL_TIME_SLOTS = Array.from({ length: 14 }, (_, i) => 7 + i);
 
 type SessionLayout = {
   offsetPercent: number; // 0 = no offset, 0.1 = 10% of column width
@@ -22,6 +20,12 @@ type EnrichedSession = {
   session: ScheduledSession;
   durationMinutes: number;
 };
+
+// ✅ Two groups of days for mobile view: 3 days at a time
+const DAY_GROUPS = [
+  { label: 'شنبه - دوشنبه', days: [0, 1, 2] },
+  { label: 'سه‌شنبه - پنجشنبه', days: [3, 4, 5] },
+];
 
 const timeToMinutes = (t: number | string): number => {
   if (typeof t === 'number') {
@@ -69,11 +73,9 @@ const computeLayoutsForDay = (
       currentGroup.push(session);
       currentEnd = end;
     } else if (start < currentEnd) {
-      // Overlaps with current group
       currentGroup.push(session);
       if (end > currentEnd) currentEnd = end;
     } else {
-      // No overlap – start a new group
       groups.push(currentGroup);
       currentGroup = [session];
       currentEnd = end;
@@ -151,7 +153,7 @@ const enrichSessionsWithConflictMetadata = (
   const uniqueDurations = new Set(durations);
   const hasMixedDurations = uniqueDurations.size > 1;
 
-  // Sort by duration so shorter sessions are visually \"on top\" in the stack.
+  // Sort by duration so shorter sessions are visually "on top" in the stack.
   const sorted = [...enriched].sort(
     (a, b) => a.durationMinutes - b.durationMinutes,
   );
@@ -181,6 +183,9 @@ const ScheduleGrid = () => {
   const { t, i18n } = useTranslation();
   const dir = i18n.dir();
   const isRtl = dir === 'rtl';
+
+  // ✅ Active day group for mobile (0 => Sat-Mon, 1 => Tue-Thu)
+  const [activeDayGroup, setActiveDayGroup] = useState(0);
 
   // Get the hovered course for preview / highlight
   const hoveredCourse = hoveredCourseId
@@ -213,6 +218,56 @@ const ScheduleGrid = () => {
       examTime: hoveredCourse.examTime,
     }));
   }, [hoveredCourse, isHoveredCourseSelected]);
+
+  // ✅ Dynamic time slots:
+  // Desktop/Tablet: show full template (7–21)
+  // Mobile: only hours that actually have classes, padded by 1 hour on each side
+  const timeSlots = useMemo(() => {
+    if (!isMobile) {
+      return ALL_TIME_SLOTS;
+    }
+
+    if (scheduledSessions.length === 0) {
+      // Default university hours when there are no sessions
+      return [8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+    }
+
+    const usedHours = new Set<number>();
+
+    scheduledSessions.forEach(session => {
+      const startHour = Math.floor(timeToMinutes(session.startTime) / 60);
+      const endHour = Math.ceil(timeToMinutes(session.endTime) / 60);
+
+      for (let h = startHour; h < endHour; h++) {
+        usedHours.add(h);
+      }
+    });
+
+    if (usedHours.size === 0) {
+      return [8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+    }
+
+    const sortedHours = Array.from(usedHours).sort((a, b) => a - b);
+    const minHour = Math.max(7, sortedHours[0] - 1);
+    const maxHour = Math.min(20, sortedHours[sortedHours.length - 1] + 1);
+
+    const slots: number[] = [];
+    for (let h = minHour; h <= maxHour; h++) {
+      slots.push(h);
+    }
+
+    return slots;
+  }, [isMobile, scheduledSessions]);
+
+  // ✅ Visible days:
+  // - Desktop/Tablet: all days
+  // - Mobile: only 3-day group
+  const visibleDays = useMemo(() => {
+    if (!isMobile) {
+      return [0, 1, 2, 3, 4, 5];
+    }
+    return DAY_GROUPS[activeDayGroup].days;
+  }, [isMobile, activeDayGroup]);
 
   // Pre-index scheduled sessions for efficient lookups
   const slotsIndex = useMemo(() => {
@@ -263,10 +318,6 @@ const ScheduleGrid = () => {
    * Returns true when this cell (day, time) is within the vertical span
    * of any session that started earlier on the same day – including both
    * real scheduled sessions and the hovered (ghost) course sessions.
-   *
-   * This prevents us from rendering extra 1-hour cells in the middle of
-   * a multi-hour block, which is what was visually cutting the ghost preview
-   * height in half.
    */
   const isCellOccupiedByPrevious = useCallback(
     (day: number, time: number): boolean => {
@@ -312,7 +363,7 @@ const ScheduleGrid = () => {
   // Find the first heavy conflict cell (3+ sessions starting at same slot)
   const firstHeavyConflictKey = useMemo(() => {
     const { byDayTime } = slotsIndex;
-    for (const time of TIME_SLOTS) {
+    for (const time of timeSlots) {
       for (let dayIndex = 0; dayIndex < DAYS.length; dayIndex++) {
         const key = `${dayIndex}-${time}`;
         const sessionsHere = byDayTime.get(key);
@@ -322,207 +373,231 @@ const ScheduleGrid = () => {
       }
     }
     return null;
-  }, [slotsIndex]);
+  }, [slotsIndex, timeSlots]);
 
   const formatTime = (hour: number): string => {
     return `${hour.toString().padStart(2, '0')}:00`;
   };
 
   // Responsive sizing
-  const ROW_HEIGHT = isMobile ? 48 : isTablet ? 50 : 52;
-  const HEADER_HEIGHT = isMobile ? 32 : 36;
-  const TIME_COL_WIDTH = isMobile ? 44 : 56;
-  const MIN_COL_WIDTH = isMobile ? 90 : isTablet ? 100 : 120;
+  const ROW_HEIGHT = isMobile ? 52 : isTablet ? 50 : 52;
+  const HEADER_HEIGHT = isMobile ? 36 : 36;
+  const TIME_COL_WIDTH = isMobile ? 48 : 56;
+  const MIN_COL_WIDTH = isMobile ? 100 : isTablet ? 100 : 120;
 
   return (
-    <div 
-      data-tour="schedule-grid" 
+    <div
+      data-tour="schedule-grid"
       className={cn(
-        "relative flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden bg-muted/20",
+        "relative flex-1 flex flex-col min-w-0 min-h-0 bg-muted/20",
         isMobile ? "p-2" : isTablet ? "p-3" : "p-4 md:p-6"
       )}
     >
-      {/* Scroll hint for mobile */}
+      {/* ✅ Day group selector – only on mobile */}
       {isMobile && (
-        <div className="flex items-center justify-center gap-2 py-1.5 text-[10px] text-muted-foreground">
-          <span>{t('scheduleGrid.scrollHint')}</span>
+        <div className="flex items-center justify-center gap-2 mb-3 px-2">
+          {DAY_GROUPS.map((group, index) => (
+            <button
+              key={index}
+              onClick={() => setActiveDayGroup(index)}
+              className={cn(
+                "flex-1 px-4 py-2.5 rounded-xl text-xs font-bold transition-all duration-200",
+                activeDayGroup === index
+                  ? "bg-primary text-primary-foreground shadow-lg scale-105"
+                  : "bg-card border border-border text-muted-foreground hover:bg-muted"
+              )}
+            >
+              {group.label}
+            </button>
+          ))}
         </div>
       )}
-      
-      <div 
+
+      <div
         className={cn(
-          "flex-1 bg-card shadow-md border border-border/40",
+          "flex-1 bg-card shadow-md border border-border/40 overflow-hidden",
           isMobile ? "rounded-xl" : "rounded-2xl"
         )}
       >
-        <div
-          className={cn(
-            "w-full h-full overflow-x-auto overflow-y-auto",
-            "scroll-smooth touch-pan-x touch-pan-y"
-          )}
-          style={{
-            // Prevent overscroll bounce on iOS
-            WebkitOverflowScrolling: 'touch',
-          }}
-        >
-          <div 
+        {/* ✅ No horizontal scroll; grid always fits width */}
+        <div className="w-full h-full overflow-hidden">
+          <div
             id="schedule-grid-capture"
             style={{
               display: 'grid',
-              gridTemplateColumns: `${TIME_COL_WIDTH}px repeat(6, minmax(${MIN_COL_WIDTH}px, 1fr))`,
-              gridTemplateRows: `${HEADER_HEIGHT}px repeat(${TIME_SLOTS.length}, ${ROW_HEIGHT}px)`,
+              gridTemplateColumns: `${TIME_COL_WIDTH}px repeat(${visibleDays.length}, minmax(${MIN_COL_WIDTH}px, 1fr))`,
+              gridTemplateRows: `${HEADER_HEIGHT}px repeat(${timeSlots.length}, ${ROW_HEIGHT}px)`,
               gap: isMobile ? '1px' : '2px',
-              minWidth: `${TIME_COL_WIDTH + (MIN_COL_WIDTH * 6) + 12}px`,
+              width: '100%',
+              height: '100%',
             }}
           >
-          {/* Header Row */}
-          <div 
-            className={cn(
-              "sticky top-0 bg-muted/95 backdrop-blur-md flex items-center justify-center",
-              showGridLines ? "border border-border/50" : ""
-            )}
-            style={{
-              gridColumn: 1,
-              gridRow: 1,
-              zIndex: Z_INDEX.gridHeader,
-              ...(isRtl ? { right: 0 } : { left: 0 }),
-            }}
-          >
-            <span className={cn(
-              "font-bold text-muted-foreground",
-              isMobile ? "text-[10px]" : "text-sm",
-              getFontSizeClass()
-            )}>
-              {t('scheduleGrid.timeHeader')}
-            </span>
-          </div>
-
-          {DAYS.map((_, dayIndex) => {
-            const label = t(`days.${dayIndex}`);
-            return (
-              <div
-                key={`header-${dayIndex}`}
+            {/* Header Row */}
+            <div
+              className={cn(
+                "sticky top-0 bg-muted/95 backdrop-blur-md flex items-center justify-center",
+                showGridLines ? "border border-border/50" : ""
+              )}
+              style={{
+                gridColumn: 1,
+                gridRow: 1,
+                zIndex: Z_INDEX.gridHeader,
+                ...(isRtl ? { right: 0 } : { left: 0 }),
+              }}
+            >
+              <span
                 className={cn(
-                  "sticky top-0 bg-muted/95 backdrop-blur-md flex items-center justify-center font-bold text-foreground",
-                  isMobile ? "text-[11px]" : "text-sm",
-                  showGridLines &&
-                    (isRtl
-                      ? "border-t border-b border-r border-border/50"
-                      : "border-t border-b border-l border-border/50"),
+                  "font-bold text-muted-foreground",
+                  isMobile ? "text-[10px]" : "text-sm",
                   getFontSizeClass()
                 )}
-                style={{ gridColumn: dayIndex + 2, gridRow: 1, zIndex: Z_INDEX.gridHeader }}
               >
-                {isMobile ? label.replace('\u200c', '') : label}
-              </div>
-            );
-          })}
+                {t('scheduleGrid.timeHeader')}
+              </span>
+            </div>
 
-          {/* Time Rows */}
-          {TIME_SLOTS.map((time, rowIndex) => (
-            <React.Fragment key={`row-${time}`}>
-              <div
-                className={cn(
-                  "sticky z-10 bg-muted/60 backdrop-blur-sm flex items-start justify-center text-muted-foreground font-mono",
-                  isMobile ? "text-[9px] pt-0.5" : "text-xs pt-1",
-                  showGridLines &&
-                    (isRtl
-                      ? "border-r border-b border-border/40"
-                      : "border-l border-b border-border/40"),
-                  getFontSizeClass()
-                )}
-                style={{
-                  gridColumn: 1,
-                  gridRow: rowIndex + 2,
-                  ...(isRtl ? { right: 0 } : { left: 0 }),
-                }}
-              >
-                <span>
-                  {formatTime(time)}
-                </span>
-              </div>
+            {visibleDays.map((dayIndex, colIndex) => {
+              const label = t(`days.${dayIndex}`);
+              return (
+                <div
+                  key={`header-${dayIndex}`}
+                  className={cn(
+                    "sticky top-0 bg-muted/95 backdrop-blur-md flex items-center justify-center font-bold text-foreground",
+                    isMobile ? "text-xs" : "text-sm",
+                    showGridLines &&
+                      (isRtl
+                        ? "border-t border-b border-r border-border/50"
+                        : "border-t border-b border-l border-border/50"),
+                    getFontSizeClass()
+                  )}
+                  style={{
+                    gridColumn: colIndex + 2,
+                    gridRow: 1,
+                    zIndex: Z_INDEX.gridHeader,
+                  }}
+                >
+                  {isMobile ? label.replace('\u200c', '') : label}
+                </div>
+              );
+            })}
 
-              {DAYS.map((_, dayIndex) => {
-                const rawSessions = getSessionsForSlot(dayIndex, time);
-                const sessions = enrichSessionsWithConflictMetadata(rawSessions);
-                const isPreviewCell = isHoveredCourseCell(dayIndex, time);
-                const rawHoveredStartSessions = getHoveredStartSessionsForSlot(dayIndex, time);
-                const hoveredStartSessions = enrichSessionsWithConflictMetadata(
-                  rawHoveredStartSessions,
-                );
-                const cellKey = `${dayIndex}-${time}`;
-                const showDiscoveryTip = firstHeavyConflictKey === cellKey;
+            {/* Time Rows */}
+            {timeSlots.map((time, rowIndex) => (
+              <React.Fragment key={`row-${time}`}>
+                <div
+                  className={cn(
+                    "sticky z-10 bg-muted/60 backdrop-blur-sm flex items-start justify-center text-muted-foreground font-mono",
+                    isMobile ? "text-[10px] pt-1" : "text-xs pt-1",
+                    showGridLines &&
+                      (isRtl
+                        ? "border-r border-b border-border/40"
+                        : "border-l border-b border-border/40"),
+                    getFontSizeClass()
+                  )}
+                  style={{
+                    gridColumn: 1,
+                    gridRow: rowIndex + 2,
+                    ...(isRtl ? { right: 0 } : { left: 0 }),
+                  }}
+                >
+                  <span>{formatTime(time)}</span>
+                </div>
 
-                const hasStartHere =
-                  sessions.length > 0 || hoveredStartSessions.length > 0;
-                const isOccupied =
-                  !hasStartHere && isCellOccupiedByPrevious(dayIndex, time);
-                if (isOccupied) return null;
+                {visibleDays.map((dayIndex, colIndex) => {
+                  const rawSessions = getSessionsForSlot(dayIndex, time);
+                  const sessions = enrichSessionsWithConflictMetadata(rawSessions);
+                  const isPreviewCell = isHoveredCourseCell(dayIndex, time);
+                  const rawHoveredStartSessions = getHoveredStartSessionsForSlot(
+                    dayIndex,
+                    time,
+                  );
+                  const hoveredStartSessions = enrichSessionsWithConflictMetadata(
+                    rawHoveredStartSessions,
+                  );
+                  const cellKey = `${dayIndex}-${time}`;
+                  const showDiscoveryTip = firstHeavyConflictKey === cellKey;
 
-                const mainSession = sessions[0];
-                const ghostMain = hoveredStartSessions[0];
+                  const hasStartHere =
+                    sessions.length > 0 || hoveredStartSessions.length > 0;
+                  const isOccupied =
+                    !hasStartHere && isCellOccupiedByPrevious(dayIndex, time);
+                  if (isOccupied) return null;
 
-                let rowSpan = 1;
-                if (mainSession) {
-                  rowSpan = getRowSpanFromSession(mainSession);
-                } else if (ghostMain) {
-                  rowSpan = getRowSpanFromSession(ghostMain);
-                }
+                  const mainSession = sessions[0];
+                  const ghostMain = hoveredStartSessions[0];
 
-                let layoutStyle: React.CSSProperties | undefined;
-                if (mainSession && sessions.length === 1) {
-                  const layout = layoutBySessionKey.get(getSessionKey(mainSession));
-                  if (layout) {
-                    layoutStyle = {
-                      width: `${layout.widthPercent * 100}%`,
-                      ...(isRtl
-                        ? { marginRight: `${layout.offsetPercent * 100}%` }
-                        : { marginLeft: `${layout.offsetPercent * 100}%` }),
-                    };
+                  let rowSpan = 1;
+                  if (mainSession) {
+                    rowSpan = getRowSpanFromSession(mainSession);
+                  } else if (ghostMain) {
+                    rowSpan = getRowSpanFromSession(ghostMain);
                   }
-                }
 
-                const isGhostStartCell = hoveredStartSessions.length > 0 && !mainSession;
+                  let layoutStyle: React.CSSProperties | undefined;
+                  if (mainSession && sessions.length === 1) {
+                    const layout = layoutBySessionKey.get(getSessionKey(mainSession));
+                    if (layout) {
+                      layoutStyle = {
+                        width: `${layout.widthPercent * 100}%`,
+                        ...(isRtl
+                          ? { marginRight: `${layout.offsetPercent * 100}%` }
+                          : { marginLeft: `${layout.offsetPercent * 100}%` }),
+                      };
+                    }
+                  }
 
-                return (
-                  <div
-                    key={`cell-${dayIndex}-${time}`}
-                    className={cn(
-                      "relative",
-                      isMobile ? "transition-colors duration-100" : "transition-all duration-200",
-                      showGridLines &&
-                        (isRtl
-                          ? "border-r border-b border-border/60"
-                          : "border-l border-b border-border/60"),
-                      rowIndex % 2 === 0 ? 'bg-background' : 'bg-muted/10',
-                      isMobile ? "min-h-[48px]" : "",
-                      !isMobile && "hover:bg-accent/30",
-                      "active:bg-accent/40",
-                      isPreviewCell && !mainSession && !hoveredHasConflict && "bg-primary/5"
-                    )}
-                    style={{ 
-                      gridColumn: dayIndex + 2, 
-                      gridRow: rowSpan > 1 
-                        ? `${rowIndex + 2} / span ${rowSpan}` 
-                        : rowIndex + 2,
-                      ...(isGhostStartCell ? { zIndex: Z_INDEX.ghostPreview } : {}),
-                      ...layoutStyle,
-                    }}
-                  >
-                    <CourseCell sessions={sessions} showConflictTip={showDiscoveryTip} />
-                    {hoveredStartSessions.length > 0 && (
+                  const isGhostStartCell =
+                    hoveredStartSessions.length > 0 && !mainSession;
+
+                  return (
+                    <div
+                      key={`cell-${dayIndex}-${time}`}
+                      className={cn(
+                        "relative",
+                        isMobile
+                          ? "transition-colors duration-100"
+                          : "transition-all duration-200",
+                        showGridLines &&
+                          (isRtl
+                            ? "border-r border-b border-border/60"
+                            : "border-l border-b border-border/60"),
+                        rowIndex % 2 === 0 ? 'bg-background' : 'bg-muted/10',
+                        isMobile ? "min-h-[52px]" : "",
+                        !isMobile && "hover:bg-accent/30",
+                        isPreviewCell &&
+                          !mainSession &&
+                          !hoveredHasConflict &&
+                          "bg-primary/5"
+                      )}
+                      style={{
+                        gridColumn: colIndex + 2,
+                        gridRow:
+                          rowSpan > 1
+                            ? `${rowIndex + 2} / span ${rowSpan}`
+                            : rowIndex + 2,
+                        ...(isGhostStartCell
+                          ? { zIndex: Z_INDEX.ghostPreview }
+                          : {}),
+                        ...layoutStyle,
+                      }}
+                    >
                       <CourseCell
-                        sessions={hoveredStartSessions}
-                        ghost
-                        conflictPreview={hoveredHasConflict}
-                        showConflictTip={false}
+                        sessions={sessions}
+                        showConflictTip={showDiscoveryTip}
                       />
-                    )}
-                  </div>
-                );
-              })}
-            </React.Fragment>
-          ))}
+                      {hoveredStartSessions.length > 0 && (
+                        <CourseCell
+                          sessions={hoveredStartSessions}
+                          ghost
+                          conflictPreview={hoveredHasConflict}
+                          showConflictTip={false}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </React.Fragment>
+            ))}
           </div>
         </div>
       </div>

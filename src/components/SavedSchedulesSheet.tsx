@@ -27,13 +27,21 @@ const formatJalaliDate = (timestamp: number): string => {
   }
 };
 
-const SavedSchedulesSheet = () => {
+interface SavedSchedulesSheetProps {
+  onScheduleLoaded?: () => void;
+  variant?: 'icon' | 'menu';
+}
+
+const SavedSchedulesSheet = ({ onScheduleLoaded, variant = 'icon' }: SavedSchedulesSheetProps) => {
   const { savedSchedules, loadSchedule, deleteSchedule, saveSchedule, selectedCourses } = useSchedule();
   const [newName, setNewName] = useState('');
   const { t } = useTranslation();
 
   const handleLoad = (id: string) => {
     loadSchedule(id);
+    if (onScheduleLoaded) {
+      onScheduleLoaded();
+    }
   };
 
   const handleDelete = (id: string) => {
@@ -56,15 +64,28 @@ const SavedSchedulesSheet = () => {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button
-          data-tour="saved-schedules"
-          variant="ghost"
-          size="sm"
-          className="h-8 gap-1.5 px-2 text-xs"
-        >
-          <History className="h-4 w-4" />
-          <span className="hidden md:inline">{t('savedSchedules.sheetTitle')}</span>
-        </Button>
+        {variant === 'icon' ? (
+          <Button
+            data-tour="saved-schedules"
+            variant="ghost"
+            size="sm"
+            className="h-8 gap-1.5 px-2 text-xs"
+          >
+            <History className="h-4 w-4" />
+            <span className="hidden md:inline">{t('savedSchedules.sheetTitle')}</span>
+          </Button>
+        ) : (
+          <Button
+            data-tour="saved-schedules"
+            variant="ghost"
+            className="w-full justify-start h-12 text-sm gap-3 bg-muted/50 hover:bg-muted/70"
+          >
+            <History className="h-5 w-5 text-primary" />
+            <span className="text-sm font-medium text-foreground">
+              {t('savedSchedules.sheetTitle')}
+            </span>
+          </Button>
+        )}
       </SheetTrigger>
       <SheetContent side="left" className="w-[320px]" dir="rtl">
         <SheetHeader>
@@ -91,7 +112,7 @@ const SavedSchedulesSheet = () => {
         </div>
 
         {/* List */}
-        <ScrollArea className="h-[calc(100vh-200px)] mt-4">
+        <ScrollArea className="h-[calc(100vh-200px)] mt-4 touch-pan-y">
           <div className="space-y-2 pr-2">
             {savedSchedules.map(schedule => (
               <div

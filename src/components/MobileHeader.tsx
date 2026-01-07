@@ -7,6 +7,9 @@ import SavedSchedulesSheet from './SavedSchedulesSheet';
 import LanguageToggle from './LanguageToggle';
 import ProfileDropdown from './ProfileDropdown';
 import { useTranslation } from 'react-i18next';
+import { useSettings } from '@/contexts/SettingsContext';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface MobileHeaderProps {
   isDarkMode: boolean;
@@ -17,6 +20,18 @@ interface MobileHeaderProps {
 const MobileHeader = ({ isDarkMode, onToggleDarkMode, isTablet = false }: MobileHeaderProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { t } = useTranslation();
+  const { toggleLanguage } = useSettings();
+  const { user } = useAuth();
+
+  const handleLanguageRowClick = () => {
+    toggleLanguage();
+  };
+
+  const displayName =
+    ((user?.user_metadata?.full_name as string | undefined) || user?.email || t('auth.guestUserName', 'Guest')) as string;
+
+  const initials =
+    (displayName && displayName.trim()[0]?.toUpperCase()) || 'U';
 
   return (
     <header className="h-[50px] border-b border-border bg-card/80 backdrop-blur-sm px-3 flex items-center justify-between shrink-0">
@@ -90,24 +105,39 @@ const MobileHeader = ({ isDarkMode, onToggleDarkMode, isTablet = false }: Mobile
 
                 {/* Saved Schedules - only show in menu for mobile */}
                 {!isTablet && (
-                  <div onClick={() => setIsMenuOpen(false)}>
-                    <SavedSchedulesSheet />
-                  </div>
+                  <SavedSchedulesSheet
+                    variant="menu"
+                    onScheduleLoaded={() => setIsMenuOpen(false)}
+                  />
                 )}
 
                 {/* Language Toggle - only show in menu for mobile */}
                 {!isTablet && (
-                  <div className="flex items-center justify-between px-4 py-3 bg-muted/50 rounded-lg">
+                  <div
+                    className="flex items-center justify-between px-4 py-3 bg-muted/50 rounded-lg active:bg-muted/70"
+                    onClick={handleLanguageRowClick}
+                  >
                     <span className="text-sm">{t('mobile.language')}</span>
-                    <LanguageToggle />
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <LanguageToggle />
+                    </div>
                   </div>
                 )}
 
                 {/* Profile */}
-                <div className="flex items-center justify-between px-4 py-3 bg-muted/50 rounded-lg">
-                  <span className="text-sm">{t('mobile.profile')}</span>
-                  <ProfileDropdown />
-                </div>
+                <ProfileDropdown
+                  trigger={
+                    <div className="flex items-center justify-between px-4 py-3 bg-muted/50 rounded-lg active:bg-muted/70 w-full cursor-pointer">
+                      <span className="text-sm">{t('mobile.profile')}</span>
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="text-xs bg-primary/10 text-primary flex items-center justify-center">
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                  }
+                  onBeforeOpenTour={() => setIsMenuOpen(false)}
+                />
               </div>
 
               {/* Menu Footer */}

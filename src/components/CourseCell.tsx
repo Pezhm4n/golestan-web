@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { X, AlertTriangle, Pencil, MousePointer2, Info } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { CourseGroup, ScheduledSession } from '@/types/course';
@@ -102,6 +102,9 @@ const SingleBlock = ({
   // to a very light gray so cards never appear as "white holes".
   const effectiveBackgroundColor =
     baseColor && baseColor.trim() !== '' ? baseColor : 'hsl(210 40% 96%)';
+
+  // Track last tap time for mobile double‑tap detection (per card)
+  const lastTapRef = useRef<number>(0);
 
   // Globally highlighted: every session of this course across the grid.
   const isGloballyHighlighted = hoveredCourseId === session.parentId;
@@ -263,207 +266,229 @@ const SingleBlock = ({
     baseStyle.zIndex = Z_INDEX.ghostPreview;
   }
 
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+  const handleStackFlip = () => {
+    // فقط در حالت تداخل واقعی روی کارت‌های اصلی چرخه انجام شود
+    if (!isStacked || ghost) return;
+    // با دابل‌کلیک/دابل‌تپ، هاور را ریست می‌کنیم تا فقط عضو activeStack پاپ‌اوت بماند
+    setHoveredCourseId(null);
+    setIsHovered(false);
+    if (typeof stackIndex === 'number') {
+      onStackDoubleClick?.(stackIndex);
+    }
+  };
+
+  // Double‑tap detection for touch devices (only meaningful for stacked conflicts).
+  const handleTouchEnd: React.TouchEventHandler<HTMLDivElement> = (e) => {
+    const currentTime = new Date().getTime();
+    const tapLength = currentTime - lastTapRef.current;
+
+    if (tapLength < 300 && tapLength > 0) {
+      // Double Tap detected
+      e.preventDefault(); // Prevent zoom
+      e.stopPropagation();
+      handleStackFlip();
+    }
+
+    lastTapRef.current = currentTime;
+  };
+
+  const card = (
+    <div
+      data-export-course-card
+      className={cn(
+        'group relative flex flex-col items-center justify-center text-center cursor-pointer',
+        'rounded-lg border border-gray-900/20',
+        // Ensure the card can visually pop outside the slot when zoomed,
+        // while the parent cell controls clipping.
+        'max-w-full min-w-0 w-full h-full overflow-visible',
+        // Smooth transition for all interactive states.
+        'transition-all duration-300 ease-out',
+        // Base shadow so the card feels tactile.
+        'shadow-sm',
+        // Vertical split support (kept for future use).
+        isHalf ? 'h-1/2' : 'h-full',
+        isHalf && position === 'top' && 'border-b border-dashed border-gray-500/40',
+        // Stacked conflict cards are absolutely positioned inside the cell.
+        isStacked && 'absolute',
+        // Conflict preview styling: keep the course color but add a red emphasis frame.
+        conflictPreview && 'border-red-600 ring-2 ring-red-500/80',
+        // Premium hover interaction:
+        !ghost && [
+          'hover:scale-[1.05] hover:shadow-2xl',
+          'hover:ring-4 hover:ring-white/95',
+        ],
+        // All highlighted sessions of this course
+        isHighlighted && 'shadow-md ring-2 ring-white/70',
+        // The exact block that is popped out (hovered or active in cycle)
+        isPopout && [
+          'scale-[1.05]',
+          'shadow-2xl',
+          'ring-4',
+          'ring-white/95',
+        ],
+        // Subtle press feedback, بدون دیم کردن بقیه کارت‌ها.
+        'active:scale-[1.02]',
+        // Responsive padding
+        'p-1.5 sm:p-2 md:p-2.5',
+      )}
+      style={baseStyle}
+      onMouseEnter={() => {
+        setHoveredCourseId(session.parentId);
+        setIsHovered(true);
+      }}
+      onMouseLeave={() => {
+        setHoveredCourseId(null);
+        setIsHovered(false);
+      }}
+      onDoubleClick={isStacked ? (e) => {
+        e.stopPropagation();
+        handleStackFlip();
+      } : undefined}
+      onTouchEnd={isStacked ? handleTouchEnd : undefined}
+    >
+      {/* Edit / Delete Buttons - larger touch target on mobile */}
+      {!ghost && (
         <div
-          data-export-course-card
           className={cn(
-            'group relative flex flex-col items-center justify-center text-center cursor-pointer',
-            'rounded-lg border border-gray-900/20',
-            // Ensure the card can visually pop outside the slot when zoomed,
-            // while the parent cell controls clipping.
-            'max-w-full min-w-0 w-full h-full overflow-visible',
-            // Smooth transition for all interactive states.
-            'transition-all duration-300 ease-out',
-            // Base shadow so the card feels tactile.
-            'shadow-sm',
-            // Vertical split support (kept for future use).
-            isHalf ? 'h-1/2' : 'h-full',
-            isHalf && position === 'top' && 'border-b border-dashed border-gray-500/40',
-            // Stacked conflict cards are absolutely positioned inside the cell.
-            isStacked && 'absolute',
-            // Conflict preview styling: keep the course color but add a red emphasis frame.
-            conflictPreview && 'border-red-600 ring-2 ring-red-500/80',
-            // Premium hover interaction:
-            !ghost && [
-              'hover:scale-[1.05] hover:shadow-2xl',
-              'hover:ring-4 hover:ring-white/95',
-            ],
-            // All highlighted sessions of this course
-            isHighlighted && 'shadow-md ring-2 ring-white/70',
-            // The exact block that is popped out (hovered or active in cycle)
-            isPopout && [
-              'scale-[1.05]',
-              'shadow-2xl',
-              'ring-4',
-              'ring-white/95',
-            ],
-            // Subtle press feedback, بدون دیم کردن بقیه کارت‌ها.
-            'active:scale-[1.02]',
-            // Responsive padding
-            'p-1.5 sm:p-2 md:p-2.5',
+            'absolute z-30 flex items-center gap-1',
+            'top-1 right-1 opacity-100 sm:top-2 sm:right-2 sm:opacity-0 sm:group-hover:opacity-100',
+            'transition-opacity duration-150',
           )}
-          style={baseStyle}
-          onMouseEnter={() => {
-            setHoveredCourseId(session.parentId);
-            setIsHovered(true);
-          }}
-          onMouseLeave={() => {
-            setHoveredCourseId(null);
-            setIsHovered(false);
-          }}
-          onTouchStart={() => {
-            setHoveredCourseId(session.parentId);
-            setIsHovered(true);
-          }}
-          onTouchEnd={() => {
-            setHoveredCourseId(null);
-            setIsHovered(false);
-          }}
-          onDoubleClick={(e) => {
-            e.stopPropagation();
-            // فقط در حالت تداخل واقعی روی کارت‌های اصلی چرخه انجام شود
-            if (!isStacked || ghost) return;
-            // با دابل‌کلیک، هاور را ریست می‌کنیم تا فقط عضو activeStack پاپ‌اوت بماند
-            setHoveredCourseId(null);
-            setIsHovered(false);
-            if (typeof stackIndex === 'number') {
-              onStackDoubleClick?.(stackIndex);
-            }
-          }}
         >
-          {/* Edit / Delete Buttons - larger touch target on mobile */}
-          {!ghost && (
-            <div
-              className={cn(
-                'absolute z-30 flex items-center gap-1',
-                'top-1 right-1 opacity-100 sm:top-2 sm:right-2 sm:opacity-0 sm:group-hover:opacity-100',
-                'transition-opacity duration-150',
-              )}
+          {isCustomCourse && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit?.(session);
+              }}
+              className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-500/90 text-white shadow-sm transition-colors hover:bg-amber-600 sm:h-5 sm:w-5"
             >
-              {isCustomCourse && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEdit?.(session);
-                  }}
-                  className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-500/90 text-white shadow-sm transition-colors hover:bg-amber-600 sm:h-5 sm:w-5"
-                >
-                  <Pencil className="h-3 w-3 sm:h-3 sm:w-3" />
-                </button>
-              )}
-              <button
-                onClick={handleRemove}
-                className="flex h-6 w-6 items-center justify-center rounded-md bg-red-500/90 text-white shadow-sm transition-colors hover:bg-red-600 sm:h-5 sm:w-5"
-              >
-                <X className="w-3 h-3 sm:w-3 sm:h-3" />
-              </button>
+              <Pencil className="h-3 w-3 sm:h-3 sm:w-3" />
+            </button>
+          )}
+          <button
+            onClick={handleRemove}
+            className="flex h-6 w-6 items-center justify-center rounded-md bg-red-500/90 text-white shadow-sm transition-colors hover:bg-red-600 sm:h-5 sm:w-5"
+          >
+            <X className="w-3 h-3 sm:w-3 sm:h-3" />
+          </button>
+        </div>
+      )}
+
+      {/* Week Type Badge */}
+      {weekLabel && (
+        <span
+          className={cn(
+            'absolute top-1 left-1 text-[8px] px-1.5 py-0.5 font-bold rounded-md shadow-sm',
+            session.weekType === 'odd'
+              ? 'bg-amber-400/95 text-amber-900'
+              : 'bg-sky-400/95 text-sky-900',
+          )}
+        >
+          {weekLabel}
+        </span>
+      )}
+
+      {/* Content - Centered Layout with responsive text */}
+      <div className="flex flex-col items-center justify-center w-full h-full max-w-full min-w-0 textcenter gap-0.5 overflow-hidden">
+        {/* Title - Truncated to prevent overflow */}
+        <h3
+          className={cn(
+            'font-bold text-gray-900 leading-tight w-full max-w-full min-w-0 overflow-hidden',
+            isHalf
+              ? 'text-[11px]'
+              : fontSize === 'small'
+              ? 'text-xs'
+              : fontSize === 'large'
+              ? 'text-sm'
+              : 'text-sm',
+          )}
+        >
+          <EllipsisText className="block w-full" dir="rtl">
+            {session.courseName}
+          </EllipsisText>
+        </h3>
+
+        {/* Indicator for mixed-duration conflicts */}
+        {conflictMeta?.hasMixedDurationConflict && !isPopout && (
+          <div className="relative w-full flex justify-center">
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex items-center gap-0.5 bg-amber-500/90 text-white px-1.5 py-0.5 rounded-full text-[7px] font-bold shadow-sm pointer-events-none">
+              <AlertTriangle className="w-2 h-2" />
+              {conflictMeta.durationMinutes}
+              {t('labels.minutes', { defaultValue: 'دقیقه' })}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Week Type Badge */}
-          {weekLabel && (
-            <span
-              className={cn(
-                'absolute top-1 left-1 text-[8px] px-1.5 py-0.5 font-bold rounded-md shadow-sm',
-                session.weekType === 'odd'
-                  ? 'bg-amber-400/95 text-amber-900'
-                  : 'bg-sky-400/95 text-sky-900',
-              )}
+        {/* Metadata block is always rendered so it can appear in exports.
+            For compact (1-hour) sessions we hide it in the UI but reveal it
+            when the ancestor has the `.export-mode` class (export-only mode). */}
+        <div
+          className={cn(
+            'flex flex-col gap-0.5 w-full',
+            isOneHourSession ? 'hidden group-[.export-mode]:flex' : 'flex',
+          )}
+        >
+          {/* Course code + group row (combined) */}
+          <div className="flex items-center justify-center w-full max-w-full min-w-0 gap-1 text-[11px] font-bold text-gray-800 overflow-hidden">
+            <EllipsisText
+              className="inline-block min-w-0 max-w-full font-mono tracking-tight"
+              dir="ltr"
             >
-              {weekLabel}
-            </span>
-          )}
+              {courseCodeWithGroup}
+            </EllipsisText>
+          </div>
 
-          {/* Content - Centered Layout with responsive text */}
-          <div className="flex flex-col items-center justify-center w-full h-full max-w-full min-w-0 textcenter gap-0.5 overflow-hidden">
-            {/* Title - Truncated to prevent overflow */}
-            <h3
+          {/* Subtitle - Instructor */}
+          {!isHalf && (
+            <p
               className={cn(
-                'font-bold text-gray-900 leading-tight w-full max-w-full min-w-0 overflow-hidden',
-                isHalf
+                'text-gray-700 w-full max-w-full min-w-0 overflow-hidden',
+                fontSize === 'small'
                   ? 'text-[11px]'
-                  : fontSize === 'small'
-                  ? 'text-xs'
                   : fontSize === 'large'
-                  ? 'text-sm'
-                  : 'text-sm',
+                  ? 'text-xs'
+                  : 'text-xs',
               )}
             >
               <EllipsisText className="block w-full" dir="rtl">
-                {session.courseName}
+                {session.instructor}
               </EllipsisText>
-            </h3>
+            </p>
+          )}
 
-            {/* Indicator for mixed-duration conflicts */}
-            {conflictMeta?.hasMixedDurationConflict && !isPopout && (
-              <div className="relative w-full flex justify-center">
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex items-center gap-0.5 bg-amber-500/90 text-white px-1.5 py-0.5 rounded-full text-[7px] font-bold shadow-sm pointer-events-none">
-                  <AlertTriangle className="w-2 h-2" />
-                  {conflictMeta.durationMinutes}
-                  {t('labels.minutes', { defaultValue: 'دقیقه' })}
-                </div>
-              </div>
-            )}
-
-            {/* Metadata block is always rendered so it can appear in exports.
-                For compact (1-hour) sessions we hide it in the UI but reveal it
-                when the ancestor has the `.export-mode` class (export-only mode). */}
-            <div
+          {/* Metadata Row - Credits */}
+          <div className="flex items-center justify-center gap-1 max-w-full overflow-hidden">
+            <span
               className={cn(
-                'flex flex-col gap-0.5 w-full',
-                isOneHourSession ? 'hidden group-[.export-mode]:flex' : 'flex',
+                'bg-gray-800/15 text-gray-800 px-1 py-0.5 rounded font-semibold whitespace-nowrap',
+                isHalf
+                  ? 'text-[6px]'
+                  : fontSize === 'small'
+                  ? 'text-[7px]'
+                  : fontSize === 'large'
+                  ? 'text-[10px]'
+                  : 'text-[8px]',
               )}
             >
-              {/* Course code + group row (combined) */}
-              <div className="flex items-center justify-center w-full max-w-full min-w-0 gap-1 text-[11px] font-bold text-gray-800 overflow-hidden">
-                <EllipsisText
-                  className="inline-block min-w-0 max-w-full font-mono tracking-tight"
-                  dir="ltr"
-                >
-                  {courseCodeWithGroup}
-                </EllipsisText>
-              </div>
-
-              {/* Subtitle - Instructor */}
-              {!isHalf && (
-                <p
-                  className={cn(
-                    'text-gray-700 w-full max-w-full min-w-0 overflow-hidden',
-                    fontSize === 'small'
-                      ? 'text-[11px]'
-                      : fontSize === 'large'
-                      ? 'text-xs'
-                      : 'text-xs',
-                  )}
-                >
-                  <EllipsisText className="block w-full" dir="rtl">
-                    {session.instructor}
-                  </EllipsisText>
-                </p>
-              )}
-
-              {/* Metadata Row - Credits */}
-              <div className="flex items-center justify-center gap-1 max-w-full overflow-hidden">
-                <span
-                  className={cn(
-                    'bg-gray-800/15 text-gray-800 px-1 py-0.5 rounded font-semibold whitespace-nowrap',
-                    isHalf
-                      ? 'text-[6px]'
-                      : fontSize === 'small'
-                      ? 'text-[7px]'
-                      : fontSize === 'large'
-                      ? 'text-[10px]'
-                      : 'text-[8px]',
-                  )}
-                >
-                  {session.credits} {t('labels.units')}
-                </span>
-              </div>
-            </div>
+              {session.credits} {t('labels.units')}
+            </span>
           </div>
         </div>
+      </div>
+    </div>
+  );
+
+  // For stacked conflict cards, we do NOT wrap in a Popover.
+  // This ensures double‑click with mouse always works (no overlay intercept).
+  if (isStacked) {
+    return card;
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        {card}
       </PopoverTrigger>
       <PopoverContent
         side="top"

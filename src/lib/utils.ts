@@ -43,6 +43,9 @@ export const downloadScheduleImage = async (
     const dataUrl = await htmlToImage.toPng(element, {
       cacheBust: true,
       pixelRatio: 3,
+      // Disable automatic font stylesheet scraping/embedding to avoid CORS SecurityError
+      // with external fonts (e.g. Google Fonts / Vazirmatn).
+      fontEmbedCSS: "",
       backgroundColor:
         liveBg && liveBg !== "rgba(0, 0, 0, 0)" && liveBg !== "transparent"
           ? liveBg

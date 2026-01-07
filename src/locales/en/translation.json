@@ -416,6 +416,7 @@
   },
   "settings": {
     "title": "App Settings",
+    "dialogDescription": "Configure theme, font size, language, and grid lines for the planner.",
     "appearance": "Appearance",
     "themeSection": "Theme mode",
     "theme": {
@@ -506,7 +507,7 @@
   "mobile": {
     "menuTitle": "Menu",
     "donate": "Support us",
-    "language": "Language",
+    "language": "Change language",
     "profile": "Profile",
     "version": "Version {{version}}",
     "sidebarTitle": "Course list"

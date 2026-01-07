@@ -64,7 +64,7 @@ const VirtualizedCourseList = ({ courses }: VirtualizedCourseListProps) => {
   }
 
   return (
-    <div ref={parentRef} className="max-h-[600px] overflow-auto">
+    <div ref={parentRef} className="max-h-[600px] overflow-auto touch-pan-y">
       <div
         style={{
           height: `${rowVirtualizer.getTotalSize()}px`,
@@ -338,7 +338,7 @@ const Sidebar = () => {
         )}
 
         {!isLoading && !error && (selectedDepartment || customCoursesList.length > 0) && (
-          <ScrollArea className="h-full overflow-x-auto">
+          <ScrollArea className="h-full overflow-x-auto touch-pan-y">
             {/* اجازه‌ی اسکرول افقی در صورت وجود درس با نام بسیار بلند */}
             {/* Custom/User Courses */}
             {customCoursesList.length > 0 && (

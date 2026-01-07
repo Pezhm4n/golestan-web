@@ -159,6 +159,28 @@ const GuidedTour = ({ isOpen, onClose }: GuidedTourProps) => {
     };
   }, [isOpen, currentStep, updateTargetRect]);
 
+  // On step change, ensure the target element is scrolled into view,
+  // especially important on mobile where it might be off-screen.
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const step = tourSteps[currentStep];
+    const element = document.querySelector(step.target) as HTMLElement | null;
+    if (!element) return;
+
+    element.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+      inline: 'center',
+    });
+
+    const timer = window.setTimeout(() => {
+      updateTargetRect();
+    }, 400);
+
+    return () => window.clearTimeout(timer);
+  }, [currentStep, isOpen, updateTargetRect]);
+
   const handleNext = useCallback(() => {
     if (currentStep < tourSteps.length - 1) {
       setCurrentStep(prev => prev + 1);
@@ -281,7 +303,7 @@ const GuidedTour = ({ isOpen, onClose }: GuidedTourProps) => {
   };
 
   const tourContent = (
-    <div className="fixed inset-0 z-[9999]" dir="rtl">
+    <div className="fixed inset-0 z-[99999]" dir="rtl">
       {/* Overlay (spotlight) */}
       {targetRect ? (
         <>

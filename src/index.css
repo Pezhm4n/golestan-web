@@ -5,6 +5,9 @@
 /* Golestan Planner Design System - Persian RTL Application */
 
 @layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
   :root {
     --background: 0 0% 96%;
     --foreground: 0 0% 9%;
@@ -175,6 +178,9 @@
   [data-radix-scroll-area-viewport] {
     width: 100%;
     max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    overscroll-behavior: contain;
   }
 }
 
@@ -192,5 +198,13 @@
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
     overflow: hidden;
+  }
+
+  .touch-pan-y {
+    touch-action: pan-y !important;
+  }
+
+  .touch-pan-x {
+    touch-action: pan-x !important;
   }
 }
